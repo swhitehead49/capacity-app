@@ -53,3 +53,5 @@ td.left { text-align: left; white-space: normal; }
 .edit-form + table { margin-top: 32px; }
 table.narrow { max-width: 720px; margin-top: 16px; }
 .edit-form select[multiple] { padding: 4px; }
+.edit-form .grid { align-items: start; }
+.hint { font-size: 13px; align-self: end; }
