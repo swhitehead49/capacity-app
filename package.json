@@ -9,9 +9,14 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
+    "drizzle-kit": "^0.31.11",
     "typescript": "^5.9.3",
     "vitest": "^3.2.7"
   },
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.16",
+    "drizzle-orm": "^0.44.7"
+  }
 }
