@@ -2,7 +2,12 @@
 * { box-sizing: border-box; }
 body { margin: 0; font: 15px/1.45 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
 .topbar { padding: 12px 24px; border-bottom: 1px solid var(--line); background: #fff; font-weight: 600; }
+.topbar { display: flex; gap: 24px; align-items: baseline; }
 .topbar a { color: inherit; text-decoration: none; }
+.topbar nav { display: flex; gap: 16px; font-weight: 400; }
+.notice { border: 1px solid #b3d4b8; background: #f0f8f1; color: #1f5a2a; padding: 8px 12px; border-radius: 6px; }
+td form { display: inline; }
+.errors + table, .notice + table { margin-top: 16px; }
 main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 h1 { margin: 0 0 4px; font-size: 24px; }
 h2 { margin: 32px 0 8px; font-size: 18px; }
@@ -33,3 +38,4 @@ button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; 
 button.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
 button.secondary.danger { color: #8a1f1f; border-color: #c98a8a; }
 button:disabled { opacity: 0.45; cursor: default; }
+table + table { margin-top: 32px; }

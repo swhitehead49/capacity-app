@@ -8,3 +8,9 @@ npm test        # run all tests
 ```
 
 See `docs/requirements.md` for what the app must do and `docs/architecture.md` for how it is organised.
+
+## Public holidays
+
+Open **Holidays** in the top bar to load each country's public holidays for a year from the
+[OpenHolidays API](https://openholidaysapi.org) (DE, FR, AT, BE). Tests never call the internet: they read
+saved answers from `tests/fixtures/openholidays` (set `OPENHOLIDAYS_FIXTURE_DIR`).
