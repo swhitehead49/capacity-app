@@ -5,14 +5,16 @@ The app is built in layers. Each layer depends only on the layers below it.
 ```
 screens (Next.js, later)        what the user sees and clicks
    │
-application services (later)    use cases: "show team capacity for S001"
+application (src/application)    use cases: "save a team default", checks rules, writes audit log
    │
 domain                          pure rules and calculations, no database, no screens
    ▲
 infrastructure                  database: loads rows and turns them into domain shapes
 ```
 
-The domain never imports from infrastructure. Infrastructure imports domain types and fills them.
+The domain never imports from infrastructure or application.
+Application code calls domain rules first, then saves through infrastructure inside one transaction.
+ Infrastructure imports domain types and fills them.
 
 ## Rules
 
