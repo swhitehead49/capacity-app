@@ -14,7 +14,7 @@ test("add a team", async ({ page }) => {
   await page.getByRole("link", { name: "Add team" }).click();
   await page.getByLabel("Team ID").fill("T100");
   await page.getByLabel("Name").fill("Payments");
-  await page.getByLabel("Parent group").fill("Platform");
+  await page.getByLabel("Value stream").fill("Platform");
   await page.getByLabel("Start date").fill("2026-11-09");
   await page.getByRole("button", { name: "Add team" }).click();
   await expect(page).toHaveURL(/\/teams$/);

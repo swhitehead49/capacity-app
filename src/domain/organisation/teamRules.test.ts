@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { nameClashes, sameName } from "./teamRules";
 
 describe("team name rules (BR-16)", () => {
-  const others = [{ name: "Payments", parentGroup: "Platform" }, { name: "Payments", parentGroup: "Clinical" }];
+  const others = [{ name: "Payments", valueStream: "Platform" }, { name: "Payments", valueStream: "Clinical" }];
 
   it("names match ignoring capitals and spaces", () => {
     expect(sameName(" payments ", "Payments")).toBe(true);

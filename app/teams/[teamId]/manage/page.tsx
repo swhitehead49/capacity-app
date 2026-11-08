@@ -22,7 +22,7 @@ export default async function ManageTeam({ params }: { params: Promise<{ teamId:
       <p className="muted"><Link href="/teams">← Teams</Link></p>
       <h1>{team.name}</h1>
       <p className="muted">
-        {team.id} · {team.parentGroup ?? "no parent group"} · {status} ·{" "}
+        {team.id} · {team.valueStream ?? "no value stream"} · {status} ·{" "}
         <Link href={`/teams/${team.id}`}>Planner</Link> · <Link href={`/teams/${team.id}/members`}>Members</Link> ·{" "}
         <Link href={`/teams/${team.id}/default`}>Default</Link>
       </p>

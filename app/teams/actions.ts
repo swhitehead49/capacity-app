@@ -12,7 +12,7 @@ const read = (form: FormData, name: string) => String(form.get(name) ?? "").trim
 /** UC15. Warnings (same name under another parent) are shown on the Teams list. */
 export async function addTeamAction(previous: FormState, form: FormData): Promise<FormState> {
   const result = await addTeam(await getDb(), ACTOR, {
-    id: read(form, "id"), name: read(form, "name"), parentGroup: read(form, "parentGroup") || null,
+    id: read(form, "id"), name: read(form, "name"), valueStream: read(form, "valueStream") || null,
     leadEmail: read(form, "leadEmail") || null, effectiveFrom: read(form, "effectiveFrom"),
   });
   if (!result.ok) return failed(previous, form, result.errors);

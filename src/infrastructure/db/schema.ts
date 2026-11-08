@@ -11,7 +11,7 @@ export const teams = pgTable("teams", {
   id: text("id").primaryKey(), // e.g. "T017"
   name: text("name").notNull(),
   leadEmail: text("lead_email"),
-  parentGroup: text("parent_group"),
+  valueStream: text("value_stream"), // the level just above a team (decision 8 Nov 2026; was "parent group")
   grandparentGroup: text("grandparent_group"),
   topLevelGroup: text("top_level_group"),
   idConfirmed: boolean("id_confirmed").notNull().default(false),

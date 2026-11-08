@@ -12,7 +12,7 @@ export function AddTeamForm({ today }: { today: string }) {
         <div className="grid">
           <label>Team ID<input name="id" defaultValue={v.id} placeholder="e.g. T074" /></label>
           <label>Name<input name="name" defaultValue={v.name} /></label>
-          <label>Parent group<input name="parentGroup" defaultValue={v.parentGroup} /></label>
+          <label>Value stream<input name="valueStream" defaultValue={v.valueStream} /></label>
           <label>Lead email<input name="leadEmail" defaultValue={v.leadEmail} /></label>
           <label>Start date<input name="effectiveFrom" type="date" defaultValue={v.effectiveFrom} /></label>
         </div>

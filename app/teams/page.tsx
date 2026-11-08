@@ -16,13 +16,13 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
       <p><Link className="button" href="/teams/new">Add team</Link></p>
       <table className="members">
         <caption>All teams</caption>
-        <thead><tr><th>ID</th><th>Name</th><th>Parent group</th><th>Lead</th><th>Members now</th><th>Status</th><th></th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Value stream</th><th>Lead</th><th>Members now</th><th>Status</th><th></th><th></th></tr></thead>
         <tbody>
           {teams.map((x) => (
             <tr key={x.id} className={x.status.startsWith("Retired") ? "muted" : ""}>
               <td>{x.id}</td>
               <td>{x.name}</td>
-              <td>{x.parentGroup}</td>
+              <td>{x.valueStream}</td>
               <td>{x.leadEmail}</td>
               <td>{x.members}</td>
               <td>{x.status}</td>

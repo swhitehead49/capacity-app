@@ -22,6 +22,13 @@
       "when": 1794140573025,
       "tag": "0002_team_name_from_start",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794142000000,
+      "tag": "0003_value_stream",
+      "breakpoints": true
     }
   ]
 }

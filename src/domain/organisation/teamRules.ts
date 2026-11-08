@@ -3,7 +3,7 @@
 export interface TeamDraft {
   id: string;
   name: string;
-  parentGroup: string | null;
+  valueStream: string | null;
   leadEmail: string | null;
   effectiveFrom: string;
 }
@@ -25,11 +25,11 @@ export function sameName(a: string, b: string): boolean {
 /** BR-16: a clash in the same parent is an error; the same name elsewhere is only a warning. */
 export function nameClashes(
   name: string,
-  parentGroup: string | null,
-  others: { name: string; parentGroup: string | null }[],
+  valueStream: string | null,
+  others: { name: string; valueStream: string | null }[],
 ): { errors: string[]; warnings: string[] } {
   const matches = others.filter((o) => sameName(o.name, name));
-  const inParent = matches.find((o) => (o.parentGroup ?? "") === (parentGroup ?? ""));
-  if (inParent) return { errors: [`"${name.trim()}" is already a team in ${parentGroup ?? "(no parent)"}`], warnings: [] };
-  return { errors: [], warnings: matches.map((o) => `"${name.trim()}" is also a team in ${o.parentGroup ?? "(no parent)"}`) };
+  const inStream = matches.find((o) => (o.valueStream ?? "") === (valueStream ?? ""));
+  if (inStream) return { errors: [`"${name.trim()}" is already a team in ${valueStream ?? "(no value stream)"}`], warnings: [] };
+  return { errors: [], warnings: matches.map((o) => `"${name.trim()}" is also a team in ${o.valueStream ?? "(no value stream)"}`) };
 }

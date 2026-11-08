@@ -12,18 +12,18 @@ const formatDay = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
 
 /** UC15: a new team with a permanent ID, its first name, and a Draft default (BR-17). */
 export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<TeamResult> {
-  const team = { ...draft, id: draft.id.trim(), name: draft.name.trim(), parentGroup: draft.parentGroup?.trim() || null, leadEmail: draft.leadEmail?.trim() || null };
+  const team = { ...draft, id: draft.id.trim(), name: draft.name.trim(), valueStream: draft.valueStream?.trim() || null, leadEmail: draft.leadEmail?.trim() || null };
   const errors = validateTeam(team);
   if (errors.length) return { ok: false, errors };
   if (await db.query.teams.findFirst({ where: eq(t.teams.id, team.id) })) {
     return { ok: false, errors: [`Team ID ${team.id} is already used`] };
   }
-  const clash = nameClashes(team.name, team.parentGroup, await liveTeams(db));
+  const clash = nameClashes(team.name, team.valueStream, await liveTeams(db));
   if (clash.errors.length) return { ok: false, errors: clash.errors };
 
   await db.transaction(async (tx) => {
     const [row] = await tx.insert(t.teams).values({
-      id: team.id, name: team.name, parentGroup: team.parentGroup, leadEmail: team.leadEmail,
+      id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail,
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
     await tx.insert(t.allocationSettings).values({
@@ -45,7 +45,7 @@ export async function renameTeam(db: Db, actor: string, request: { teamId: strin
   if (!name) return { ok: false, errors: ["Name is needed"] };
   if (!request.effectiveFrom) return { ok: false, errors: ["Date is needed"] };
   if (sameName(name, team.name)) return { ok: false, errors: ["That is already the team's name"] };
-  const clash = nameClashes(name, team.parentGroup, (await liveTeams(db)).filter((o) => o.id !== team.id));
+  const clash = nameClashes(name, team.valueStream, (await liveTeams(db)).filter((o) => o.id !== team.id));
   if (clash.errors.length) return { ok: false, errors: clash.errors };
 
   await db.transaction(async (tx) => {
@@ -140,5 +140,5 @@ function teamStatus(retiredOn: string | null, today: string): string {
 }
 
 async function liveTeams(db: Db) {
-  return db.select({ id: t.teams.id, name: t.teams.name, parentGroup: t.teams.parentGroup }).from(t.teams).where(isNull(t.teams.retiredOn));
+  return db.select({ id: t.teams.id, name: t.teams.name, valueStream: t.teams.valueStream }).from(t.teams).where(isNull(t.teams.retiredOn));
 }

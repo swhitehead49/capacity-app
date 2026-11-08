@@ -16,19 +16,19 @@ beforeEach(async () => {
   db = await createTestDb();
   await seedDrgw(db); // T017 DRGW with 10 members and an Active default
   await db.insert(t.teams).values([
-    { id: "T001", name: "Example Team A", parentGroup: "Platform" },
-    { id: "T002", name: "Example Team B", parentGroup: "Platform" },
+    { id: "T001", name: "Example Team A", valueStream: "Platform" },
+    { id: "T002", name: "Example Team B", valueStream: "Platform" },
   ]);
 });
 
 const team = (id: string) => db.query.teams.findFirst({ where: eq(t.teams.id, id) });
 const audit = () => db.select().from(t.auditLog);
-const newTeam = { id: "T100", name: "Payments", parentGroup: "Platform", leadEmail: "lead@example.com", effectiveFrom: "2026-11-09" };
+const newTeam = { id: "T100", name: "Payments", valueStream: "Platform", leadEmail: "lead@example.com", effectiveFrom: "2026-11-09" };
 
 describe("addTeam (UC15)", () => {
   it("creates the team, its first name, a Draft default, and logs it", async () => {
     expect(await addTeam(db, actor, newTeam)).toEqual({ ok: true, id: "T100", warnings: [] });
-    expect(await team("T100")).toMatchObject({ name: "Payments", parentGroup: "Platform", leadEmail: "lead@example.com", retiredOn: null });
+    expect(await team("T100")).toMatchObject({ name: "Payments", valueStream: "Platform", leadEmail: "lead@example.com", retiredOn: null });
     expect(await db.select().from(t.teamNameHistory).where(eq(t.teamNameHistory.teamId, "T100")))
       .toEqual([expect.objectContaining({ name: "Payments", effectiveFrom: "2026-11-09" })]);
     const defaults = await db.select().from(t.allocationSettings).where(eq(t.allocationSettings.teamId, "T100"));
@@ -47,12 +47,12 @@ describe("addTeam (UC15)", () => {
   });
 
   it("the same name under a different parent is allowed but flagged (BR-16)", async () => {
-    const result = await addTeam(db, actor, { ...newTeam, name: "Example Team A", parentGroup: "Clinical" });
+    const result = await addTeam(db, actor, { ...newTeam, name: "Example Team A", valueStream: "Clinical" });
     expect(result).toEqual({ ok: true, id: "T100", warnings: ['"Example Team A" is also a team in Platform'] });
   });
 
   it("needs an ID, a name and a start date; the lead email must look right", async () => {
-    const result = await addTeam(db, actor, { id: " ", name: "", parentGroup: null, leadEmail: "boss", effectiveFrom: "" });
+    const result = await addTeam(db, actor, { id: " ", name: "", valueStream: null, leadEmail: "boss", effectiveFrom: "" });
     expect(result).toEqual({ ok: false, errors: [
       "Team ID is needed (letters, digits and - only)", "Name is needed", "Start date is needed", "Lead email must look like name@company.com",
     ] });
