@@ -1,7 +1,8 @@
-import { and, asc, between, count, eq, sql } from "drizzle-orm";
+import { asc, sql } from "drizzle-orm";
 import { parseOpenHolidays, type OpenHolidaysEntry } from "../domain/holidays/openHolidays";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
+import { replaceHolidayCalendar } from "./replaceHolidayCalendar";
 
 /** Countries whose holidays come from OpenHolidays (decision 8 Nov 2026). India uses a yearly CSV. */
 export const OPEN_HOLIDAYS_COUNTRIES = ["AT", "BE", "DE", "FR"] as const;
@@ -38,22 +39,7 @@ export async function loadHolidayCalendar(db: Db, actor: string, request: LoadRe
   }
   if (holidays.length === 0) return { ok: false, errors: [`OpenHolidays sent no public holidays for ${country} ${year}`] };
 
-  const h = t.publicHolidays;
-  const inYear = and(eq(h.country, country), between(h.date, `${year}-01-01`, `${year}-12-31`));
-  await db.transaction(async (tx) => {
-    const [before] = await tx.select({ n: count() }).from(h).where(inYear);
-    await tx.delete(h).where(inYear);
-    await tx.insert(h).values(holidays);
-    await tx.insert(t.holidayCalendars).values({ country, year, source: SOURCE })
-      .onConflictDoUpdate({
-        target: [t.holidayCalendars.country, t.holidayCalendars.year],
-        set: { source: SOURCE, loadedAt: sql`now()` },
-      });
-    await tx.insert(t.auditLog).values({
-      actor, entity: "holiday_calendars", entityId: `${country}:${year}`, action: "load",
-      reason: `Loaded from ${SOURCE}`, before: { holidays: before?.n ?? 0 }, after: { holidays: holidays.length },
-    });
-  });
+  await replaceHolidayCalendar(db, actor, { country, year, source: SOURCE, action: "load", holidays });
   return { ok: true, count: holidays.length };
 }
 
