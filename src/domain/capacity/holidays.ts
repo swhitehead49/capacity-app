@@ -31,6 +31,11 @@ export function countHolidayWeekdays(
   return days.size;
 }
 
+/** True if the date is a public holiday at this location. */
+export function isHoliday(date: IsoDate, location: Location, holidays: PublicHoliday[]): boolean {
+  return holidays.some((h) => h.date === date && appliesTo(h, location));
+}
+
 function appliesTo(holiday: PublicHoliday, location: Location): boolean {
   if (holiday.country !== location.country) return false;
   return holiday.regions.length === 0 || holiday.regions.includes(location.region);

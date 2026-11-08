@@ -25,21 +25,22 @@ export function effectiveWindow(period: DateRange, employment: Employment): Date
 
 /** Step 4 (requirements §3): Monday–Friday days in the range, both ends included. */
 export function countWeekdays(range: DateRange | null): number {
-  if (!range) return 0;
-  let count = 0;
+  return eachDay(range).filter(isWeekday).length;
+}
+
+/** Every date in the range, both ends included. */
+export function eachDay(range: DateRange | null): IsoDate[] {
+  if (!range) return [];
+  const days: IsoDate[] = [];
   for (let day = toUtc(range.start); day <= toUtc(range.end); day.setUTCDate(day.getUTCDate() + 1)) {
-    if (isWeekdayDate(day)) count++;
+    days.push(day.toISOString().slice(0, 10));
   }
-  return count;
+  return days;
 }
 
 /** True for Monday to Friday. */
 export function isWeekday(date: IsoDate): boolean {
-  return isWeekdayDate(toUtc(date));
-}
-
-function isWeekdayDate(day: Date): boolean {
-  const weekday = day.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  const weekday = toUtc(date).getUTCDay(); // 0 = Sunday, 6 = Saturday
   return weekday !== 0 && weekday !== 6;
 }
 
