@@ -4,6 +4,7 @@ import { getOverride } from "../../../../../../src/application/saveOverride";
 import { getDb } from "../../../../../../src/infrastructure/db/appDb";
 import * as t from "../../../../../../src/infrastructure/db/schema";
 import { OverrideForm } from "./OverrideForm";
+import { RevertButtons } from "./RevertButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,19 @@ export default async function EditOverride({ params }: { params: Promise<{ teamI
         Currently applied: {applied.splitSource ?? "nothing (calendar capacity only)"}
         {applied.overhead !== null && <span className="muted"> · overhead {pct(applied.overhead)}% from {applied.overheadSource}</span>}
       </p>
+      <section aria-label="Team default (read only)" className="reference">
+        <h2>Team default <span className="muted">(read only)</span></h2>
+        {view.teamDefault ? (
+          <p>
+            Overhead {pct(view.teamDefault.overhead)}% · Run {pct(view.teamDefault.split.run)}% ·
+            Fix {pct(view.teamDefault.split.fix)}% · Sustain {pct(view.teamDefault.split.sustain)}% ·
+            Change {pct(view.teamDefault.split.change)}%
+            <span className="muted"> · since {formatDate(view.teamDefault.effectiveFrom ?? view.period.start)}</span>
+          </p>
+        ) : (
+          <p className="muted">No Active team default yet.</p>
+        )}
+      </section>
       <OverrideForm
         values={{
           teamId,
@@ -40,6 +54,7 @@ export default async function EditOverride({ params }: { params: Promise<{ teamI
           reason: view.override?.reason ?? "",
         }}
       />
+      <RevertButtons teamId={teamId} periodId={periodId} hasOverride={view.override !== null} />
     </>
   );
 }

@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { saveOverride } from "../../../../../../src/application/saveOverride";
-import { getDb } from "../../../../../../src/infrastructure/db/appDb";
+import { revertAllOverrides, revertOverride } from "../../../../../../src/application/revertOverrides";
+import { getDb, today } from "../../../../../../src/infrastructure/db/appDb";
 
 export interface FormState {
   errors: string[];
@@ -31,5 +32,19 @@ export async function saveOverrideAction(previous: FormState, form: FormData): P
     const submitted = Object.fromEntries([...form.entries()].map(([key, value]) => [key, String(value)]));
     return { errors: result.errors, submitted, attempt: previous.attempt + 1 };
   }
+  redirect(`/teams/${teamId}`);
+}
+
+/** Revert this one period to the team default (requested 8 Nov 2026). */
+export async function revertPeriodAction(form: FormData) {
+  const teamId = String(form.get("teamId"));
+  await revertOverride(await getDb(), ACTOR, { teamId, periodId: String(form.get("periodId")) });
+  redirect(`/teams/${teamId}`);
+}
+
+/** Revert every current and future period for the team. */
+export async function revertAllAction(form: FormData) {
+  const teamId = String(form.get("teamId"));
+  await revertAllOverrides(await getDb(), ACTOR, { teamId, today: today() });
   redirect(`/teams/${teamId}`);
 }

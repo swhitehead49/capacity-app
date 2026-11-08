@@ -26,3 +26,10 @@ button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; 
 .errors p { margin: 0; }
 .edit-form input, .edit-form select { width: 100%; }
 .edit-form .fields { border: 0; padding: 0; margin: 0; display: grid; gap: 16px; min-width: 0; }
+.reference { max-width: 720px; margin-top: 16px; padding: 12px 16px; border: 1px dashed var(--line); border-radius: 8px; background: #f4f4f6; }
+.reference h2 { margin: 0 0 4px; font-size: 15px; }
+.reference p { margin: 0; }
+.revert { display: flex; gap: 12px; margin-top: 16px; max-width: 720px; }
+button.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+button.secondary.danger { color: #8a1f1f; border-color: #c98a8a; }
+button:disabled { opacity: 0.45; cursor: default; }
