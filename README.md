@@ -7,6 +7,21 @@ npm install     # once
 npm test        # run all tests
 ```
 
+## Run it on your own computer
+
+You need **Node.js 22 (LTS)** from https://nodejs.org and **Git** from https://git-scm.com.
+No database to install: the app keeps its data in a local folder (`data/dev`).
+
+```bash
+git clone https://github.com/swhitehead49/capacity-app.git
+cd capacity-app
+npm install        # once, and again after pulling changes
+npm run seed       # FIRST TIME ONLY: creates demo data (DRGW etc.). It wipes data/dev!
+npm run dev        # starts the app; open http://localhost:3000
+```
+
+Stop it with Ctrl+C. Next time just run `npm run dev`. To get the latest changes: `git pull`, then `npm install`.
+
 See `docs/requirements.md` for what the app must do and `docs/architecture.md` for how it is organised.
 
 ## Public holidays
