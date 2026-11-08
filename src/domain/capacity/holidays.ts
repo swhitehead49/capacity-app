@@ -36,7 +36,8 @@ export function isHoliday(date: IsoDate, location: Location, holidays: PublicHol
   return holidays.some((h) => h.date === date && appliesTo(h, location));
 }
 
-function appliesTo(holiday: PublicHoliday, location: Location): boolean {
+/** BR-09: a holiday applies to the whole country (no regions) or to the listed regions. */
+export function appliesTo(holiday: PublicHoliday, location: Location): boolean {
   if (holiday.country !== location.country) return false;
   return holiday.regions.length === 0 || holiday.regions.includes(location.region);
 }
