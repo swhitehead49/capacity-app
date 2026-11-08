@@ -88,6 +88,18 @@ describe("teamCapacity for DRGW, sprint S001", () => {
   });
 });
 
+describe("teamCapacity with contingency", () => {
+  it("DRGW S001 with 10% contingency holds back 5.80 of 58.03 engineering days", () => {
+    const allocation = resolveAllocation({
+      teamDefault: { status: "Active", overhead: 0.2, contingency: 0.1, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3 } },
+    });
+    const result = teamCapacity({ ...baseInput, allocation });
+    expect(result.engineeringDays).toBeCloseTo(58.032);
+    expect(result.contingencyDays).toBeCloseTo(5.8032);
+    expect(result.run).toBeCloseTo(15.66864); // (58.032 - 5.8032) × 30%
+  });
+});
+
 describe("teamCapacity statuses", () => {
   it("is Provisional when no holiday calendar is loaded for the location and year (BR-10)", () => {
     const result = teamCapacity({ ...baseInput, holidayCalendarsLoaded: [] });

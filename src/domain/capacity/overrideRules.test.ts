@@ -31,4 +31,8 @@ describe("validateOverride", () => {
   it("lets a Draft be saved unfinished", () => {
     expect(validateOverride({ ...good, status: "Draft", reason: "", split: { run: 1, fix: 1, sustain: 0, change: 0 } })).toEqual([]);
   });
+
+  it("checks a contingency it sets is between 0% and 100%", () => {
+    expect(validateOverride({ ...good, contingency: -0.1 })).toContain("Contingency must be between 0% and 100%");
+  });
 });

@@ -36,4 +36,8 @@ describe("validateTeamDefault", () => {
     expect(validateTeamDefault({ ...good, status: "Draft", effectiveFrom: null, overhead: null,
       split: { run: 0.5, fix: 0, sustain: 0, change: 0 } })).toEqual([]);
   });
+
+  it("rejects contingency outside 0–100% (contingency, decided 8 Nov 2026)", () => {
+    expect(validateTeamDefault({ ...good, contingency: 1.2 })).toContain("Contingency must be between 0% and 100%");
+  });
 });

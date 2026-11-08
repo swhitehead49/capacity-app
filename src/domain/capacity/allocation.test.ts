@@ -81,6 +81,41 @@ describe("splitCapacity", () => {
 
   it("shows calendar capacity only when there is no active allocation", () => {
     const result = splitCapacity(100, { overhead: null, split: null });
-    expect(result).toEqual({ engineeringDays: null, run: null, fix: null, sustain: null, change: null });
+    expect(result).toEqual({ engineeringDays: null, contingencyDays: null, run: null, fix: null, sustain: null, change: null });
+  });
+});
+
+// Contingency (decided 8 Nov 2026): a % held back after overhead, before the R/F/S/C split.
+// Set on the team default; overrides may set their own or leave it blank to inherit. None set = 0%.
+describe("contingency", () => {
+  it("comes from the team default", () => {
+    const result = resolveAllocation({ teamDefault: { ...teamDefault, contingency: 0.1 } });
+    expect(result.contingency).toBe(0.1);
+    expect(result.contingencySource).toBe("Team default");
+  });
+
+  it("is inherited when an override leaves it blank, and can be overridden", () => {
+    const inherited = resolveAllocation({ teamDefault: { ...teamDefault, contingency: 0.1 }, quarter: { ...quarter, contingency: null } });
+    expect(inherited.contingency).toBe(0.1);
+    const own = resolveAllocation({ teamDefault: { ...teamDefault, contingency: 0.1 }, sprint: { ...sprint, contingency: 0.05 } });
+    expect(own).toMatchObject({ contingency: 0.05, contingencySource: "Sprint override" });
+  });
+
+  it("is 0% when nothing sets it", () => {
+    expect(resolveAllocation({ teamDefault })).toMatchObject({ contingency: 0, contingencySource: null });
+  });
+
+  it("is held back after overhead, and only the rest is split", () => {
+    const result = splitCapacity(100, { overhead: 0.2, contingency: 0.1, split: split(0.3, 0.2, 0.2, 0.3) });
+    expect(result.engineeringDays).toBeCloseTo(80);
+    expect(result.contingencyDays).toBeCloseTo(8);
+    expect(result.run).toBeCloseTo(21.6); // (80 - 8) × 30%
+    expect(result.change).toBeCloseTo(21.6);
+  });
+
+  it("0% contingency changes nothing", () => {
+    const result = splitCapacity(100, { overhead: 0.2, contingency: 0, split: split(0.3, 0.2, 0.2, 0.3) });
+    expect(result.contingencyDays).toBe(0);
+    expect(result.run).toBeCloseTo(24);
   });
 });
