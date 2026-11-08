@@ -27,12 +27,13 @@ export default async function EditOverride({ params }: { params: Promise<{ teamI
       <p>
         Currently applied: {applied.splitSource ?? "nothing (calendar capacity only)"}
         {applied.overhead !== null && <span className="muted"> · overhead {pct(applied.overhead)}% from {applied.overheadSource}</span>}
+        {applied.contingencySource && <span className="muted"> · contingency {pct(applied.contingency)}% from {applied.contingencySource}</span>}
       </p>
       <section aria-label="Team default (read only)" className="reference">
         <h2>Team default <span className="muted">(read only)</span></h2>
         {view.teamDefault ? (
           <p>
-            Overhead {pct(view.teamDefault.overhead)}% · Run {pct(view.teamDefault.split.run)}% ·
+            Overhead {pct(view.teamDefault.overhead)}% · Contingency {pct(view.teamDefault.contingency ?? 0)}% · Run {pct(view.teamDefault.split.run)}% ·
             Fix {pct(view.teamDefault.split.fix)}% · Sustain {pct(view.teamDefault.split.sustain)}% ·
             Change {pct(view.teamDefault.split.change)}%
             <span className="muted"> · since {formatDate(view.teamDefault.effectiveFrom ?? view.period.start)}</span>
@@ -48,6 +49,7 @@ export default async function EditOverride({ params }: { params: Promise<{ teamI
           periodId,
           status: view.override?.status ?? "Active",
           overhead: pct(view.override?.overhead),
+          contingency: pct(view.override?.contingency),
           run: pct(split.run),
           fix: pct(split.fix),
           sustain: pct(split.sustain),

@@ -42,7 +42,8 @@ Every change records **who made it, when and why**, so roles can be added later.
    - **Explicit only**: take off booked absence only.
    - **Forecast only**: apply the forecast % only.
 7. **Engineering days** = calendar-available days × (1 − overhead %).
-8. **Run / Fix / Sustain / Change days** = engineering days × the effective % for each.
+8. **Contingency days** = engineering days × contingency % (held back, not split). Set on the team default (blank = 0%); a quarter or sprint override may set its own or inherit, like overhead (added 8 Nov 2026).
+9. **Run / Fix / Sustain / Change days** = (engineering days − contingency days) × the effective % for each.
 
 The unit is **person-days**. Part-time work is handled through FTE.
 
@@ -161,6 +162,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | Holidays | OpenHolidays API for DE/FR/AT/BE. India via a yearly company CSV upload. |
 | Team IDs | The Capacity Admin confirms provisional IDs and ambiguous teams with group leads before go-live. |
 | Planning unit | Person-days. |
+| Contingency | A separate contingency % held back after overhead and before the R/F/S/C split; default 0% (decided 8 Nov 2026). |
 | Value streams | The value stream is the org level just above a team (the former "parent group"). A team is in at most one value stream; changes are logged (decided 8 Nov 2026). |
 | Merges and splits | Done by hand, plus a successor-team link. |
 | New sprints and quarters | Created automatically, on demand, from the timeline settings. |

@@ -29,7 +29,7 @@ function PlanTable({ caption, rows, teamId }: { caption: string; rows: PlanRow[]
       <caption>{caption}</caption>
       <thead>
         <tr>
-          <th>Period</th><th>Dates</th><th>FTE</th><th>Available</th><th>Engineering</th>
+          <th>Period</th><th>Dates</th><th>FTE</th><th>Available</th><th>Engineering</th><th>Contingency</th>
           <th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Allocation from</th><th>Status</th><th></th>
         </tr>
       </thead>
@@ -41,6 +41,7 @@ function PlanTable({ caption, rows, teamId }: { caption: string; rows: PlanRow[]
             <td>{days(row.allocatedFte, 2)}</td>
             <td>{days(row.calendarAvailableDays)}</td>
             <td>{days(row.engineeringDays)}</td>
+            <td>{days(row.contingencyDays)}</td>
             <td>{days(row.run)}</td>
             <td>{days(row.fix)}</td>
             <td>{days(row.sustain)}</td>

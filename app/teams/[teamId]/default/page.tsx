@@ -8,7 +8,7 @@ import { DefaultForm } from "./DefaultForm";
 export const dynamic = "force-dynamic";
 
 const summary = (d: DefaultVersion) =>
-  `Overhead ${percent(d.overhead)}% · Run ${percent(d.split.run)}% · Fix ${percent(d.split.fix)}% · ` +
+  `Overhead ${percent(d.overhead)}% · Contingency ${percent(d.contingency ?? 0)}% · Run ${percent(d.split.run)}% · Fix ${percent(d.split.fix)}% · ` +
   `Sustain ${percent(d.split.sustain)}% · Change ${percent(d.split.change)}%`;
 
 /** UC03 / FR-10: the team's default allocation, its history, and a form for a new version. */
@@ -17,10 +17,10 @@ export default async function TeamDefault({ params }: { params: Promise<{ teamId
   const data = await getTeamDefaults(await getDb(), { teamId, today: today() }).catch(() => null);
   if (!data) notFound();
   const { team, current, history } = data;
-  const start = current ?? { overhead: null, split: { run: null, fix: null, sustain: null, change: null } };
+  const start = current ?? { overhead: null, contingency: null, split: { run: null, fix: null, sustain: null, change: null } };
   const values = {
     effectiveFrom: today(), status: "Active", reason: "",
-    overhead: percent(start.overhead), run: percent(start.split.run), fix: percent(start.split.fix),
+    overhead: percent(start.overhead), contingency: percent(start.contingency ?? 0), run: percent(start.split.run), fix: percent(start.split.fix),
     sustain: percent(start.split.sustain), change: percent(start.split.change),
   };
 
@@ -28,7 +28,7 @@ export default async function TeamDefault({ params }: { params: Promise<{ teamId
     <>
       <p className="muted"><Link href={`/teams/${team.id}`}>← {team.name} planner</Link></p>
       <h1>{team.name} default</h1>
-      <p className="muted">How the team&apos;s capacity is split when no quarter or sprint override applies.</p>
+      <p className="muted">How the team&apos;s capacity is split when no quarter or sprint override applies. Overhead comes off first, then contingency is held back, and the rest is split across Run, Fix, Sustain and Change.</p>
 
       <section aria-label="In force today" className="reference">
         <h2>In force today <span className="muted">({formatDate(today())})</span></h2>
@@ -47,15 +47,16 @@ export default async function TeamDefault({ params }: { params: Promise<{ teamId
       <table>
         <caption>Default history</caption>
         <thead>
-          <tr><th>Effective from</th><th>Status</th><th>Overhead</th><th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Reason</th></tr>
+          <tr><th>Effective from</th><th>Status</th><th>Overhead</th><th>Contingency</th><th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Reason</th></tr>
         </thead>
         <tbody>
-          {history.length === 0 && <tr><td colSpan={8} className="empty">No versions yet.</td></tr>}
+          {history.length === 0 && <tr><td colSpan={9} className="empty">No versions yet.</td></tr>}
           {history.map((d) => (
             <tr key={d.id} className={d.status === "Retired" ? "muted" : ""}>
               <td>{d.effectiveFrom ? formatDate(d.effectiveFrom) : "(no date)"}</td>
               <td>{d.status}{current?.id === d.id ? " · in force" : ""}</td>
               <td>{percent(d.overhead)}%</td>
+              <td>{percent(d.contingency ?? 0)}%</td>
               <td>{percent(d.split.run)}%</td>
               <td>{percent(d.split.fix)}%</td>
               <td>{percent(d.split.sustain)}%</td>

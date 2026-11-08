@@ -18,6 +18,7 @@ export async function saveDefaultAction(previous: FormState, form: FormData): Pr
     status: read("status") as "Draft" | "Active",
     effectiveFrom: read("effectiveFrom") || null,
     overhead: fraction("overhead"),
+    contingency: fraction("contingency"),
     split: { run: fraction("run") ?? 0, fix: fraction("fix") ?? 0, sustain: fraction("sustain") ?? 0, change: fraction("change") ?? 0 },
     reason: read("reason") || undefined,
   });

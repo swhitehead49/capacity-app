@@ -19,12 +19,14 @@ export async function saveOverrideAction(previous: FormState, form: FormData): P
   const teamId = String(form.get("teamId"));
   const percent = (name: string) => Number(form.get(name)) / 100;
   const overheadText = String(form.get("overhead") ?? "").trim();
+  const contingencyText = String(form.get("contingency") ?? "").trim();
 
   const result = await saveOverride(await getDb(), ACTOR, {
     teamId,
     periodId: String(form.get("periodId")),
     status: form.get("status") as "Draft" | "Active" | "Retired",
     overhead: overheadText === "" ? null : Number(overheadText) / 100,
+    contingency: contingencyText === "" ? null : Number(contingencyText) / 100,
     split: { run: percent("run"), fix: percent("fix"), sustain: percent("sustain"), change: percent("change") },
     reason: String(form.get("reason") ?? ""),
   });

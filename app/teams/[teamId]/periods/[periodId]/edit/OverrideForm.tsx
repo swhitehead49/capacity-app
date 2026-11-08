@@ -8,6 +8,7 @@ export interface OverrideFormValues {
   periodId: string;
   status: "Draft" | "Active" | "Retired";
   overhead: string; // empty = inherit
+  contingency: string; // empty = inherit
   run: string;
   fix: string;
   sustain: string;
@@ -36,6 +37,7 @@ export function OverrideForm({ values }: { values: OverrideFormValues }) {
         <label>Sustain %<input name="sustain" type="number" step="any" min="0" max="100" defaultValue={v.sustain} /></label>
         <label>Change %<input name="change" type="number" step="any" min="0" max="100" defaultValue={v.change} /></label>
         <label>Overhead % (blank = inherit)<input name="overhead" type="number" step="any" min="0" max="100" defaultValue={v.overhead} /></label>
+        <label>Contingency % (blank = inherit)<input name="contingency" type="number" step="any" min="0" max="100" defaultValue={v.contingency} /></label>
         <label>Status
           <select name="status" defaultValue={v.status}>
             <option>Draft</option>

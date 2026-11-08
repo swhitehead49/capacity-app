@@ -12,6 +12,7 @@ export function DefaultForm({ teamId, values }: { teamId: string; values: Values
           <div className="grid">
             <label>Effective from<input name="effectiveFrom" type="date" defaultValue={v.effectiveFrom} /></label>
             <label>Overhead %<input name="overhead" type="number" step="any" min="0" max="100" defaultValue={v.overhead} /></label>
+            <label>Contingency %<input name="contingency" type="number" step="any" min="0" max="100" defaultValue={v.contingency} /></label>
             <label>Status
               <select name="status" defaultValue={v.status}>
                 <option>Active</option>
