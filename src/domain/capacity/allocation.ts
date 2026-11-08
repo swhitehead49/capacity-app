@@ -10,6 +10,7 @@ export interface Split {
 export interface AllocationSetting {
   status: "Draft" | "Active" | "Retired";
   overhead: number | null; // null on an override = inherit (BR-06)
+  contingency?: number | null; // held back after overhead; null/missing = inherit, and 0% if nothing sets it
   split: Split;
 }
 
@@ -20,6 +21,8 @@ export interface ResolvedAllocation {
   splitSource: AllocationSource | null;
   overhead: number | null;
   overheadSource: AllocationSource | null;
+  contingency: number;
+  contingencySource: AllocationSource | null;
 }
 
 const TOLERANCE = 0.0001; // BR-01: within 0.01%
@@ -37,7 +40,7 @@ export function validateSplit(split: Split): string[] {
 /**
  * FR-12: the most specific Active setting wins — sprint, then quarter, then team default.
  * BR-05: Draft and Retired settings are ignored.
- * BR-06: overhead comes from the most specific Active setting that has one.
+ * BR-06: overhead comes from the most specific Active setting that has one. Contingency works the same way.
  */
 export function resolveAllocation(settings: {
   teamDefault?: AllocationSetting;
@@ -54,37 +57,47 @@ export function resolveAllocation(settings: {
   );
   const forSplit = active[0];
   const forOverhead = active.find(([, setting]) => setting.overhead !== null);
+  const forContingency = active.find(([, setting]) => setting.contingency !== null && setting.contingency !== undefined);
   return {
     split: forSplit?.[1].split ?? null,
     splitSource: forSplit?.[0] ?? null,
     overhead: forOverhead?.[1].overhead ?? null,
     overheadSource: forOverhead?.[0] ?? null,
+    contingency: forContingency?.[1].contingency ?? 0,
+    contingencySource: forContingency?.[0] ?? null,
   };
 }
 
 export interface CapacitySplit {
-  engineeringDays: number | null;
+  engineeringDays: number | null; // after overhead
+  contingencyDays: number | null; // held back from engineering days, not split
   run: number | null;
   fix: number | null;
   sustain: number | null;
   change: number | null;
 }
 
-/** Steps 7–8: take overhead off, then split the engineering days. Null when there is no active allocation. */
+/**
+ * Steps 7–8: take overhead off, hold back the contingency, then split what is left.
+ * Null when there is no active allocation.
+ */
 export function splitCapacity(
   availableDays: number,
-  allocation: { overhead: number | null; split: Split | null },
+  allocation: { overhead: number | null; contingency?: number; split: Split | null },
 ): CapacitySplit {
   const { overhead, split } = allocation;
   if (overhead === null || split === null) {
-    return { engineeringDays: null, run: null, fix: null, sustain: null, change: null };
+    return { engineeringDays: null, contingencyDays: null, run: null, fix: null, sustain: null, change: null };
   }
   const engineeringDays = availableDays * (1 - overhead);
+  const contingencyDays = engineeringDays * (allocation.contingency ?? 0);
+  const plannable = engineeringDays - contingencyDays;
   return {
     engineeringDays,
-    run: engineeringDays * split.run,
-    fix: engineeringDays * split.fix,
-    sustain: engineeringDays * split.sustain,
-    change: engineeringDays * split.change,
+    contingencyDays,
+    run: plannable * split.run,
+    fix: plannable * split.fix,
+    sustain: plannable * split.sustain,
+    change: plannable * split.change,
   };
 }

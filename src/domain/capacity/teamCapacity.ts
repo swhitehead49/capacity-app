@@ -61,6 +61,7 @@ export interface TeamCapacity {
   holidayDeduction: number;
   calendarAvailableDays: number;
   engineeringDays: number | null;
+  contingencyDays: number | null;
   run: number | null;
   fix: number | null;
   sustain: number | null;
