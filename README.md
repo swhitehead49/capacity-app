@@ -22,6 +22,8 @@ npm run dev        # starts the app; open http://localhost:3000
 
 Stop it with Ctrl+C. Next time just run `npm run dev`. To get the latest changes: `git pull`, then `npm install`.
 
+To put a password-protected test copy online, see `docs/hosting.md`.
+
 See `docs/requirements.md` for what the app must do and `docs/architecture.md` for how it is organised.
 
 ## Public holidays

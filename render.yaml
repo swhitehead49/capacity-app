@@ -1,0 +1,22 @@
+# Render Blueprint: one free web service running the app (hosting decision, 8 Nov 2026).
+# The database is on Neon; its address goes in DATABASE_URL in the Render dashboard (never in this file).
+services:
+  - type: web
+    name: capacity-app
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    autoDeploy: true
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL # from Neon: Connection string, starts with postgresql://
+        sync: false
+      - key: APP_PASSWORD # the shared password people type to open the app
+        sync: false
+      - key: SEED_DEMO_DATA # fills an EMPTY database with the demo teams on first start
+        value: "true"

@@ -20,7 +20,7 @@ th { font-size: 13px; color: var(--muted); font-weight: 600; background: #f4f4f6
 .status-Provisional { color: var(--warn); }
 .empty { color: var(--muted); }
 a.edit { color: var(--accent); }
-form.picker { display: flex; gap: 12px; align-items: end; margin-top: 16px; }
+form.picker { display: flex; gap: 12px; align-items: flex-end; margin-top: 16px; }
 label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
 select, input, button { font: inherit; padding: 6px 10px; }
 button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; cursor: pointer; }
@@ -39,7 +39,7 @@ button.secondary { background: #fff; color: var(--accent); border: 1px solid var
 button.secondary.danger { color: #8a1f1f; border-color: #c98a8a; }
 button:disabled { opacity: 0.45; cursor: default; }
 table + table { margin-top: 32px; }
-form.upload { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: #fff; border: 1px solid var(--line); padding: 16px; border-radius: 8px; max-width: 720px; }
+form.upload { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #fff; border: 1px solid var(--line); padding: 16px; border-radius: 8px; max-width: 720px; }
 form.upload input[name=country] { width: 5em; }
 form.upload input[name=year] { width: 7em; }
 code { font-size: 13px; background: #f0f0f3; padding: 1px 4px; border-radius: 4px; }
@@ -54,6 +54,6 @@ td.left { text-align: left; white-space: normal; }
 table.narrow { max-width: 720px; margin-top: 16px; }
 .edit-form select[multiple] { padding: 4px; }
 .edit-form .grid { align-items: start; }
-.hint { font-size: 13px; align-self: end; }
-.toolbar { display: flex; gap: 24px; align-items: end; justify-content: space-between; margin: 16px 0; flex-wrap: wrap; }
+.hint { font-size: 13px; align-self: flex-end; }
+.toolbar { display: flex; gap: 24px; align-items: flex-end; justify-content: space-between; margin: 16px 0; flex-wrap: wrap; }
 form.picker.inline { margin-top: 0; }
