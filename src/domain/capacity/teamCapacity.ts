@@ -118,7 +118,7 @@ function memberCapacity(member: Member, input: TeamCapacityInput, forecastMonth:
 }
 
 /** FR-04: the first missing input, in the order the workbook checks them. */
-function checkInputs(member: Member): InputStatus {
+export function checkInputs(member: Pick<Member, "active" | "location" | "contractedHours" | "standardHours" | "teamAllocation">): InputStatus {
   if (!member.active) return "Inactive";
   if (!member.location) return "Missing location";
   if (member.contractedHours === null) return "Missing contracted hours";
