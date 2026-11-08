@@ -147,3 +147,11 @@ export const auditLog = pgTable("audit_log", {
   before: jsonb("before"),
   after: jsonb("after"),
 });
+
+/** FR-08: how sprints are generated. One row only. */
+export const timelineSettings = pgTable("timeline_settings", {
+  id: integer("id").primaryKey().default(1),
+  firstSprintStart: date("first_sprint_start").notNull(),
+  sprintLengthDays: integer("sprint_length_days").notNull(),
+  sprintPrefix: text("sprint_prefix").notNull(),
+}, (t) => [check("single_row", sql`${t.id} = 1`)]);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateQuarters, generateSprints, planningHorizon } from "./periods";
+import { generateQuarters, generateSprints, periodsNeeded, planningHorizon } from "./periods";
 
 // FR-08: generate sprints and quarters.
 // Team Planner horizon (agreed 8 Nov 2026): sprints from the current one to the end of next quarter;
@@ -46,5 +46,24 @@ describe("planningHorizon on 8 Nov 2026", () => {
   it("drops finished sprints", () => {
     const later = planningHorizon("2026-11-20", [...quarters, ...sprints]);
     expect(later.sprints[0]?.id).toBe("S002");
+  });
+});
+
+// Decision 8 Nov 2026: periods are created automatically, on demand, from the timeline settings.
+describe("periodsNeeded", () => {
+  const timeline = { firstSprintStart: "2026-10-26", sprintLengthDays: 14, sprintPrefix: "S" };
+
+  it("on 8 Nov 2026 covers S001–S012 and 2026-Q4 to 2027-Q4", () => {
+    const needed = periodsNeeded("2026-11-08", timeline);
+    expect(needed.filter((p) => p.type === "Sprint").map((p) => p.id).at(-1)).toBe("S012");
+    expect(needed.filter((p) => p.type === "Quarter").map((p) => p.id))
+      .toEqual(["2026-Q4", "2027-Q1", "2027-Q2", "2027-Q3", "2027-Q4"]);
+  });
+
+  it("grows as time passes, and sprint numbers never change", () => {
+    const later = periodsNeeded("2027-06-01", timeline);
+    expect(later.find((p) => p.id === "S001")).toMatchObject({ start: "2026-10-26" });
+    expect(later.filter((p) => p.type === "Sprint").at(-1)?.start <= "2027-09-30").toBe(true);
+    expect(later.filter((p) => p.type === "Quarter").at(-1)?.id).toBe("2028-Q4");
   });
 });
