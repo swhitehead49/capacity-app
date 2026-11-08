@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "tests/e2e",
+  workers: 1, // tests share one seeded database, so run them one at a time
   use: { baseURL: "http://localhost:3100", trace: "off" },
   webServer: {
     // Fresh database with demo data, then start the app with a fixed "today".
