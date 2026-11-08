@@ -63,7 +63,7 @@ describe("periodsNeeded", () => {
   it("grows as time passes, and sprint numbers never change", () => {
     const later = periodsNeeded("2027-06-01", timeline);
     expect(later.find((p) => p.id === "S001")).toMatchObject({ start: "2026-10-26" });
-    expect(later.filter((p) => p.type === "Sprint").at(-1)?.start <= "2027-09-30").toBe(true);
+    expect(later.filter((p) => p.type === "Sprint").at(-1)?.start ?? "").toBe("2027-09-27"); // last sprint starting by 30 Sep 2027
     expect(later.filter((p) => p.type === "Quarter").at(-1)?.id).toBe("2028-Q4");
   });
 });

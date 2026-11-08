@@ -79,7 +79,7 @@ Overhead follows the same order. If an override leaves overhead blank, the next 
 | UC08 | Approve a people change | **Deferred** (not needed with one actor) |
 | UC09 | Record an absence | One record per absence: dates, type, day fraction and status |
 | UC10 | Maintain calendars and assumptions | Location standard hours, holidays and monthly availability forecast |
-| UC11 | Extend the planning horizon | Generate the next sprints and quarters |
+| UC11 | Extend the planning horizon (automatic) | Whenever the planner opens, any missing sprints and quarters in its window are created from the timeline settings (first sprint start, length, prefix). Existing periods are never changed (decided 8 Nov 2026) |
 | UC12 | Work through data-quality issues | Set an issue to Open, Resolved or Accepted. Counts are shown by severity |
 | UC13 | Review portfolio readiness | For each team: headcount, completeness, FTE, shared resources, default status and readiness, plus an org roll-up |
 | UC14 | Load and reconcile org data | Import teams and people, flag ambiguous teams, map legacy members |
@@ -162,6 +162,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | Team IDs | The Capacity Admin confirms provisional IDs and ambiguous teams with group leads before go-live. |
 | Planning unit | Person-days. |
 | Merges and splits | Done by hand, plus a successor-team link. |
+| New sprints and quarters | Created automatically, on demand, from the timeline settings. |
 
 **Parked until roles are added:** which roles come first, and whether adding or retiring a team needs a Group Lead's approval.
 

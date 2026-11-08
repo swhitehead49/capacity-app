@@ -39,13 +39,53 @@ export function generateQuarters(options: { from: IsoDate; count: number }): Pla
  * quarters from the current one to the end of next calendar year.
  */
 export function planningHorizon(today: IsoDate, periods: PlanningPeriod[]) {
-  const sprintLimit = addDays(addMonths(quarterStart(today), 6), -1);
-  const quarterLimit = `${Number(today.slice(0, 4)) + 1}-12-31`;
+  const { sprintLimit, quarterLimit } = horizonLimits(today);
   const inHorizon = (type: PlanningPeriod["type"], limit: IsoDate) =>
     periods
       .filter((p) => p.type === type && p.end >= today && p.start <= limit)
       .sort((a, b) => a.start.localeCompare(b.start));
   return { sprints: inHorizon("Sprint", sprintLimit), quarters: inHorizon("Quarter", quarterLimit) };
+}
+
+export interface TimelineSettings {
+  firstSprintStart: IsoDate;
+  sprintLengthDays: number;
+  sprintPrefix: string;
+}
+
+/**
+ * Every sprint and quarter that must exist for the planner on `today` (decision 8 Nov 2026:
+ * created automatically, on demand). Numbering always starts from the first sprint, so it never changes.
+ */
+export function periodsNeeded(today: IsoDate, timeline: TimelineSettings): PlanningPeriod[] {
+  const { sprintLimit, quarterLimit } = horizonLimits(today);
+  const sprintCount = Math.floor(daysBetween(timeline.firstSprintStart, sprintLimit) / timeline.sprintLengthDays) + 1;
+  const sprints = generateSprints({
+    firstStart: timeline.firstSprintStart,
+    lengthDays: timeline.sprintLengthDays,
+    count: Math.max(0, sprintCount),
+    prefix: timeline.sprintPrefix,
+  });
+  const firstQuarter = quarterStart(timeline.firstSprintStart);
+  const quarterCount = monthsBetween(firstQuarter, quarterLimit) / 3 + 1;
+  const quarters = generateQuarters({ from: firstQuarter, count: Math.floor(quarterCount) });
+  return [...quarters, ...sprints];
+}
+
+function horizonLimits(today: IsoDate) {
+  return {
+    sprintLimit: addDays(addMonths(quarterStart(today), 6), -1), // end of next quarter
+    quarterLimit: `${Number(today.slice(0, 4)) + 1}-12-31`, // end of next calendar year
+  };
+}
+
+function daysBetween(from: IsoDate, to: IsoDate): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}
+
+function monthsBetween(from: IsoDate, to: IsoDate): number {
+  const months = (date: IsoDate) => Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7)) - 1;
+  return months(to) - months(from);
 }
 
 export function quarterId(date: IsoDate): string {
