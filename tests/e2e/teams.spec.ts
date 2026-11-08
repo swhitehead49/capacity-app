@@ -63,3 +63,25 @@ test("retire an empty team and name its successor", async ({ page }) => {
   await page.goto("/teams");
   await expect(page.getByRole("row", { name: /T002/ })).toContainText("Retiring 31 Dec 2026");
 });
+
+test("move a team to another value stream", async ({ page }) => {
+  await page.goto("/teams/T001/manage");
+  const form = page.getByRole("form", { name: "Value stream" });
+  await form.getByLabel("Value stream").fill("Clinical");
+  await form.getByRole("button", { name: "Change value stream" }).click();
+  await expect(page.getByText("T001 · Clinical")).toBeVisible();
+});
+
+test("filter the Teams list to one value stream", async ({ page }) => {
+  await page.goto("/teams");
+  await page.getByLabel("Show value stream").selectOption("Platform");
+  await page.getByRole("button", { name: "Show" }).click();
+  const table = page.getByRole("table", { name: "All teams" });
+  await expect(table.getByRole("row", { name: /T100/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /T017/ })).toHaveCount(0);
+});
+
+test("the home page groups teams by value stream", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('optgroup[label="Clinical"] option')).toHaveText(["T001 | Example Team A"]);
+});
