@@ -28,10 +28,19 @@ export function countWeekdays(range: DateRange | null): number {
   if (!range) return 0;
   let count = 0;
   for (let day = toUtc(range.start); day <= toUtc(range.end); day.setUTCDate(day.getUTCDate() + 1)) {
-    const weekday = day.getUTCDay(); // 0 = Sunday, 6 = Saturday
-    if (weekday !== 0 && weekday !== 6) count++;
+    if (isWeekdayDate(day)) count++;
   }
   return count;
+}
+
+/** True for Monday to Friday. */
+export function isWeekday(date: IsoDate): boolean {
+  return isWeekdayDate(toUtc(date));
+}
+
+function isWeekdayDate(day: Date): boolean {
+  const weekday = day.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  return weekday !== 0 && weekday !== 6;
 }
 
 function later(date: IsoDate, limit?: IsoDate | null): IsoDate {
