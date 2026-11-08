@@ -107,13 +107,42 @@ export async function retireTeam(
   return { ok: true, id: team.id, warnings: [] };
 }
 
-/** FR-19: every team, its status today and how many people are on it now. */
-export async function listTeamsOverview(db: Db, today: string) {
+/** FR-01: move a team to another value stream (the level just above it). Blank = none. */
+export async function changeValueStream(db: Db, actor: string, request: { teamId: string; valueStream: string }): Promise<TeamResult> {
+  const team = await db.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
+  if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
+  const valueStream = request.valueStream.trim() || null;
+  if (sameName(valueStream ?? "", team.valueStream ?? "")) {
+    return { ok: false, errors: [`${team.id} is already in ${team.valueStream ?? "no value stream"}`] };
+  }
+  const clash = nameClashes(team.name, valueStream, (await liveTeams(db)).filter((o) => o.id !== team.id));
+  if (clash.errors.length) return { ok: false, errors: clash.errors };
+
+  await db.transaction(async (tx) => {
+    await tx.update(t.teams).set({ valueStream }).where(eq(t.teams.id, team.id));
+    await tx.insert(t.auditLog).values({
+      actor, entity: "teams", entityId: team.id, action: "change value stream",
+      before: { valueStream: team.valueStream }, after: { valueStream },
+    });
+  });
+  return { ok: true, id: team.id, warnings: clash.warnings };
+}
+
+/** The value streams teams are in today, for filters and suggestions. */
+export async function listValueStreams(db: Db): Promise<string[]> {
+  const rows = await db.selectDistinct({ v: t.teams.valueStream }).from(t.teams).orderBy(asc(t.teams.valueStream));
+  return rows.flatMap((r) => (r.v ? [r.v] : []));
+}
+
+/** FR-19: every team, its status today and how many people are on it now. Optionally one value stream only. */
+export async function listTeamsOverview(db: Db, today: string, filter: { valueStream?: string } = {}) {
   const a = t.assignments;
   const counts = await db.select({ teamId: a.teamId, n: sql<number>`count(*)::int` }).from(a)
     .where(and(or(isNull(a.startDate), lte(a.startDate, today)), or(isNull(a.endDate), sql`${a.endDate} >= ${today}`)))
     .groupBy(a.teamId);
-  const teams = await db.select().from(t.teams).orderBy(asc(t.teams.id));
+  const teams = await db.select().from(t.teams)
+    .where(filter.valueStream ? eq(t.teams.valueStream, filter.valueStream) : undefined)
+    .orderBy(asc(t.teams.id));
   return teams.map((team) => ({
     ...team,
     status: teamStatus(team.retiredOn, today),
