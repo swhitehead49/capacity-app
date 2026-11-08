@@ -69,7 +69,7 @@ Overhead follows the same order. If an override leaves overhead blank, the next 
 
 | ID | Use case | Outcome |
 | --- | --- | --- |
-| UC01 | View team capacity for a period | Headcount, allocated FTE, scheduled days, calendar-available days, engineering days and the R/F/S/C split, with a status for each member |
+| UC01 | Team Planner: view a team's capacity plan | Pick a team, then see one row per sprint (current sprint to the end of next quarter) and per quarter (current quarter to the end of next calendar year). Each row shows FTE, available days, engineering days, R/F/S/C, where the allocation came from and a status, with an Edit button that opens that period's override (agreed 8 Nov 2026) |
 | UC02 | Choose availability mode | Recalculated using Auto, Explicit only or Forecast only |
 | UC03 | Set a team's default allocation | Effective-from date, overhead %, and R/F/S/C % totalling 100%. Status is Draft, Active or Retired |
 | UC04 | Create a quarter or sprint override | A dated exception (R/F/S/C, optional overhead %) with a reason and status |
