@@ -61,7 +61,7 @@ export default async function HolidaysPage({ searchParams }: { searchParams: Pro
           {loaded.length === 0 && <tr><td colSpan={5} className="empty">No calendars loaded yet.</td></tr>}
           {loaded.map((c) => (
             <tr key={`${c.country}-${c.year}`}>
-              <td>{c.country} {c.year}</td>
+              <td>{c.country} {c.year} <a className="edit" href={`/holidays/${c.country}/${c.year}`}>View</a></td>
               <td>{c.source}</td>
               <td>{c.holidays}</td>
               <td>{dateTime.format(c.loadedAt)}</td>
