@@ -23,7 +23,7 @@ export const teamNameHistory = pgTable("team_name_history", {
   id: serial("id").primaryKey(),
   teamId: text("team_id").notNull().references(() => teams.id),
   name: text("name").notNull(),
-  effectiveFrom: date("effective_from").notNull(),
+  effectiveFrom: date("effective_from"), // null = the team's name from the start
 });
 
 /** BR-23: which team(s) replaced a retired team. */

@@ -1,0 +1,1 @@
+ALTER TABLE "team_name_history" ALTER COLUMN "effective_from" DROP NOT NULL;

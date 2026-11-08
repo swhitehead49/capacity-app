@@ -15,6 +15,13 @@
       "when": 1794135254523,
       "tag": "0001_timeline_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794140573025,
+      "tag": "0002_team_name_from_start",
+      "breakpoints": true
     }
   ]
 }
