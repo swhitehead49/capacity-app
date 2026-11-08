@@ -8,7 +8,7 @@ export default defineConfig({
     // Fresh database with demo data, then start the app with a fixed "today".
     command: "npm run seed && npx next dev -p 3100",
     url: "http://localhost:3100",
-    env: { DATA_DIR: "./data/e2e", APP_TODAY: "2026-11-08" },
+    env: { DATA_DIR: "./data/e2e", OPENHOLIDAYS_FIXTURE_DIR: "tests/fixtures/openholidays", APP_TODAY: "2026-11-08" },
     reuseExistingServer: false,
     timeout: 120_000,
   },
