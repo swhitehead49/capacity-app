@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { seedDrgw } from "../infrastructure/db/fixtures";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { addTeam, listTeamsOverview, renameTeam, retireTeam, getTeamDetails } from "./teams";
+import { addTeam, changeValueStream, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
 import { endMember } from "./teamMembers";
 
 // UC15 add, UC16 rename, UC17 retire a team (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted.
@@ -131,5 +131,41 @@ describe("listTeamsOverview", () => {
     await retireTeam(db, actor, { teamId: "T002", retiredOn: "2026-12-31", successorTeamIds: [] });
     const teams = await listTeamsOverview(db, today);
     expect(teams.find((x) => x.id === "T002")?.status).toBe("Retiring 31 Dec 2026");
+  });
+});
+
+describe("value streams (FR-01, decision 8 Nov 2026: the value stream is the level just above a team)", () => {
+  it("moves a team to another value stream and logs it", async () => {
+    expect(await changeValueStream(db, actor, { teamId: "T017", valueStream: " Diagnostics " })).toEqual({ ok: true, id: "T017", warnings: [] });
+    expect((await team("T017"))?.valueStream).toBe("Diagnostics");
+    expect((await audit())[0]).toMatchObject({
+      entity: "teams", action: "change value stream", before: { valueStream: null }, after: { valueStream: "Diagnostics" },
+    });
+  });
+
+  it("refuses a move that would clash with a team of the same name there (BR-16)", async () => {
+    await addTeam(db, actor, { id: "T100", name: "DRGW", valueStream: "Diagnostics", leadEmail: null, effectiveFrom: today });
+    expect(await changeValueStream(db, actor, { teamId: "T017", valueStream: "Diagnostics" }))
+      .toEqual({ ok: false, errors: ['"DRGW" is already a team in Diagnostics'] });
+  });
+
+  it("refuses the value stream the team is already in", async () => {
+    expect(await changeValueStream(db, actor, { teamId: "T001", valueStream: "platform" }))
+      .toEqual({ ok: false, errors: ["T001 is already in Platform"] });
+  });
+
+  it("blank means no value stream", async () => {
+    await changeValueStream(db, actor, { teamId: "T001", valueStream: "" });
+    expect((await team("T001"))?.valueStream).toBeNull();
+  });
+
+  it("lists the value streams in use, for the filter", async () => {
+    await changeValueStream(db, actor, { teamId: "T017", valueStream: "Diagnostics" });
+    expect(await listValueStreams(db)).toEqual(["Diagnostics", "Platform"]);
+  });
+
+  it("the Teams list can be filtered to one value stream", async () => {
+    const teams = await listTeamsOverview(db, today, { valueStream: "Platform" });
+    expect(teams.map((x) => x.id)).toEqual(["T001", "T002"]);
   });
 });
