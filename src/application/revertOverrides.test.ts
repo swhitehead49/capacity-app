@@ -70,7 +70,7 @@ describe("getOverride shows the team default for reference", () => {
   it("includes the default in force for the period", async () => {
     const view = await getOverride(db, { teamId: "T017", periodId: "S001" });
     expect(view.teamDefault).toEqual({
-      effectiveFrom: "2026-01-01", overhead: 0.2, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3 },
+      effectiveFrom: "2026-01-01", overhead: 0.2, contingency: null, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3 },
     });
   });
 });

@@ -50,6 +50,7 @@ export async function saveTeamDefault(db: Db, actor: string, request: SaveTeamDe
       effectiveFrom: request.effectiveFrom,
       status: request.status,
       overhead: request.overhead,
+      contingency: request.contingency ?? null,
       ...request.split,
       reason: request.reason,
       owner: actor,

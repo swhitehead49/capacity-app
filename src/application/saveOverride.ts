@@ -29,6 +29,7 @@ export async function saveOverride(db: Db, actor: string, request: SaveOverrideR
   const values = {
     status: request.status,
     overhead: request.overhead,
+    contingency: request.contingency ?? null,
     ...request.split,
     reason: request.reason,
     owner: actor,
@@ -71,6 +72,7 @@ export async function getOverride(db: Db, query: { teamId: string; periodId: str
       ? {
           status: row.status,
           overhead: row.overhead,
+          contingency: row.contingency,
           split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change },
           reason: row.reason ?? "",
         }
@@ -80,6 +82,7 @@ export async function getOverride(db: Db, query: { teamId: string; periodId: str
       ? {
           effectiveFrom: teamDefault.effectiveFrom,
           overhead: teamDefault.overhead,
+          contingency: teamDefault.contingency,
           split: { run: teamDefault.run, fix: teamDefault.fix, sustain: teamDefault.sustain, change: teamDefault.change },
         }
       : null,

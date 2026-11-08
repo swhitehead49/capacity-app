@@ -116,6 +116,7 @@ export const allocationSettings = pgTable("allocation_settings", {
   effectiveFrom: date("effective_from"), // team defaults only
   status: text("status", { enum: ["Draft", "Active", "Retired"] }).notNull().default("Draft"),
   overhead: numeric("overhead", { mode: "number" }),
+  contingency: numeric("contingency", { mode: "number" }), // null = inherit (override) or 0% (default)
   run: numeric("run", { mode: "number" }).notNull(),
   fix: numeric("fix", { mode: "number" }).notNull(),
   sustain: numeric("sustain", { mode: "number" }).notNull(),

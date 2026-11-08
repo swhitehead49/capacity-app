@@ -1,0 +1,1 @@
+ALTER TABLE "allocation_settings" ADD COLUMN "contingency" numeric;

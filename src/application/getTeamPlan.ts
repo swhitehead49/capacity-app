@@ -15,6 +15,7 @@ export interface PlanRow {
   allocatedFte: number;
   calendarAvailableDays: number;
   engineeringDays: number | null;
+  contingencyDays: number | null;
   run: number | null;
   fix: number | null;
   sustain: number | null;
@@ -47,6 +48,7 @@ export async function getTeamPlan(db: Db, query: { teamId: string; today: string
       allocatedFte: result.allocatedFte,
       calendarAvailableDays: result.calendarAvailableDays,
       engineeringDays: result.engineeringDays,
+      contingencyDays: result.contingencyDays,
       run: result.run,
       fix: result.fix,
       sustain: result.sustain,
