@@ -9,7 +9,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <header className="topbar">
           <a href="/">Capacity App</a>
-          <nav><a href="/">Teams</a><a href="/holidays">Holidays</a></nav>
+          <nav><a href="/teams">Teams</a><a href="/holidays">Holidays</a></nav>
         </header>
         <main>{children}</main>
       </body>

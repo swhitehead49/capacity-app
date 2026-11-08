@@ -24,7 +24,7 @@ export default async function Home() {
           <select name="team" required defaultValue="">
             <option value="" disabled>Select a team…</option>
             {teams.map((team) => (
-              <option key={team.id} value={team.id}>{`${team.id} | ${team.name}`}</option>
+              <option key={team.id} value={team.id}>{`${team.id} | ${team.name}${team.retiredOn ? " (retired)" : ""}`}</option>
             ))}
           </select>
         </label>

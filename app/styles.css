@@ -51,3 +51,5 @@ table.members td, table.members th { text-align: left; }
 .edit-form p { margin: 0; }
 td.left { text-align: left; white-space: normal; }
 .edit-form + table { margin-top: 32px; }
+table.narrow { max-width: 720px; margin-top: 16px; }
+.edit-form select[multiple] { padding: 4px; }
