@@ -1,7 +1,7 @@
 import { and, desc, eq, ne } from "drizzle-orm";
 import { validateOverride, type OverrideDraft } from "../domain/capacity/overrideRules";
 import * as t from "../infrastructure/db/schema";
-import { loadTeamCapacityInput } from "../infrastructure/db/teamCapacityRepository";
+import { findTeamDefault, loadTeamCapacityInput } from "../infrastructure/db/teamCapacityRepository";
 import type { Db } from "../infrastructure/db/testDb";
 import type { SaveResult } from "./saveTeamDefault";
 
@@ -63,6 +63,7 @@ export async function getOverride(db: Db, query: { teamId: string; periodId: str
   const level = levelFor(period.type);
   const row = await findOverride(db, query.teamId, query.periodId, level);
   const input = await loadTeamCapacityInput(db, { teamId: query.teamId, periodId: query.periodId, mode: "Auto" });
+  const teamDefault = await findTeamDefault(db, query.teamId, period.startDate);
   return {
     period: { id: period.id, type: period.type, start: period.startDate, end: period.endDate },
     level,
@@ -75,6 +76,13 @@ export async function getOverride(db: Db, query: { teamId: string; periodId: str
         }
       : null,
     currentlyApplied: input.allocation,
+    teamDefault: teamDefault
+      ? {
+          effectiveFrom: teamDefault.effectiveFrom,
+          overhead: teamDefault.overhead,
+          split: { run: teamDefault.run, fix: teamDefault.fix, sustain: teamDefault.sustain, change: teamDefault.change },
+        }
+      : null,
   };
 }
 
@@ -82,7 +90,7 @@ function levelFor(type: "Sprint" | "Quarter"): Level {
   return type === "Sprint" ? "Sprint override" : "Quarter override";
 }
 
-async function findOverride(db: Db, teamId: string, periodId: string, level: Level) {
+export async function findOverride(db: Db, teamId: string, periodId: string, level: Level) {
   const s = t.allocationSettings;
   const [row] = await db.select().from(s)
     .where(and(eq(s.teamId, teamId), eq(s.periodId, periodId), eq(s.level, level), ne(s.status, "Retired")))

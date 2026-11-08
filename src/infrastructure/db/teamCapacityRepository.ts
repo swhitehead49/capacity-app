@@ -82,11 +82,7 @@ async function loadAllocation(
   const settings = t.allocationSettings;
   const active = eq(settings.status, "Active");
 
-  // The team default in force at the start of the period: the latest Active one already effective.
-  const [teamDefault] = await db.select().from(settings)
-    .where(and(eq(settings.teamId, teamId), eq(settings.level, "Team default"), active, lte(settings.effectiveFrom, period.startDate)))
-    .orderBy(desc(settings.effectiveFrom))
-    .limit(1);
+  const teamDefault = await findTeamDefault(db, teamId, period.startDate);
   const [quarter] = quarterId
     ? await db.select().from(settings)
         .where(and(eq(settings.teamId, teamId), eq(settings.level, "Quarter override"), eq(settings.periodId, quarterId), active))
@@ -99,6 +95,19 @@ async function loadAllocation(
     : [];
 
   return resolveAllocation({ teamDefault: toSetting(teamDefault), quarter: toSetting(quarter), sprint: toSetting(sprint) });
+}
+
+/** The team default in force on a date: the latest Active one already effective. */
+export async function findTeamDefault(db: Db, teamId: string, date: string) {
+  const settings = t.allocationSettings;
+  const [row] = await db.select().from(settings)
+    .where(and(
+      eq(settings.teamId, teamId), eq(settings.level, "Team default"),
+      eq(settings.status, "Active"), lte(settings.effectiveFrom, date),
+    ))
+    .orderBy(desc(settings.effectiveFrom))
+    .limit(1);
+  return row;
 }
 
 function toSetting(row?: typeof t.allocationSettings.$inferSelect): AllocationSetting | undefined {
