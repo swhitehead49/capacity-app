@@ -43,3 +43,9 @@ form.upload { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; backg
 form.upload input[name=country] { width: 5em; }
 form.upload input[name=year] { width: 7em; }
 code { font-size: 13px; background: #f0f0f3; padding: 1px 4px; border-radius: 4px; }
+a.button { display: inline-block; background: var(--accent); color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; }
+label.check { display: flex; gap: 8px; align-items: center; font-size: 15px; color: var(--fg); }
+.edit-form label.check input { width: auto; }
+table.members td, table.members th { text-align: left; }
+.edit-form h2 { margin: 8px 0 0; font-size: 15px; }
+.edit-form p { margin: 0; }

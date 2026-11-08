@@ -16,7 +16,7 @@ export default async function TeamPlanner({ params }: { params: Promise<{ teamId
   return (
     <>
       <h1>{plan.team.name}</h1>
-      <p className="muted">{plan.team.id} · person-days, as of {formatDate(today())}</p>
+      <p className="muted">{plan.team.id} · person-days, as of {formatDate(today())} · <a href={`/teams/${plan.team.id}/members`}>Team members</a></p>
       <PlanTable caption="Sprints" rows={plan.sprints} teamId={plan.team.id} />
       <PlanTable caption="Quarters" rows={plan.quarters} teamId={plan.team.id} />
     </>
