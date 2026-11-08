@@ -1,6 +1,6 @@
 import { listHolidayCalendars } from "../../src/application/loadHolidayCalendar";
 import { getDb, today } from "../../src/infrastructure/db/appDb";
-import { loadCalendarAction } from "./actions";
+import { loadCalendarAction, uploadCsvAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,7 @@ function LoadButton({ country, year, label }: { country: string; year: number; l
 export default async function HolidaysPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const { loaded, missing } = await listHolidayCalendars(await getDb(), today());
+  const nextUpload = missing.find((m) => m.how === "CSV upload");
 
   return (
     <>
@@ -33,7 +34,9 @@ export default async function HolidaysPage({ searchParams }: { searchParams: Pro
         <p role="status" className="notice">Loaded {params.count} public holidays for {params.loaded}.</p>
       )}
       {params.error && (
-        <div role="alert" aria-label="Problems loading" className="errors"><p>{params.error}</p></div>
+        <div role="alert" aria-label="Problems loading" className="errors">
+          {params.error.split("\n").map((line) => <p key={line}>{line}</p>)}
+        </div>
       )}
 
       <table>
@@ -45,7 +48,7 @@ export default async function HolidaysPage({ searchParams }: { searchParams: Pro
             <tr key={`${m.country}-${m.year}`}>
               <td>{m.country} {m.year}</td>
               <td>{m.how}</td>
-              <td>{m.how === "OpenHolidays" ? <LoadButton country={m.country} year={m.year} label="Load" /> : <span className="muted">Upload not built yet</span>}</td>
+              <td>{m.how === "OpenHolidays" ? <LoadButton country={m.country} year={m.year} label="Load" /> : <span className="muted">Upload below</span>}</td>
             </tr>
           ))}
         </tbody>
@@ -62,11 +65,25 @@ export default async function HolidaysPage({ searchParams }: { searchParams: Pro
               <td>{c.source}</td>
               <td>{c.holidays}</td>
               <td>{dateTime.format(c.loadedAt)}</td>
-              <td><LoadButton country={c.country} year={c.year} label="Reload" /></td>
+              <td>{c.source === "CSV upload" ? <span className="muted">Upload again below</span> : <LoadButton country={c.country} year={c.year} label="Reload" />}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <h2>Upload a company holiday list</h2>
+      <p className="muted">
+        For countries OpenHolidays doesn&apos;t cover, such as India. Save the list from Excel as CSV with the headings
+        {" "}<code>date,name</code>, plus an optional <code>regions</code> column (for example <code>IN-KA</code>; separate several
+        with <code>;</code>, leave blank for the whole country). Dates can be 2027-01-26 or 26/01/2027.
+        Uploading a year again replaces it.
+      </p>
+      <form action={uploadCsvAction} aria-label="Upload a holiday list" className="upload">
+        <label>Country<input name="country" defaultValue={nextUpload?.country ?? "IN"} maxLength={2} required /></label>
+        <label>Year<input name="year" type="number" defaultValue={nextUpload?.year ?? Number(today().slice(0, 4))} required /></label>
+        <label>CSV file<input name="file" type="file" accept=".csv,text/csv" required /></label>
+        <button type="submit">Upload</button>
+      </form>
     </>
   );
 }
