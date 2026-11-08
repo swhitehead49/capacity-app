@@ -15,6 +15,8 @@ await db.insert(t.teams).values([
   { id: "T001", name: "Example Team A" },
   { id: "T002", name: "Example Team B" },
 ]);
+// An India office (no people yet), so the Holidays page shows the CSV upload calendars.
+await db.insert(t.locations).values({ code: "IN-KA", country: "IN", name: "Bangalore", standardHours: 40 });
 const added = await ensurePeriods(db, today());
 console.log(`Seeded demo data; created ${added} planning periods.`);
 process.exit(0);
