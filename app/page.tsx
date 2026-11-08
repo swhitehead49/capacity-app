@@ -23,8 +23,12 @@ export default async function Home() {
           Team
           <select name="team" required defaultValue="">
             <option value="" disabled>Select a team…</option>
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>{`${team.id} | ${team.name}${team.retiredOn ? " (retired)" : ""}`}</option>
+            {groupByValueStream(teams).map(([stream, group]) => (
+              <optgroup key={stream} label={stream}>
+                {group.map((team) => (
+                  <option key={team.id} value={team.id}>{`${team.id} | ${team.name}${team.retiredOn ? " (retired)" : ""}`}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
@@ -32,4 +36,15 @@ export default async function Home() {
       </form>
     </>
   );
+}
+
+/** Teams grouped under their value stream (A–Z), with teams that have none last. */
+function groupByValueStream<T extends { valueStream: string | null }>(teams: T[]): [string, T[]][] {
+  const groups = new Map<string, T[]>();
+  for (const team of teams) {
+    const key = team.valueStream ?? "No value stream";
+    groups.set(key, [...(groups.get(key) ?? []), team]);
+  }
+  return [...groups.entries()].sort(([a], [b]) =>
+    a === "No value stream" ? 1 : b === "No value stream" ? -1 : a.localeCompare(b));
 }

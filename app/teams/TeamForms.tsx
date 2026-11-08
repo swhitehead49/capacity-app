@@ -1,18 +1,19 @@
 "use client";
 
 import { ActionForm } from "../lib/ActionForm";
-import { addTeamAction, renameTeamAction, retireTeamAction } from "./actions";
+import { addTeamAction, changeValueStreamAction, renameTeamAction, retireTeamAction } from "./actions";
 
 export interface Option { value: string; label: string }
 
-export function AddTeamForm({ today }: { today: string }) {
+export function AddTeamForm({ today, valueStreams }: { today: string; valueStreams: string[] }) {
   return (
     <ActionForm action={addTeamAction} hidden={{}} values={{ effectiveFrom: today }} submitLabel="Add team" label="Add team">
       {(v) => (
         <div className="grid">
           <label>Team ID<input name="id" defaultValue={v.id} placeholder="e.g. T074" /></label>
           <label>Name<input name="name" defaultValue={v.name} /></label>
-          <label>Value stream<input name="valueStream" defaultValue={v.valueStream} /></label>
+          <label>Value stream<input name="valueStream" list="value-streams" defaultValue={v.valueStream} /></label>
+          <ValueStreamList valueStreams={valueStreams} />
           <label>Lead email<input name="leadEmail" defaultValue={v.leadEmail} /></label>
           <label>Start date<input name="effectiveFrom" type="date" defaultValue={v.effectiveFrom} /></label>
         </div>
@@ -46,6 +47,24 @@ export function RetireForm({ teamId, teams }: { teamId: string; teams: Option[] 
             </select>
           </label>
           <p className="muted hint">Pick the team(s) that take over its work. Ctrl/Cmd-click to pick several.</p>
+        </div>
+      )}
+    </ActionForm>
+  );
+}
+
+/** Suggests existing value streams while still allowing a new one to be typed. */
+function ValueStreamList({ valueStreams }: { valueStreams: string[] }) {
+  return <datalist id="value-streams">{valueStreams.map((v) => <option key={v} value={v} />)}</datalist>;
+}
+
+export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: string; current: string; valueStreams: string[] }) {
+  return (
+    <ActionForm action={changeValueStreamAction} hidden={{ teamId }} values={{ valueStream: current }} submitLabel="Change value stream" label="Value stream">
+      {(v) => (
+        <div className="grid">
+          <label>Value stream<input name="valueStream" list="value-streams" defaultValue={v.valueStream} /></label>
+          <ValueStreamList valueStreams={valueStreams} />
         </div>
       )}
     </ActionForm>

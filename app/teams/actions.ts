@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { addTeam, renameTeam, retireTeam } from "../../src/application/teams";
+import { addTeam, changeValueStream, renameTeam, retireTeam } from "../../src/application/teams";
 import { getDb } from "../../src/infrastructure/db/appDb";
 import { failed, type FormState } from "../lib/formState";
 
@@ -31,6 +31,14 @@ export async function retireTeamAction(previous: FormState, form: FormData): Pro
   const result = await retireTeam(await getDb(), ACTOR, {
     teamId, retiredOn: read(form, "retiredOn"), successorTeamIds: form.getAll("successors").map(String),
   });
+  if (!result.ok) return failed(previous, form, result.errors);
+  redirect(`/teams/${teamId}/manage`);
+}
+
+/** FR-01: move the team to another value stream. */
+export async function changeValueStreamAction(previous: FormState, form: FormData): Promise<FormState> {
+  const teamId = read(form, "teamId");
+  const result = await changeValueStream(await getDb(), ACTOR, { teamId, valueStream: read(form, "valueStream") });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(`/teams/${teamId}/manage`);
 }

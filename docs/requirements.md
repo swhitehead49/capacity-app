@@ -93,7 +93,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 
 | ID | Area | Requirement |
 | --- | --- | --- |
-| FR-01 | Organisation | Team hierarchy: team → parent → grandparent → top-level group, each level with a lead email. Teams get provisional IDs (e.g. T017) until confirmed. |
+| FR-01 | Organisation | Team hierarchy: team → value stream (the parent level) → grandparent → top-level group, each level with a lead email. Teams get provisional IDs (e.g. T017) until confirmed. |
 | FR-02 | Organisation | Teams with the same name under different parents stay separate and are flagged, never merged. |
 | FR-03 | People | Store email, team, role, location, contracted hours, team allocation %, shared-resource flag, employment start and end, and an active flag. |
 | FR-04 | People | Input status: Complete, Missing location, Missing contracted hours, Missing standard hours, Missing team allocation or Inactive. Incomplete people are left out of the capacity figures. |
@@ -133,7 +133,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | BR-13 | Sprint IDs are prefix + number (S001). Quarter IDs are year + quarter (2026-Q4). All teams share one sprint calendar. |
 | BR-14 | People changes apply immediately and are logged. |
 | BR-15 | Team IDs are permanent and never reused. Everything links by ID, never by name. |
-| BR-16 | Team names are unique under the same parent. The same name under a different parent is allowed but flagged. |
+| BR-16 | Team names are unique within the same value stream. The same name in a different value stream is allowed but flagged. |
 | BR-17 | A new team starts with a Draft default and shows calendar capacity only. |
 | BR-18 | A team cannot be retired while anyone is assigned to it after the end date. |
 | BR-19 | Retiring a team retires its default and any overrides after the end date. Past data stays reportable. |
@@ -161,6 +161,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | Holidays | OpenHolidays API for DE/FR/AT/BE. India via a yearly company CSV upload. |
 | Team IDs | The Capacity Admin confirms provisional IDs and ambiguous teams with group leads before go-live. |
 | Planning unit | Person-days. |
+| Value streams | The value stream is the org level just above a team (the former "parent group"). A team is in at most one value stream; changes are logged (decided 8 Nov 2026). |
 | Merges and splits | Done by hand, plus a successor-team link. |
 | New sprints and quarters | Created automatically, on demand, from the timeline settings. |
 

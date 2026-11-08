@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listTeams } from "../../../../src/application/lookups";
-import { getTeamDetails } from "../../../../src/application/teams";
+import { getTeamDetails, listValueStreams } from "../../../../src/application/teams";
 import { getDb, today } from "../../../../src/infrastructure/db/appDb";
 import { formatDate } from "../../../lib/format";
-import { RenameForm, RetireForm } from "../../TeamForms";
+import { RenameForm, RetireForm, ValueStreamForm } from "../../TeamForms";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +43,10 @@ export default async function ManageTeam({ params }: { params: Promise<{ teamId:
           {names.map((n, i) => <tr key={i}><td>{n.name}</td><td>{n.effectiveFrom ? formatDate(n.effectiveFrom) : "the start"}</td></tr>)}
         </tbody>
       </table>
+
+      <h2>Value stream</h2>
+      <p className="muted">The value stream this team belongs to. Its name must be unique within the value stream.</p>
+      <ValueStreamForm teamId={team.id} current={team.valueStream ?? ""} valueStreams={await listValueStreams(db)} />
 
       <h2>Retire</h2>
       {team.retiredOn ? (
