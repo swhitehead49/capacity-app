@@ -45,7 +45,7 @@ test("a team without a default gets one, and the planner uses it", async ({ page
   await page.goto("/teams/T001/default");
   await expect(page.getByRole("region", { name: "In force today" })).toContainText("No default yet");
   const form = page.getByRole("form", { name: "New default" });
-  await form.getByLabel("Effective from").fill("2026-11-09");
+  await form.getByLabel("Effective from").fill("2026-11-01");
   await form.getByLabel("Overhead %").fill("10");
   await form.getByLabel("Run %").fill("25");
   await form.getByLabel("Fix %").fill("25");

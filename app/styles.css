@@ -49,3 +49,5 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 15px; col
 table.members td, table.members th { text-align: left; }
 .edit-form h2 { margin: 8px 0 0; font-size: 15px; }
 .edit-form p { margin: 0; }
+td.left { text-align: left; white-space: normal; }
+.edit-form + table { margin-top: 32px; }

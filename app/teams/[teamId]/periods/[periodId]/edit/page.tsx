@@ -40,6 +40,7 @@ export default async function EditOverride({ params }: { params: Promise<{ teamI
         ) : (
           <p className="muted">No Active team default yet.</p>
         )}
+        <p><a className="edit" href={`/teams/${teamId}/default`}>Change the team default</a></p>
       </section>
       <OverrideForm
         values={{
