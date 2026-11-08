@@ -8,7 +8,7 @@ test("the planner links to the team default page, which shows the default in for
   await page.getByRole("link", { name: "Team default" }).click();
   await expect(page.getByRole("heading", { name: "DRGW default" })).toBeVisible();
   await expect(page.getByRole("region", { name: "In force today" }))
-    .toContainText("Overhead 20% · Run 30% · Fix 20% · Sustain 20% · Change 30%");
+    .toContainText("Overhead 20% · Contingency 0% · Run 30% · Fix 20% · Sustain 20% · Change 30%");
 });
 
 test("the form starts from the current values", async ({ page }) => {
@@ -52,7 +52,7 @@ test("a team without a default gets one, and the planner uses it", async ({ page
   await form.getByLabel("Sustain %").fill("25");
   await form.getByLabel("Change %").fill("25");
   await form.getByRole("button", { name: "Save default" }).click();
-  await expect(page.getByRole("region", { name: "In force today" })).toContainText("Overhead 10% · Run 25%");
+  await expect(page.getByRole("region", { name: "In force today" })).toContainText("Overhead 10% · Contingency 0% · Run 25%");
   await page.goto("/teams/T001");
   await expect(page.getByRole("table", { name: "Sprints" }).getByRole("row", { name: /S002/ })).toContainText("Team default");
 });
