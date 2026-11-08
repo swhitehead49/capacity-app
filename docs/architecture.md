@@ -7,8 +7,12 @@ screens (Next.js, later)        what the user sees and clicks
    │
 application services (later)    use cases: "show team capacity for S001"
    │
-domain  ◄── we start here       pure rules and calculations, no database, no screens
+domain                          pure rules and calculations, no database, no screens
+   ▲
+infrastructure                  database: loads rows and turns them into domain shapes
 ```
+
+The domain never imports from infrastructure. Infrastructure imports domain types and fills them.
 
 ## Rules
 
