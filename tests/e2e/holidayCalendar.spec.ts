@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// Reference data is the Admin side (sean, 15 Nov 2026).
+test.use({ storageState: "tests/e2e/admin-role.json" });
+
 // FR-20 / UC10 (requested 8 Nov 2026): view a loaded holiday calendar.
 // Seeded DE 2026 calendar has two holidays: Reformation Day (DE-NI, Sat 31 Oct) and All Saints' Day (DE-BY and others, Sun 1 Nov).
 

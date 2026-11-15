@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// Reference data is the Admin side (sean, 15 Nov 2026).
+test.use({ storageState: "tests/e2e/admin-role.json" });
+
 // Decision Q4: India's holidays come from the company list, uploaded once a year as a CSV.
 // The seed adds an India office (IN-KA) with no calendar loaded.
 

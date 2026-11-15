@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+// Reference data is the Admin side (sean, 15 Nov 2026).
+test.use({ storageState: "tests/e2e/admin-role.json" });
+
 // sean, 15 Nov 2026: value streams and locations are reference data set once at system level, for every project.
 
 test("add a value stream and a location on the Reference data page, then use them in a project", async ({ page }) => {
-  await page.goto("/projects");
-  await page.getByRole("link", { name: "Reference data" }).click();
+  await page.goto("/");
+  await page.getByRole("button", { name: "Admin" }).click();
   await expect(page).toHaveURL(/\/reference$/);
 
   const streams = page.getByRole("form", { name: "Add value stream" });
@@ -21,7 +24,8 @@ test("add a value stream and a location on the Reference data page, then use the
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /ES-MD/ })).toContainText("Madrid");
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /ES-MD/ })).toContainText("35");
 
-  // Another project can pick them straight away.
+  // An Engineering manager can pick them straight away in any project.
+  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
   await page.goto("/p/imaging/teams/new");
   await page.getByLabel("Team ID").fill("T902");
   await page.getByLabel("Name").fill("Imaging Oncology");

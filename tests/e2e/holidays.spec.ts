@@ -1,22 +1,20 @@
 import { expect, test } from "@playwright/test";
 
+// Reference data is the Admin side (sean, 15 Nov 2026).
+test.use({ storageState: "tests/e2e/admin-role.json" });
+
 // FR-20 / BR-10: the Capacity Admin loads public holidays from OpenHolidays.
 // The test server reads saved answers from tests/fixtures/openholidays, so no internet is needed.
 // Seeded: German locations, and a DE 2026 calendar with only 2 holidays in it.
 
 // sean, 15 Nov 2026: Public holidays are part of Reference data.
 test("Public holidays open from the Reference data page", async ({ page }) => {
-  await page.goto("/p/default");
-  await page.getByRole("banner").getByRole("link", { name: "Reference data" }).click();
+  await page.goto("/reference");
   await page.getByRole("link", { name: "Open public holidays" }).click();
   await expect(page).toHaveURL(/\/reference\/public-holidays$/);
   await expect(page.getByRole("heading", { name: "Public holidays" })).toBeVisible();
 });
 
-test("an old Holidays link still works", async ({ page }) => {
-  await page.goto("/p/default/holidays/DE/2026");
-  await expect(page).toHaveURL(/\/reference\/public-holidays\/DE\/2026$/);
-});
 
 test("shows loaded calendars and the ones still missing", async ({ page }) => {
   await page.goto("/reference/public-holidays");

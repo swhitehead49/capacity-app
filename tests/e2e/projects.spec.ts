@@ -43,6 +43,7 @@ test("an unknown project is not found", async ({ page }) => {
 
 // Country holiday calendars live once, at the top level, and every project uses them (sean, 15 Nov 2026).
 test("every project sees the same holiday calendars", async ({ page }) => {
+  await page.context().addCookies([{ name: "capacity-role", value: "admin", domain: "localhost", path: "/" }]);
   await page.goto("/reference/public-holidays");
   await expect(page.getByText("shared by all projects")).toBeVisible();
   await expect(page.getByRole("table", { name: "Loaded calendars" }).getByRole("row", { name: /DE 2026/ })).toBeVisible();
@@ -90,15 +91,28 @@ test("rename, archive and restore a project from its Project reference data", as
   await expect(page.getByRole("list", { name: "Projects" }).getByRole("link", { name: /Oncology Services/ })).toBeVisible();
 });
 
-// sean, 15 Nov 2026: the menu across the top is the same on every page.
-test("every page has the same top menu", async ({ page }) => {
+// sean, 15 Nov 2026: the menu across the top is the same on every page (per role).
+test("every Engineering manager page has the same top menu", async ({ page }) => {
   await page.goto("/p/imaging/teams");
-  for (const address of ["/p/imaging/teams", "/reference/public-holidays", "/projects", "/reference", "/reference/locations/DE-BY"]) {
+  for (const address of ["/p/imaging", "/p/imaging/teams", "/p/imaging/project-reference", "/projects"]) {
     await page.goto(address);
     const bar = page.getByRole("banner");
-    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Teams", "Reference data", "Switch project"]);
+    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Teams", "Project reference data", "Switch project"]);
     await expect(bar).toContainText("Imaging");
     await expect(bar.getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/p/imaging/teams");
+  }
+});
+
+test("the Admin side is project-agnostic: only Reference data, and no project pages", async ({ page }) => {
+  await page.context().addCookies([{ name: "capacity-role", value: "admin", domain: "localhost", path: "/" }]);
+  for (const address of ["/reference", "/reference/public-holidays", "/reference/locations/DE-BY"]) {
+    await page.goto(address);
+    await expect(page.getByRole("banner").getByRole("link")).toHaveText(["Capacity App", "Reference data"]);
+    await expect(page.getByRole("banner")).not.toContainText("Imaging");
+  }
+  for (const address of ["/p/imaging/teams", "/projects", "/p/imaging/project-reference"]) {
+    await page.goto(address);
+    await expect(page).toHaveURL(/\/reference$/);
   }
 });
 
@@ -109,9 +123,3 @@ test("an old Settings link opens the project's Project reference data", async ({
   await expect(page.getByRole("heading", { name: "Standard allocation for new teams" })).toBeVisible();
 });
 
-test("an Admin doesn't see Project reference data", async ({ page }) => {
-  await page.goto("/p/imaging/teams");
-  await expect(page.getByRole("banner").getByRole("link", { name: "Project reference data" })).toHaveCount(0);
-  await page.goto("/p/imaging/project-reference");
-  await expect(page).toHaveURL(/\/reference$/);
-});

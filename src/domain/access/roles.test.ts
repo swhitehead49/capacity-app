@@ -15,8 +15,10 @@ describe("parseRole", () => {
 });
 
 describe("accessFor", () => {
-  it("keeps an Admin out of a project's Project reference data (sean, 15 Nov 2026)", () => {
+  it("keeps an Admin out of projects: the Admin side is project-agnostic (sean, 15 Nov 2026)", () => {
     expect(accessFor("admin", "/p/imaging/project-reference")).toEqual({ allowed: false, goTo: "/reference" });
+    expect(accessFor("admin", "/p/default/teams")).toEqual({ allowed: false, goTo: "/reference" });
+    expect(accessFor("admin", "/projects")).toEqual({ allowed: false, goTo: "/reference" });
     expect(accessFor("manager", "/p/imaging/project-reference")).toEqual({ allowed: true });
   });
 
@@ -43,6 +45,5 @@ describe("accessFor", () => {
 
   it("an Admin can go everywhere", () => {
     expect(accessFor("admin", "/reference/locations/DE-BY")).toEqual({ allowed: true });
-    expect(accessFor("admin", "/p/default/teams")).toEqual({ allowed: true });
   });
 });
