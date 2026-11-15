@@ -106,13 +106,14 @@ test("rename, archive and restore a project from its Project reference data", as
   await expect(page.getByRole("list", { name: "Projects" }).getByRole("link", { name: /Oncology Services/ })).toBeVisible();
 });
 
-// sean, 15 Nov 2026: the menu across the top is the same on every page (per role).
+// sean, 15 Nov 2026: the menu across the top is the same on every page (per role), with a way back to the project home.
 test("every Engineering manager page has the same top menu", async ({ page }) => {
   await page.goto("/p/imaging/teams");
   for (const address of ["/p/imaging", "/p/imaging/teams", "/p/imaging/project-reference", "/projects"]) {
     await page.goto(address);
     const bar = page.getByRole("banner");
-    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Teams", "Project reference data", "Switch project"]);
+    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Project home", "Teams", "Project reference data", "Switch project"]);
+    await expect(bar.getByRole("link", { name: "Project home" })).toHaveAttribute("href", "/p/imaging");
     await expect(bar).toContainText("Imaging");
     await expect(bar.getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/p/imaging/teams");
   }
