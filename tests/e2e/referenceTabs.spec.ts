@@ -28,3 +28,23 @@ test("the Sprint calendar tab shows the shared calendar and its sprints", async 
   await expect(s001).toContainText("26 Oct 2026");
   await expect(s001).toContainText("Current"); // the test server's today is 8 Nov 2026
 });
+
+// sean, 15 Nov 2026: a system standard allocation that projects use until they set their own.
+test("set the system standard allocation; a project without its own uses it", async ({ page }) => {
+  await page.goto("/reference");
+  await page.getByRole("navigation", { name: "Reference data sections" }).getByRole("link", { name: "Standard allocation" }).click();
+  await expect(page).toHaveURL(/\/reference\/standard-allocation$/);
+  const form = page.getByRole("form", { name: "Standard allocation" });
+  for (const [label, value] of [["Overhead %", "10"], ["Contingency %", "0"], ["Run %", "30"], ["Fix %", "20"], ["Sustain %", "20"], ["Change %", "20"], ["Enabling/Training %", "0"]]) {
+    await form.getByLabel(label).fill(value);
+  }
+  await form.getByRole("button", { name: "Save standard allocation" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved");
+
+  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
+  await page.goto("/projects");
+  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Uses System");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await page.goto("/p/uses-system/project-reference");
+  await expect(page.getByText("Using the system standard allocation")).toBeVisible();
+});
