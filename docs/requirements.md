@@ -120,6 +120,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | FR-18c | Reference data | Value streams and locations are reference data set once at system level and shared by every project (sean, 15 Nov 2026), on the Reference data page. A team's Value stream and Base location, and each person's Location, are picked from them; an unknown value stream or location is refused. Location codes are ISO 3166-2 region codes (or a country code); the workbook's eight LocationProfiles plus IN-KA can be added in one go. |
 | FR-19 | Organisation | All screens, reports and totals pick up new and retired teams automatically. There are no fixed limits on teams, people or members per team. |
 | FR-20 | Calendars | Load public holidays for DE, FR, AT and BE from the **OpenHolidays API** (https://openholidaysapi.org), including regional holidays by ISO 3166-2 subdivision (e.g. DE-BY). Map each location to a country and subdivision. Refresh every year in the horizon and cache the data locally, so calculations don't depend on the API being available. **India** is not covered: the Capacity Admin uploads the company holiday list as a CSV each year. |
+| FR-20a | Calendars | Add or remove single public holidays in a loaded calendar (sean, 15 Nov 2026), on the calendar's View page: date, name, regions (none = whole country), optional reason. Added holidays are kept on reload; removed loaded holidays stay removed (listed, with Put back). Every change is audited and applies to all projects. |
 
 ## 6. Business rules
 

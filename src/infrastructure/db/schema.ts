@@ -98,6 +98,16 @@ export const publicHolidays = pgTable("public_holidays", {
   country: text("country").notNull(),
   regions: text("regions").array().notNull().default(sql`'{}'::text[]`),
   name: text("name").notNull(),
+  origin: text("origin", { enum: ["Loaded", "Added"] }).notNull().default("Loaded"), // "Added" = added by hand (sean, 15 Nov 2026)
+});
+
+/** Loaded holidays removed by hand (sean, 15 Nov 2026), so a reload doesn't bring them back. */
+export const removedHolidays = pgTable("removed_holidays", {
+  id: serial("id").primaryKey(),
+  date: date("date").notNull(),
+  country: text("country").notNull(),
+  regions: text("regions").array().notNull().default(sql`'{}'::text[]`),
+  name: text("name").notNull(),
 });
 
 /** BR-10: which country/year holiday calendars have been loaded. */

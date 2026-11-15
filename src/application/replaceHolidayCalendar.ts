@@ -17,8 +17,12 @@ export async function replaceHolidayCalendar(
   const inYear = and(eq(h.country, country), between(h.date, `${year}-01-01`, `${year}-12-31`));
   await db.transaction(async (tx) => {
     const [before] = await tx.select({ n: count() }).from(h).where(inYear);
-    await tx.delete(h).where(inYear);
-    await tx.insert(h).values(holidays);
+    // Holidays added by hand are kept; loaded holidays removed by hand stay removed (sean, 15 Nov 2026).
+    await tx.delete(h).where(and(inYear, eq(h.origin, "Loaded")));
+    const r = t.removedHolidays;
+    const removed = await tx.select().from(r).where(and(eq(r.country, country), between(r.date, `${year}-01-01`, `${year}-12-31`)));
+    const kept = holidays.filter((x) => !removed.some((gone) => gone.date === x.date && gone.name === x.name));
+    if (kept.length) await tx.insert(h).values(kept.map((x) => ({ ...x, origin: "Loaded" as const })));
     await tx.insert(t.holidayCalendars).values({ country, year, source })
       .onConflictDoUpdate({
         target: [t.holidayCalendars.country, t.holidayCalendars.year],

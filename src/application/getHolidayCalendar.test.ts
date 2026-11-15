@@ -24,7 +24,7 @@ describe("getHolidayCalendar", () => {
     const view = await getHolidayCalendar(db, { country: "DE", year: 2026 });
     expect(view.calendar).toMatchObject({ country: "DE", year: 2026, source: "OpenHolidays API" });
     expect(view.holidays).toHaveLength(20);
-    expect(view.holidays[0]).toEqual({ date: "2026-01-01", weekday: "Thu", name: "New Year's Day", regions: [], isWeekday: true });
+    expect(view.holidays[0]).toMatchObject({ origin: "Loaded", date: "2026-01-01", weekday: "Thu", name: "New Year's Day", regions: [], isWeekday: true });
     expect(view.holidays.find((h) => h.date === "2026-11-01")).toMatchObject({ weekday: "Sun", isWeekday: false });
   });
 

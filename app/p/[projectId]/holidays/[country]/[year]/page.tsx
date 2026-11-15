@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getHolidayCalendar } from "@/src/application/getHolidayCalendar";
 import { projectDb, sharedDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
+import { putBackHolidayAction, removeHolidayAction } from "./actions";
+import { AddHolidayForm } from "./AddHolidayForm";
 
 export const dynamic = "force-dynamic";
 
@@ -39,19 +41,67 @@ export default async function HolidayCalendar({ params, searchParams }: {
 
       <table className="members">
         <caption>Holidays</caption>
-        <thead><tr><th>Date</th><th>Day</th><th>Holiday</th><th>Applies in</th></tr></thead>
+        <thead><tr><th>Date</th><th>Day</th><th>Holiday</th><th>Applies in</th><th>Source</th><th></th></tr></thead>
         <tbody>
-          {view.holidays.length === 0 && <tr><td colSpan={4} className="empty">No holidays to show.</td></tr>}
+          {view.holidays.length === 0 && <tr><td colSpan={6} className="empty">No holidays to show.</td></tr>}
           {view.holidays.map((h) => (
             <tr key={`${h.date}-${h.name}`} className={h.isWeekday ? "" : "muted"}>
               <td>{formatDate(h.date)}</td>
               <td>{h.weekday}{h.isWeekday ? "" : " (weekend)"}</td>
               <td>{h.name}</td>
               <td className="left">{h.regions.length === 0 ? "Whole country" : h.regions.join(", ")}</td>
+              <td>{h.origin === "Added" ? "Added by hand" : view.calendar?.source}</td>
+              <td>
+                <form action={removeHolidayAction}>
+                  <HiddenFields projectId={projectId} country={country} year={year} id={h.id} />
+                  <button type="submit" className="secondary">Remove</button>
+                </form>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {view.removed.length > 0 && (
+        <table className="members">
+          <caption>Removed holidays</caption>
+          <thead><tr><th>Date</th><th>Holiday</th><th>Applied in</th><th></th></tr></thead>
+          <tbody>
+            {view.removed.map((h) => (
+              <tr key={h.id}>
+                <td>{formatDate(h.date)}</td>
+                <td>{h.name}</td>
+                <td className="left">{h.regions.length === 0 ? "Whole country" : h.regions.join(", ")}</td>
+                <td>
+                  <form action={putBackHolidayAction}>
+                    <HiddenFields projectId={projectId} country={country} year={year} id={h.id} />
+                    <button type="submit" className="secondary">Put back</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {view.calendar && (
+        <>
+          <h2>Add a holiday</h2>
+          <p className="muted">Holidays you add or remove here are kept when the calendar is reloaded, and apply to every project.</p>
+          <AddHolidayForm country={country} year={year} regions={view.regions} />
+        </>
+      )}
+    </>
+  );
+}
+
+function HiddenFields({ projectId, country, year, id }: { projectId: string; country: string; year: string; id: number }) {
+  return (
+    <>
+      <input type="hidden" name="projectId" value={projectId} />
+      <input type="hidden" name="country" value={country} />
+      <input type="hidden" name="year" value={year} />
+      <input type="hidden" name="id" value={id} />
     </>
   );
 }

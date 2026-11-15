@@ -41,18 +41,18 @@ test("add a public holiday by hand, then remove it", async ({ page }) => {
   await form.getByLabel("Name").fill("Company day");
   await form.getByLabel("DE-BY").check();
   await form.getByRole("button", { name: "Add holiday" }).click();
-  const row = page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Company day/ });
+  const row = page.getByRole("table", { name: "Holidays", exact: true }).getByRole("row", { name: /Company day/ });
   await expect(row).toContainText("DE-BY");
   await expect(row).toContainText("Added by hand");
   await row.getByRole("button", { name: "Remove" }).click();
-  await expect(page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Company day/ })).toHaveCount(0);
+  await expect(page.getByRole("table", { name: "Holidays", exact: true }).getByRole("row", { name: /Company day/ })).toHaveCount(0);
 });
 
 test("remove a loaded holiday and put it back", async ({ page }) => {
   await page.goto("/p/default/holidays/DE/2026");
-  await page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Epiphany/ }).getByRole("button", { name: "Remove" }).click();
-  await expect(page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Epiphany/ })).toHaveCount(0);
+  await page.getByRole("table", { name: "Holidays", exact: true }).getByRole("row", { name: /Epiphany/ }).getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByRole("table", { name: "Holidays", exact: true }).getByRole("row", { name: /Epiphany/ })).toHaveCount(0);
   const removed = page.getByRole("table", { name: "Removed holidays" }).getByRole("row", { name: /Epiphany/ });
   await removed.getByRole("button", { name: "Put back" }).click();
-  await expect(page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Epiphany/ })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Holidays", exact: true }).getByRole("row", { name: /Epiphany/ })).toBeVisible();
 });

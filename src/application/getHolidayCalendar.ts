@@ -22,11 +22,17 @@ export async function getHolidayCalendar(db: Db, query: { country: string; year:
   const holidays = rows
     .filter((row) => !query.region || appliesTo(row, { country: query.country, region: query.region }))
     .map((row) => ({
+      id: row.id,
+      origin: row.origin,
       date: row.date,
       weekday: WEEKDAY[new Date(`${row.date}T00:00:00Z`).getUTCDay()]!,
       name: row.name,
       regions: row.regions,
       isWeekday: isWeekday(row.date),
     }));
-  return { calendar: calendar ?? null, regions, holidays, weekdayCount: holidays.filter((x) => x.isWeekday).length };
+  // Loaded holidays removed by hand (sean, 15 Nov 2026), so they can be put back.
+  const r = t.removedHolidays;
+  const removed = await db.select().from(r)
+    .where(and(eq(r.country, query.country), between(r.date, `${query.year}-01-01`, `${query.year}-12-31`))).orderBy(asc(r.date));
+  return { calendar: calendar ?? null, regions, holidays, removed, weekdayCount: holidays.filter((x) => x.isWeekday).length };
 }

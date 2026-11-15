@@ -78,6 +78,13 @@
       "when": 1794768014522,
       "tag": "0010_drop_id_confirmed",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794774408336,
+      "tag": "0011_holiday_changes",
+      "breakpoints": true
     }
   ]
 }
