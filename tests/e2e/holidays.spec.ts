@@ -32,3 +32,27 @@ test("a failed load says why and changes nothing", async ({ page }) => {
   await expect(page.getByRole("alert", { name: "Problems loading" })).toContainText("No saved OpenHolidays answer for DE 2027");
   await expect(page.getByRole("table", { name: "Missing calendars" }).getByRole("row", { name: /DE 2027/ })).toBeVisible();
 });
+
+// sean, 15 Nov 2026: add or remove single public holidays in a loaded calendar.
+test("add a public holiday by hand, then remove it", async ({ page }) => {
+  await page.goto("/p/default/holidays/DE/2026");
+  const form = page.getByRole("form", { name: "Add a holiday" });
+  await form.getByLabel("Date").fill("2026-07-01");
+  await form.getByLabel("Name").fill("Company day");
+  await form.getByLabel("DE-BY").check();
+  await form.getByRole("button", { name: "Add holiday" }).click();
+  const row = page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Company day/ });
+  await expect(row).toContainText("DE-BY");
+  await expect(row).toContainText("Added by hand");
+  await row.getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Company day/ })).toHaveCount(0);
+});
+
+test("remove a loaded holiday and put it back", async ({ page }) => {
+  await page.goto("/p/default/holidays/DE/2026");
+  await page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Epiphany/ }).getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Epiphany/ })).toHaveCount(0);
+  const removed = page.getByRole("table", { name: "Removed holidays" }).getByRole("row", { name: /Epiphany/ });
+  await removed.getByRole("button", { name: "Put back" }).click();
+  await expect(page.getByRole("table", { name: "Holidays" }).getByRole("row", { name: /Epiphany/ })).toBeVisible();
+});
