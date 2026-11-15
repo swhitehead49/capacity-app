@@ -1,3 +1,4 @@
+import { TopBar } from "@/app/lib/TopBar";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getReferenceData } from "@/src/application/referenceData";
@@ -13,7 +14,7 @@ export default async function EditLocation({ params }: { params: Promise<{ code:
   if (!location) notFound();
   return (
     <>
-      <header className="topbar" role="banner"><a href="/projects">Capacity App</a><nav><a href="/projects">Projects</a><a href="/reference">Reference data</a></nav></header>
+      <TopBar />
       <main>
         <p className="muted"><Link href="/reference">← Reference data</Link></p>
         <h1>{location.code}</h1>

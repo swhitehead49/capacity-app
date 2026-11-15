@@ -1,3 +1,4 @@
+import { TopBar } from "@/app/lib/TopBar";
 import Link from "next/link";
 import { STARTING_LOCATIONS, getReferenceData } from "@/src/application/referenceData";
 import { sharedDb } from "@/app/lib/project";
@@ -12,7 +13,7 @@ export default async function ReferenceData() {
   const missing = STARTING_LOCATIONS.filter((s) => !locations.some((l) => l.code === s.code));
   return (
     <>
-      <header className="topbar" role="banner"><a href="/projects">Capacity App</a><nav><a href="/projects">Projects</a></nav></header>
+      <TopBar />
       <main>
         <h1>Reference data</h1>
         <p className="muted">Set once for the whole system and shared by every project. A team&apos;s value stream and base location,
