@@ -59,16 +59,20 @@ export default async function HolidaysPage({ params: routeParams, searchParams }
         </tbody>
       </table>
 
+      <p className="muted">Holidays per location counts the public holidays that apply there: the nationwide ones plus that region&apos;s own.
+        It includes any that fall at a weekend.</p>
       <table>
         <caption>Loaded calendars</caption>
-        <thead><tr><th>Calendar</th><th>Source</th><th>Holidays</th><th>Loaded</th><th></th></tr></thead>
+        <thead><tr><th>Calendar</th><th>Source</th><th>Holidays per location</th><th>Loaded</th><th></th></tr></thead>
         <tbody>
           {loaded.length === 0 && <tr><td colSpan={5} className="empty">No calendars loaded yet.</td></tr>}
           {loaded.map((c) => (
             <tr key={`${c.country}-${c.year}`}>
               <td>{c.country} {c.year} <a className="edit" href={`/p/${projectId}/holidays/${c.country}/${c.year}`}>View</a></td>
               <td>{c.source}</td>
-              <td>{c.holidays}</td>
+              <td>{c.regions.length === 0
+                ? <span className="muted">No locations in {c.country}</span>
+                : c.regions.map((r) => <div key={r.code} title={r.name}>{r.code} {r.holidays}</div>)}</td>
               <td>{dateTime.format(c.loadedAt)}</td>
               <td>{c.source === "CSV upload" ? <span className="muted">Upload again below</span> : <LoadButton projectId={projectId} country={c.country} year={c.year} label="Reload" />}</td>
             </tr>

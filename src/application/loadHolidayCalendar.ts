@@ -43,7 +43,11 @@ export async function loadHolidayCalendar(db: Db, actor: string, request: LoadRe
   return { ok: true, count: holidays.length };
 }
 
-export interface CalendarRow { country: string; year: number; source: string; loadedAt: Date; holidays: number }
+export interface CalendarRow {
+  country: string; year: number; source: string; loadedAt: Date; holidays: number;
+  /** Each location in that country, with the holidays that apply there (sean, 15 Nov 2026). */
+  regions: { code: string; name: string; holidays: number }[];
+}
 export interface MissingCalendar { country: string; year: number; how: "OpenHolidays" | "CSV upload" }
 
 /**
@@ -55,13 +59,26 @@ export interface MissingCalendar { country: string; year: number; how: "OpenHoli
 export async function listHolidayCalendars(db: Db, today: string, projectDbs: Db[] = [db]) {
   const c = t.holidayCalendars;
   const h = t.publicHolidays;
-  const loaded: CalendarRow[] = await db
+  const calendars = await db
     .select({
       country: c.country, year: c.year, source: c.source, loadedAt: c.loadedAt,
       holidays: sql<number>`(select count(*)::int from ${h} where ${h.country} = ${c.country}
         and extract(year from ${h.date}) = ${c.year})`,
     })
     .from(c).orderBy(asc(c.country), asc(c.year));
+  // The system's locations (this database holds the reference list) and every holiday, to total them per location.
+  const places = await db.select().from(t.locations).orderBy(asc(t.locations.code));
+  const days = await db.select({ date: h.date, country: h.country, regions: h.regions }).from(h);
+  const loaded: CalendarRow[] = calendars.map((cal) => {
+    const inCalendar = days.filter((d) => d.country === cal.country && d.date.startsWith(String(cal.year)));
+    const regions = places.filter((p) => p.country === cal.country).map((p) => ({
+      code: p.code,
+      name: p.name,
+      // Nationwide holidays, plus the ones for that region. A whole-country location only gets the nationwide ones.
+      holidays: inCalendar.filter((d) => d.regions.length === 0 || d.regions.includes(p.code)).length,
+    }));
+    return { ...cal, regions };
+  });
 
   const thisYear = Number(today.slice(0, 4));
   const perProject = await Promise.all(projectDbs.map((p) => p.selectDistinct({ country: t.locations.country }).from(t.locations)));
