@@ -130,13 +130,13 @@ CREATE TABLE "teams" (
 	"retired_on" date
 );
 --> statement-breakpoint
-ALTER TABLE "absences" ADD CONSTRAINT "absences_person_email_people_email_fk" FOREIGN KEY ("person_email") REFERENCES "public"."people"("email") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "allocation_settings" ADD CONSTRAINT "allocation_settings_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "allocation_settings" ADD CONSTRAINT "allocation_settings_period_id_planning_periods_id_fk" FOREIGN KEY ("period_id") REFERENCES "public"."planning_periods"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "assignments" ADD CONSTRAINT "assignments_person_email_people_email_fk" FOREIGN KEY ("person_email") REFERENCES "public"."people"("email") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "assignments" ADD CONSTRAINT "assignments_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "availability_forecasts" ADD CONSTRAINT "availability_forecasts_location_code_locations_code_fk" FOREIGN KEY ("location_code") REFERENCES "public"."locations"("code") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "people" ADD CONSTRAINT "people_location_code_locations_code_fk" FOREIGN KEY ("location_code") REFERENCES "public"."locations"("code") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "team_name_history" ADD CONSTRAINT "team_name_history_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "team_successors" ADD CONSTRAINT "team_successors_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "team_successors" ADD CONSTRAINT "team_successors_successor_team_id_teams_id_fk" FOREIGN KEY ("successor_team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "absences" ADD CONSTRAINT "absences_person_email_people_email_fk" FOREIGN KEY ("person_email") REFERENCES "people"("email") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "allocation_settings" ADD CONSTRAINT "allocation_settings_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "allocation_settings" ADD CONSTRAINT "allocation_settings_period_id_planning_periods_id_fk" FOREIGN KEY ("period_id") REFERENCES "planning_periods"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "assignments" ADD CONSTRAINT "assignments_person_email_people_email_fk" FOREIGN KEY ("person_email") REFERENCES "people"("email") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "assignments" ADD CONSTRAINT "assignments_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "availability_forecasts" ADD CONSTRAINT "availability_forecasts_location_code_locations_code_fk" FOREIGN KEY ("location_code") REFERENCES "locations"("code") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "people" ADD CONSTRAINT "people_location_code_locations_code_fk" FOREIGN KEY ("location_code") REFERENCES "locations"("code") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "team_name_history" ADD CONSTRAINT "team_name_history_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "team_successors" ADD CONSTRAINT "team_successors_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "team_successors" ADD CONSTRAINT "team_successors_successor_team_id_teams_id_fk" FOREIGN KEY ("successor_team_id") REFERENCES "teams"("id") ON DELETE no action ON UPDATE no action;
