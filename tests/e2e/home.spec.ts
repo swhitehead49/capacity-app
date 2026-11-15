@@ -69,3 +69,26 @@ test("the project home page shows the value streams in the project, or an error 
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByRole("table", { name: "Value streams in this project" }).getByRole("row", { name: /Radiology/ })).toContainText("1");
 });
+
+// sean, 15 Nov 2026: map teams to value streams from the project home page.
+test("add a value stream to a project, map teams to it, and exclude an unmapped team", async ({ page }) => {
+  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
+  await page.goto("/p/imaging");
+  const add = page.getByRole("form", { name: "Add value stream" });
+  await add.getByLabel("Value stream").selectOption("Clinical");
+  await add.getByRole("button", { name: "Add value stream" }).click();
+  await page.getByRole("table", { name: "Value streams in this project" }).getByRole("link", { name: "Clinical" }).click();
+  await expect(page.getByRole("heading", { name: "Clinical" })).toBeVisible();
+
+  const join = page.getByRole("form", { name: "Add teams" });
+  await join.getByLabel(/T900/).check();
+  await join.getByRole("button", { name: "Add to Clinical" }).click();
+  await expect(page.getByRole("table", { name: "Teams in Clinical" }).getByRole("row", { name: /T900/ })).toBeVisible();
+
+  await page.getByRole("table", { name: "Teams in Clinical" }).getByRole("row", { name: /T900/ }).getByRole("button", { name: "Remove" }).click();
+  await page.goto("/p/imaging");
+  const unmapped = page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T900/ });
+  await expect(unmapped).toContainText("Included");
+  await unmapped.getByRole("button", { name: "Exclude" }).click();
+  await expect(page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T900/ })).toContainText("Excluded");
+});
