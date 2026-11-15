@@ -4,7 +4,6 @@ import { getDb } from "@/src/infrastructure/db/appDb";
 import { listProjects } from "@/src/infrastructure/db/projectDatabases";
 import { formatDate } from "@/app/lib/format";
 import { restoreProjectAction } from "./actions";
-import { NewProjectForm } from "./ProjectForms";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +24,7 @@ export default async function ChooseProject() {
           ))}
         </ul>
 
-        <h2>New project</h2>
-        <p className="muted">It starts empty. Add or import its teams, and set its standard allocation in Settings.</p>
-        <NewProjectForm />
+        <p className="muted">Need a new project? An Admin adds it under Reference data → Projects.</p>
 
         {archived.length > 0 && (
           <table className="members">

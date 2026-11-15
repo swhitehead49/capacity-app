@@ -10,6 +10,7 @@ const TABS = [
   { href: "/reference/public-holidays", label: "Public holidays", match: (p: string) => p.startsWith("/reference/public-holidays") },
   { href: "/reference/sprint-calendar", label: "Sprint calendar", match: (p: string) => p.startsWith("/reference/sprint-calendar") },
   { href: "/reference/standard-allocation", label: "Standard allocation", match: (p: string) => p.startsWith("/reference/standard-allocation") },
+  { href: "/reference/projects", label: "Projects", match: (p: string) => p.startsWith("/reference/projects") },
 ];
 
 export function ReferenceTabs() {

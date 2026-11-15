@@ -13,7 +13,7 @@ const read = (form: FormData, name: string) => String(form.get(name) ?? "").trim
 export async function createProjectAction(previous: FormState, form: FormData): Promise<FormState> {
   const result = await createProject(await getDb(), ACTOR, { name: read(form, "name") });
   if (!result.ok) return failed(previous, form, result.errors);
-  redirect(`/p/${result.id}/teams`);
+  redirect(`/reference/projects?created=${encodeURIComponent(read(form, "name").trim())}`);
 }
 
 export async function renameProjectAction(previous: FormState, form: FormData): Promise<FormState> {
