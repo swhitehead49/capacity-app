@@ -64,3 +64,40 @@ test("every project sees the same holiday calendars", async ({ page }) => {
   await expect(page.getByText("shared by all projects")).toBeVisible();
   await expect(page.getByRole("table", { name: "Loaded calendars" }).getByRole("row", { name: /DE 2026/ })).toBeVisible();
 });
+
+// Projects, step 4 (sean, 15 Nov 2026): create, rename, archive and restore projects.
+test("create a project from the picker; it opens on its empty Teams page", async ({ page }) => {
+  await page.goto("/projects");
+  const form = page.getByRole("form", { name: "New project" });
+  await form.getByLabel("Project name").fill("Cardiology");
+  await form.getByRole("button", { name: "Create project" }).click();
+  await expect(page).toHaveURL(/\/p\/cardiology\/teams$/);
+  await expect(page.getByRole("banner")).toContainText("Cardiology");
+  await expect(page.getByText("0 active of 0")).toBeVisible();
+});
+
+test("a project name that is already used is explained", async ({ page }) => {
+  await page.goto("/projects");
+  const form = page.getByRole("form", { name: "New project" });
+  await form.getByLabel("Project name").fill("imaging");
+  await form.getByRole("button", { name: "Create project" }).click();
+  await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText('There is already a project called "Imaging"');
+});
+
+test("rename, archive and restore a project from its Settings page", async ({ page }) => {
+  await page.goto("/projects");
+  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Oncology");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await page.goto("/p/oncology/settings");
+  const rename = page.getByRole("form", { name: "Rename project" });
+  await rename.getByLabel("Project name").fill("Oncology Services");
+  await rename.getByRole("button", { name: "Rename" }).click();
+  await expect(page.getByRole("banner")).toContainText("Oncology Services");
+
+  await page.getByRole("button", { name: "Archive project" }).click();
+  await expect(page).toHaveURL(/\/projects$/);
+  await expect(page.getByRole("list", { name: "Projects" }).getByRole("link", { name: /Oncology/ })).toHaveCount(0);
+  const archived = page.getByRole("table", { name: "Archived projects" }).getByRole("row", { name: /Oncology Services/ });
+  await archived.getByRole("button", { name: "Restore" }).click();
+  await expect(page.getByRole("list", { name: "Projects" }).getByRole("link", { name: /Oncology Services/ })).toBeVisible();
+});

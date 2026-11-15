@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectInAddress, projectStorageName, startAddress, validateProject } from "./projectRules";
+import { projectIdFromName, projectInAddress, projectStorageName, startAddress, validateProject } from "./projectRules";
 
 // Projects (decided 15 Nov 2026): project → value streams → teams. Each project's data is kept separate.
 
@@ -58,5 +58,28 @@ describe("projectInAddress", () => {
     expect(projectInAddress("/")).toBeNull();
     expect(projectInAddress("/projects")).toBeNull();
     expect(projectInAddress("/p/Not%20Valid/teams")).toBeNull();
+  });
+});
+
+// Creating a project (sean, 15 Nov 2026): you only type a name; the web-address ID is made from it.
+describe("projectIdFromName", () => {
+  it("makes a short web-address ID from the name", () => {
+    expect(projectIdFromName("Cardiology Team", [])).toBe("cardiology-team");
+    expect(projectIdFromName("  DX / Imaging 2027! ", [])).toBe("dx-imaging-2027");
+  });
+
+  it("starts with a letter and stays within 30 characters", () => {
+    expect(projectIdFromName("2027 plan", [])).toBe("p-2027-plan");
+    expect(projectIdFromName("A very long project name that keeps going and going", []).length).toBeLessThanOrEqual(30);
+    expect(validateProject({ id: projectIdFromName("A very long project name that keeps going and going", []), name: "x" })).toEqual([]);
+  });
+
+  it("adds a number when the ID is already taken", () => {
+    expect(projectIdFromName("Imaging", ["imaging"])).toBe("imaging-2");
+    expect(projectIdFromName("Imaging", ["imaging", "imaging-2"])).toBe("imaging-3");
+  });
+
+  it("copes with a name that has no letters or digits", () => {
+    expect(validateProject({ id: projectIdFromName("!!!", []), name: "!!!" })).toEqual([]);
   });
 });
