@@ -15,10 +15,13 @@ test("add a team", async ({ page }) => {
   await page.getByLabel("Team ID").fill("T100");
   await page.getByLabel("Name").fill("Payments");
   await page.getByLabel("Value stream").fill("Platform");
+  await page.getByLabel("Base location").selectOption("IN-KA");
   await page.getByLabel("Start date").fill("2026-11-09");
   await page.getByRole("button", { name: "Add team" }).click();
   await expect(page).toHaveURL(/\/p\/default\/teams$/);
-  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ })).toContainText("Payments");
+  const row = page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ });
+  await expect(row).toContainText("Payments");
+  await expect(row).toContainText("IN-KA"); // base location (sean, 15 Nov 2026)
 });
 
 test("a team ID can't be used twice", async ({ page }) => {
@@ -94,7 +97,7 @@ test("teams are grouped under a heading row for each value stream", async ({ pag
   await expect(table.getByRole("row", { name: "No value stream", exact: true })).toBeVisible();
 });
 
-test("filter the teams by country (where their current members are based)", async ({ page }) => {
+test("filter the teams by country (the country of their base location)", async ({ page }) => {
   await page.goto("/p/default/teams");
   await page.getByLabel("Country").selectOption("DE");
   await page.getByRole("button", { name: "Show" }).click();
@@ -102,4 +105,21 @@ test("filter the teams by country (where their current members are based)", asyn
   const table = page.getByRole("table", { name: "All teams" });
   await expect(table.getByRole("row", { name: /T017/ })).toContainText("DE");
   await expect(table.getByRole("row", { name: /T002/ })).toHaveCount(0);
+});
+
+// sean, 15 Nov 2026: a team has its own base location; members keep their own country for public holidays.
+test("change a team's base location on its Manage page", async ({ page }) => {
+  await page.goto("/p/default/teams/T100/manage");
+  const form = page.getByRole("form", { name: "Base location" });
+  await form.getByLabel("Base location").selectOption("DE-BY");
+  await form.getByRole("button", { name: "Change base location" }).click();
+  await expect(page.getByText(/Based in DE-BY/)).toBeVisible();
+  await page.goto("/p/default/teams");
+  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ })).toContainText("DE-BY");
+});
+
+test("a new member's location starts as the team's base location, and can be changed", async ({ page }) => {
+  await page.goto("/p/default/teams/T017/members/new");
+  await expect(page.getByLabel("Location")).toHaveValue("DE-RP");
+  await expect(page.getByText(/public holidays/)).toBeVisible();
 });

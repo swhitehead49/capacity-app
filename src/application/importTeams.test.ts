@@ -39,6 +39,21 @@ describe("importTeams", () => {
     expect(await db.select().from(t.teams)).toHaveLength(1);
   });
 
+  it("reads an optional base_location column (sean, 15 Nov 2026)", async () => {
+    await db.insert(t.locations).values({ code: "DE-BY", country: "DE", name: "Bavaria" });
+    const csv = "team_id,name,base_location\nT074,Payments Core,DE-BY\nT075,Imaging Viewer,\n";
+    expect(await importTeams(db, actor, { today, csv })).toMatchObject({ ok: true, count: 2 });
+    const teams = await db.select().from(t.teams);
+    expect(teams.find((x) => x.id === "T074")?.baseLocation).toBe("DE-BY");
+    expect(teams.find((x) => x.id === "T075")?.baseLocation).toBeNull();
+  });
+
+  it("refuses a base location the project doesn't have, and adds nothing", async () => {
+    const result = await importTeams(db, actor, { today, csv: "team_id,name,base_location\nT074,Payments Core,XX-YY\n" });
+    expect(result).toEqual({ ok: false, errors: ["Line 2: Unknown base location XX-YY"] });
+    expect(await db.select().from(t.teams)).toHaveLength(1);
+  });
+
   it("passes on file problems", async () => {
     expect(await importTeams(db, actor, { today, csv: "nothing useful" })).toMatchObject({ ok: false });
   });

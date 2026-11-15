@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { seedDrgw } from "../infrastructure/db/fixtures";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { addTeam, changeValueStream, listTeamCountries, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
+import { addTeam, changeBaseLocation, changeValueStream, listTeamCountries, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
 import { endMember } from "./teamMembers";
 
 // UC15 add, UC16 rename, UC17 retire a team (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted.
@@ -49,6 +49,16 @@ describe("addTeam (UC15)", () => {
   it("the same name under a different parent is allowed but flagged (BR-16)", async () => {
     const result = await addTeam(db, actor, { ...newTeam, name: "Example Team A", valueStream: "Clinical" });
     expect(result).toEqual({ ok: true, id: "T100", warnings: ['"Example Team A" is also a team in Platform'] });
+  });
+
+  it("saves the team's base location (sean, 15 Nov 2026)", async () => {
+    await addTeam(db, actor, { ...newTeam, baseLocation: "DE-BY" });
+    expect((await team("T100"))?.baseLocation).toBe("DE-BY");
+  });
+
+  it("refuses a base location the project doesn't have", async () => {
+    expect(await addTeam(db, actor, { ...newTeam, baseLocation: "XX-YY" }))
+      .toEqual({ ok: false, errors: ["Unknown base location XX-YY"] });
   });
 
   it("needs an ID, a name and a start date; the lead email must look right", async () => {
@@ -127,14 +137,16 @@ describe("listTeamsOverview", () => {
     ]);
   });
 
-  it("lists the countries where each team's current members are based (sean, 15 Nov 2026)", async () => {
+  it("shows each team's base location and its country (sean, 15 Nov 2026)", async () => {
+    await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "DE-BY" });
     const teams = await listTeamsOverview(db, today);
-    expect(teams.find((x) => x.id === "T017")?.countries).toEqual(["DE"]);
-    expect(teams.find((x) => x.id === "T001")?.countries).toEqual([]);
+    expect(teams.find((x) => x.id === "T001")).toMatchObject({ baseLocation: "DE-BY", baseCountry: "DE" });
+    expect(teams.find((x) => x.id === "T002")).toMatchObject({ baseLocation: null, baseCountry: null });
   });
 
-  it("filters by country: teams with at least one current member there", async () => {
-    expect((await listTeamsOverview(db, today, { country: "DE" })).map((x) => x.id)).toEqual(["T017"]);
+  it("filters by country: the country of the team's base location", async () => {
+    await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "DE-BY" });
+    expect((await listTeamsOverview(db, today, { country: "DE" })).map((x) => x.id)).toEqual(["T001", "T017"]);
     expect(await listTeamsOverview(db, today, { country: "FR" })).toEqual([]);
   });
 
@@ -184,6 +196,32 @@ describe("value streams (FR-01, decision 8 Nov 2026: the value stream is the lev
   it("the Teams list can be filtered to one value stream", async () => {
     const teams = await listTeamsOverview(db, today, { valueStream: "Platform" });
     expect(teams.map((x) => x.id)).toEqual(["T001", "T002"]);
+  });
+});
+
+describe("base location (sean, 15 Nov 2026: a team has its own base location; members keep their own for holidays)", () => {
+  it("changes a team's base location and logs it", async () => {
+    expect(await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "DE-NI" })).toEqual({ ok: true, id: "T001", warnings: [] });
+    expect((await team("T001"))?.baseLocation).toBe("DE-NI");
+    expect((await audit())[0]).toMatchObject({
+      entity: "teams", action: "change base location", before: { baseLocation: null }, after: { baseLocation: "DE-NI" },
+    });
+  });
+
+  it("blank means no base location", async () => {
+    await changeBaseLocation(db, actor, { teamId: "T017", baseLocation: "" });
+    expect((await team("T017"))?.baseLocation).toBeNull();
+  });
+
+  it("refuses an unknown location or team, and the location it already has", async () => {
+    expect(await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "XX-YY" })).toEqual({ ok: false, errors: ["Unknown base location XX-YY"] });
+    expect(await changeBaseLocation(db, actor, { teamId: "T999", baseLocation: "DE-BY" })).toEqual({ ok: false, errors: ["Unknown team T999"] });
+    expect(await changeBaseLocation(db, actor, { teamId: "T017", baseLocation: "DE-RP" })).toEqual({ ok: false, errors: ["T017 is already based in DE-RP"] });
+  });
+
+  it("members keep their own location, whatever the team's base", async () => {
+    await changeBaseLocation(db, actor, { teamId: "T017", baseLocation: "DE-BY" });
+    expect((await db.query.people.findFirst({ where: eq(t.people.email, "b@example.com") }))?.locationCode).toBe("DE-NI");
   });
 });
 

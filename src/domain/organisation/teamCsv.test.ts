@@ -12,8 +12,8 @@ describe("parseTeamCsv", () => {
     const csv = `${head}\nT074,Payments Core,Platform,,2026-11-16\nT075,Imaging Viewer,Radiology,lead@example.com,\n`;
     expect(parseTeamCsv(csv, { today })).toEqual({
       teams: [
-        { id: "T074", name: "Payments Core", valueStream: "Platform", leadEmail: null, effectiveFrom: "2026-11-16" },
-        { id: "T075", name: "Imaging Viewer", valueStream: "Radiology", leadEmail: "lead@example.com", effectiveFrom: today },
+        { id: "T074", name: "Payments Core", valueStream: "Platform", leadEmail: null, baseLocation: null, effectiveFrom: "2026-11-16" },
+        { id: "T075", name: "Imaging Viewer", valueStream: "Radiology", leadEmail: "lead@example.com", baseLocation: null, effectiveFrom: today },
       ],
       errors: [],
     });
@@ -22,13 +22,18 @@ describe("parseTeamCsv", () => {
   it("only needs team_id and name; headings can be in any order and any case; DD/MM/YYYY works", () => {
     const csv = "Name,Team_ID,Start_Date\n\"Payments, Core\",T074,16/11/2026\n";
     expect(parseTeamCsv(csv, { today }).teams).toEqual([
-      { id: "T074", name: "Payments, Core", valueStream: null, leadEmail: null, effectiveFrom: "2026-11-16" },
+      { id: "T074", name: "Payments, Core", valueStream: null, leadEmail: null, baseLocation: null, effectiveFrom: "2026-11-16" },
     ]);
+  });
+
+  it("reads the optional base_location column (sean, 15 Nov 2026)", () => {
+    const csv = "team_id,name,base_location\nT074,Payments Core, DE-BY \n";
+    expect(parseTeamCsv(csv, { today }).teams[0]?.baseLocation).toBe("DE-BY");
   });
 
   it("says which headings are missing", () => {
     expect(parseTeamCsv("id,team\nT1,A\n", { today }).errors)
-      .toEqual(['The first line must have the headings "team_id" and "name" (optional: value_stream, lead_email, start_date)']);
+      .toEqual(['The first line must have the headings "team_id" and "name" (optional: value_stream, lead_email, start_date, base_location)']);
   });
 
   it("lists every bad line and imports nothing", () => {
