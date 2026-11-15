@@ -11,7 +11,7 @@ export default async function TeamPlanner({ params }: { params: Promise<{ projec
   const { projectId, teamId } = await params;
   const db = (await projectDb(projectId)).db;
   await ensurePeriods(db, today(), await getDb()); // UC11: create any missing periods first, from the shared calendar
-  const plan = await getTeamPlan(db, { teamId, today: today() }).catch(() => null);
+  const plan = await getTeamPlan(db, { teamId, today: today() }, await getDb()).catch(() => null);
   if (!plan) notFound();
 
   return (

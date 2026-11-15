@@ -49,8 +49,10 @@ export interface MissingCalendar { country: string; year: number; how: "OpenHoli
 /**
  * What the holidays screen shows: calendars already loaded, and the ones still
  * missing for this year and next in every country we have a location in.
+ * Calendars are shared by all projects (sean, 15 Nov 2026): `db` is the top level, and
+ * `projectDbs` are the projects whose locations count when working out what is missing.
  */
-export async function listHolidayCalendars(db: Db, today: string) {
+export async function listHolidayCalendars(db: Db, today: string, projectDbs: Db[] = [db]) {
   const c = t.holidayCalendars;
   const h = t.publicHolidays;
   const loaded: CalendarRow[] = await db
@@ -62,8 +64,8 @@ export async function listHolidayCalendars(db: Db, today: string) {
     .from(c).orderBy(asc(c.country), asc(c.year));
 
   const thisYear = Number(today.slice(0, 4));
-  const countries = (await db.selectDistinct({ country: t.locations.country }).from(t.locations)
-    .orderBy(asc(t.locations.country))).map((r) => r.country);
+  const perProject = await Promise.all(projectDbs.map((p) => p.selectDistinct({ country: t.locations.country }).from(t.locations)));
+  const countries = [...new Set(perProject.flat().map((r) => r.country))].sort();
   const have = new Set(loaded.map((r) => `${r.country}:${r.year}`));
   const missing: MissingCalendar[] = countries.flatMap((country) =>
     [thisYear, thisYear + 1]

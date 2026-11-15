@@ -1,6 +1,6 @@
 import { listHolidayCalendars } from "@/src/application/loadHolidayCalendar";
 import { today } from "@/src/infrastructure/db/appDb";
-import { projectDb } from "@/app/lib/project";
+import { openProjectDbs, projectDb, sharedDb } from "@/app/lib/project";
 import { loadCalendarAction, uploadCsvAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,8 @@ function LoadButton({ projectId, country, year, label }: { projectId: string; co
 export default async function HolidaysPage({ params: routeParams, searchParams }: { params: Promise<{ projectId: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { projectId } = await routeParams;
   const params = await searchParams;
-  const { loaded, missing } = await listHolidayCalendars((await projectDb(projectId)).db, today());
+  await projectDb(projectId); // an unknown project is Not found
+  const { loaded, missing } = await listHolidayCalendars(await sharedDb(), today(), await openProjectDbs());
   const nextUpload = missing.find((m) => m.how === "CSV upload");
 
   return (
@@ -31,6 +32,7 @@ export default async function HolidaysPage({ params: routeParams, searchParams }
       <p className="muted">
         Holidays for Germany, France, Austria and Belgium come from the OpenHolidays API.
         A person whose country has no calendar for the year is shown as Provisional.
+        These calendars are shared by all projects, so loading one here loads it everywhere.
       </p>
 
       {params.loaded && (

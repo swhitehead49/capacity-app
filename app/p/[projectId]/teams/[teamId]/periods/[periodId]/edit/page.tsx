@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getOverride } from "@/src/application/saveOverride";
-import { projectDb } from "@/app/lib/project";
+import { projectDb, sharedDb } from "@/app/lib/project";
 import * as t from "@/src/infrastructure/db/schema";
 import { OverrideForm } from "./OverrideForm";
 import { RevertButtons } from "./RevertButtons";
@@ -13,7 +13,7 @@ export default async function EditOverride({ params }: { params: Promise<{ proje
   const { projectId, teamId, periodId } = await params;
   const db = (await projectDb(projectId)).db;
   const team = await db.query.teams.findFirst({ where: eq(t.teams.id, teamId) });
-  const view = team ? await getOverride(db, { teamId, periodId }).catch(() => null) : null;
+  const view = team ? await getOverride(db, { teamId, periodId }, await sharedDb()).catch(() => null) : null;
   if (!team || !view) notFound();
 
   const applied = view.currentlyApplied;

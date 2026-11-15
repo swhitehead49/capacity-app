@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { loadHolidayCalendar, type LoadResult } from "@/src/application/loadHolidayCalendar";
 import { uploadHolidayCsv } from "@/src/application/uploadHolidayCsv";
-import { formProject, projectDb } from "@/app/lib/project";
+import { formProject, projectDb, sharedDb } from "@/app/lib/project";
 import { fetchOpenHolidays } from "@/src/infrastructure/holidays/openHolidaysClient";
 
 // v1 has one actor (decision 8 Nov 2026).
@@ -15,7 +15,7 @@ export async function loadCalendarAction(form: FormData) {
   const country = String(form.get("country"));
   const year = Number(form.get("year"));
   const fixtureDir = process.env.OPENHOLIDAYS_FIXTURE_DIR; // tests only: read saved answers
-  const result = await loadHolidayCalendar((await projectDb(projectId)).db, ACTOR, {
+  const result = await loadHolidayCalendar(await sharedHolidays(projectId), ACTOR, {
     country, year, fetchEntries: (c, y) => fetchOpenHolidays(c, y, { fixtureDir }),
   });
   showResult(projectId, result, `${country} ${year}`);
@@ -28,7 +28,7 @@ export async function uploadCsvAction(form: FormData) {
   const year = Number(form.get("year"));
   const file = form.get("file");
   const csv = file instanceof File ? await file.text() : "";
-  const result = await uploadHolidayCsv((await projectDb(projectId)).db, ACTOR, { country, year, csv });
+  const result = await uploadHolidayCsv(await sharedHolidays(projectId), ACTOR, { country, year, csv });
   showResult(projectId, result, `${country} ${year}`);
 }
 
@@ -40,4 +40,10 @@ function showResult(projectId: string, result: LoadResult, calendar: string): ne
   const shown = result.errors.slice(0, MAX_SHOWN);
   if (result.errors.length > MAX_SHOWN) shown.push(`...and ${result.errors.length - MAX_SHOWN} more`);
   redirect(`/p/${projectId}/holidays?${new URLSearchParams({ error: shown.join("\n") })}`);
+}
+
+/** Holiday calendars are shared by all projects (sean, 15 Nov 2026). The project is only checked, not used. */
+async function sharedHolidays(projectId: string) {
+  await projectDb(projectId);
+  return sharedDb();
 }

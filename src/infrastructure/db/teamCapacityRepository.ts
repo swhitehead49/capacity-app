@@ -8,10 +8,13 @@ import type { Db } from "./testDb";
 /**
  * Reads everything the capacity engine needs for one team and period from the database,
  * and turns it into the plain shape the domain expects. No calculation happens here.
+ * Country holiday calendars are shared by all projects (sean, 15 Nov 2026), so they are read
+ * from `holidayDb` (the top level); everything else comes from the project's own `db`.
  */
 export async function loadTeamCapacityInput(
   db: Db,
   query: { teamId: string; periodId: string; mode: AvailabilityMode },
+  holidayDb: Db = db,
 ): Promise<TeamCapacityInput> {
   const period = await db.query.planningPeriods.findFirst({ where: eq(t.planningPeriods.id, query.periodId) });
   if (!period) throw new Error(`Unknown planning period ${query.periodId}`);
@@ -51,13 +54,13 @@ export async function loadTeamCapacityInput(
   const regions = [...new Set(rows.flatMap((r) => (r.locations ? [r.locations.code] : [])))];
 
   const holidays = countries.length
-    ? await db.select().from(t.publicHolidays).where(and(
+    ? await holidayDb.select().from(t.publicHolidays).where(and(
         inArray(t.publicHolidays.country, countries),
         gte(t.publicHolidays.date, range.start),
         lte(t.publicHolidays.date, range.end),
       ))
     : [];
-  const calendars = await db.select().from(t.holidayCalendars);
+  const calendars = await holidayDb.select().from(t.holidayCalendars);
   const forecasts = regions.length
     ? await db.select().from(t.availabilityForecasts).where(inArray(t.availabilityForecasts.locationCode, regions))
     : [];

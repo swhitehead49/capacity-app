@@ -27,7 +27,7 @@ export interface PlanRow {
 }
 
 /** UC01: everything the Team Planner shows for one team, as of `today`. */
-export async function getTeamPlan(db: Db, query: { teamId: string; today: string }) {
+export async function getTeamPlan(db: Db, query: { teamId: string; today: string }, holidayDb: Db = db) {
   const team = await db.query.teams.findFirst({ where: eq(t.teams.id, query.teamId) });
   if (!team) throw new Error(`Unknown team ${query.teamId}`);
 
@@ -37,7 +37,7 @@ export async function getTeamPlan(db: Db, query: { teamId: string; today: string
   const horizon = planningHorizon(query.today, periods);
 
   const row = async (periodId: string, editLevel: PlanRow["editLevel"]): Promise<PlanRow> => {
-    const input = await loadTeamCapacityInput(db, { teamId: team.id, periodId, mode: "Auto" });
+    const input = await loadTeamCapacityInput(db, { teamId: team.id, periodId, mode: "Auto" }, holidayDb);
     const result = teamCapacity(input);
     const counted = result.members.filter((m) => m.status !== "Excluded");
     return {

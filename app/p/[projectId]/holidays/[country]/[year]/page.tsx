@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getHolidayCalendar } from "@/src/application/getHolidayCalendar";
-import { projectDb } from "@/app/lib/project";
+import { projectDb, sharedDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export default async function HolidayCalendar({ params, searchParams }: {
 }) {
   const { projectId, country, year } = await params;
   const { region } = await searchParams;
-  const view = await getHolidayCalendar((await projectDb(projectId)).db, { country, year: Number(year), region: region || undefined });
+  const view = await getHolidayCalendar(await sharedHolidayDb(projectId), { country, year: Number(year), region: region || undefined });
 
   return (
     <>
@@ -54,4 +54,10 @@ export default async function HolidayCalendar({ params, searchParams }: {
       </table>
     </>
   );
+}
+
+/** Holiday calendars are shared by all projects (sean, 15 Nov 2026). The project is only checked. */
+async function sharedHolidayDb(projectId: string) {
+  await projectDb(projectId);
+  return sharedDb();
 }

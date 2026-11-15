@@ -58,12 +58,12 @@ export async function saveOverride(db: Db, actor: string, request: SaveOverrideR
 }
 
 /** What the Edit screen needs: the period, its override (if any) and what applies right now. */
-export async function getOverride(db: Db, query: { teamId: string; periodId: string }) {
+export async function getOverride(db: Db, query: { teamId: string; periodId: string }, holidayDb: Db = db) {
   const period = await db.query.planningPeriods.findFirst({ where: eq(t.planningPeriods.id, query.periodId) });
   if (!period) throw new Error(`Unknown planning period ${query.periodId}`);
   const level = levelFor(period.type);
   const row = await findOverride(db, query.teamId, query.periodId, level);
-  const input = await loadTeamCapacityInput(db, { teamId: query.teamId, periodId: query.periodId, mode: "Auto" });
+  const input = await loadTeamCapacityInput(db, { teamId: query.teamId, periodId: query.periodId, mode: "Auto" }, holidayDb);
   const teamDefault = await findTeamDefault(db, query.teamId, period.startDate);
   return {
     period: { id: period.id, type: period.type, start: period.startDate, end: period.endDate },
