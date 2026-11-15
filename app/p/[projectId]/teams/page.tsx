@@ -6,9 +6,9 @@ import { projectDb } from "@/app/lib/project";
 export const dynamic = "force-dynamic";
 
 /** FR-19: every team, active and retired, with links to plan and manage it. */
-export default async function Teams({ params, searchParams }: { params: Promise<{ projectId: string }>; searchParams: Promise<{ warning?: string; valueStream?: string }> }) {
+export default async function Teams({ params, searchParams }: { params: Promise<{ projectId: string }>; searchParams: Promise<{ warning?: string; valueStream?: string; imported?: string }> }) {
   const { projectId } = await params;
-  const { warning, valueStream } = await searchParams;
+  const { warning, valueStream, imported } = await searchParams;
   const db = (await projectDb(projectId)).db;
   const teams = await listTeamsOverview(db, today(), { valueStream: valueStream || undefined });
   const valueStreams = await listValueStreams(db);
@@ -16,9 +16,15 @@ export default async function Teams({ params, searchParams }: { params: Promise<
     <>
       <h1>Teams</h1>
       <p className="muted">{teams.filter((x) => x.status === "Active").length} active of {teams.length}. Retired teams stay here so past periods can still be reported.</p>
-      {warning && <div role="status" className="notice">{warning.split("\n").map((w) => <p key={w}>Added, but note: {w}</p>)}</div>}
+      {(warning || imported) && (
+        <div role="status" className="notice">
+          {imported && <p>Imported {imported} teams.</p>}
+          {warning?.split("\n").map((w) => <p key={w}>Added, but note: {w}</p>)}
+        </div>
+      )}
       <div className="toolbar">
         <Link className="button" href={`/p/${projectId}/teams/new`}>Add team</Link>
+        <Link className="button secondary" href={`/p/${projectId}/teams/import`}>Import from spreadsheet</Link>
         <form className="picker inline" method="get">
           <label>Show value stream
             <select name="valueStream" defaultValue={valueStream ?? ""}>

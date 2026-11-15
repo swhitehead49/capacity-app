@@ -36,6 +36,7 @@ button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; 
 .reference p { margin: 0; }
 .revert { display: flex; gap: 12px; margin-top: 16px; max-width: 720px; }
 button.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+a.button.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
 button.secondary.danger { color: #8a1f1f; border-color: #c98a8a; }
 button:disabled { opacity: 0.45; cursor: default; }
 table + table { margin-top: 32px; }

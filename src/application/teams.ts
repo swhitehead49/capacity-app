@@ -2,7 +2,7 @@ import { and, asc, desc, eq, gt, inArray, isNull, lte, ne, or, sql } from "drizz
 import { nameClashes, sameName, validateTeam, type TeamDraft } from "../domain/organisation/teamRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
-import { getStandardAllocation } from "./standardAllocation";
+import { getStandardAllocation, type StandardAllocation } from "./standardAllocation";
 
 // UC15 add, UC16 rename, UC17 retire (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted; every change is logged.
 
@@ -23,7 +23,15 @@ export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<
   if (clash.errors.length) return { ok: false, errors: clash.errors };
 
   const standard = await getStandardAllocation(db);
-  await db.transaction(async (tx) => {
+  await db.transaction((tx) => insertTeam(tx, actor, team, standard));
+  return { ok: true, id: team.id, warnings: clash.warnings };
+}
+
+/** Saves one new team (already checked): the team, its first name, its first default and the audit log. */
+export async function insertTeam(
+  tx: Pick<Db, "insert">, actor: string, team: TeamDraft & { valueStream: string | null; leadEmail: string | null },
+  standard: StandardAllocation | null,
+): Promise<void> {
     const [row] = await tx.insert(t.teams).values({
       id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail,
     }).returning();
@@ -40,11 +48,9 @@ export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<
         teamId: team.id, level: "Team default", status: "Draft", effectiveFrom: null, overhead: null,
         run: 0, fix: 0, sustain: 0, change: 0, reason: "Created with the team", owner: actor,
       });
-    await tx.insert(t.auditLog).values({
-      actor, entity: "teams", entityId: team.id, action: "add", reason: `Team starts ${team.effectiveFrom}`, before: null, after: row,
-    });
+  await tx.insert(t.auditLog).values({
+    actor, entity: "teams", entityId: team.id, action: "add", reason: `Team starts ${team.effectiveFrom}`, before: null, after: row,
   });
-  return { ok: true, id: team.id, warnings: clash.warnings };
 }
 
 /** UC16: a new name from a date. The ID, members and settings don't change; old names are kept (BR-20). */
@@ -178,6 +184,6 @@ function teamStatus(retiredOn: string | null, today: string): string {
   return retiredOn < today ? `Retired ${formatDay(retiredOn)}` : `Retiring ${formatDay(retiredOn)}`;
 }
 
-async function liveTeams(db: Db) {
+export async function liveTeams(db: Db) {
   return db.select({ id: t.teams.id, name: t.teams.name, valueStream: t.teams.valueStream }).from(t.teams).where(isNull(t.teams.retiredOn));
 }
