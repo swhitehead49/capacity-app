@@ -12,6 +12,7 @@ Decided 8 Nov 2026: a free test copy on **Render** (runs the app) with a free **
 2. Create a project: name `capacity-app`, Postgres version **16**, region **AWS Europe Central (Frankfurt)**.
 3. On the project dashboard click **Connect**. Copy the **connection string**. It looks like
    `postgresql://neondb_owner:…@ep-….eu-central-1.aws.neon.tech/neondb?sslmode=require`.
+   Either the pooled or the direct address works (projects other than Default always use the direct one).
    Keep it somewhere safe for step 2. **Don't paste it into chat**: it works like a password.
 
 ## 2. Create the app on Render (about 5 minutes)

@@ -9,3 +9,11 @@ export function databaseConfig(env: Record<string, string | undefined>): Databas
   }
   return { kind: "folder", dir: env.DATA_DIR ?? "./data/dev" };
 }
+
+/**
+ * Neon gives a pooled address (host ends "-pooler") that refuses the search_path setting each project's
+ * connection uses (bug found 15 Nov 2026). The same host without "-pooler" is the direct address, which accepts it.
+ */
+export function directUrl(url: string): string {
+  return url.replace(/@([^/@?]*?)-pooler\./, "@$1.");
+}

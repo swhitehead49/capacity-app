@@ -7,7 +7,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { Pool } from "pg";
 import { DEFAULT_PROJECT, projectStorageName } from "../../domain/projects/projectRules";
-import { databaseConfig, type DatabaseConfig } from "./databaseConfig";
+import { databaseConfig, directUrl, type DatabaseConfig } from "./databaseConfig";
 import { seedDemoIfEmpty } from "./demoData";
 import { ensureProjectRegistry, ProjectDatabases } from "./projectDatabases";
 import * as schema from "./schema";
@@ -42,13 +42,14 @@ async function openProject(config: DatabaseConfig, projectId: string): Promise<D
   let db: Db;
   if (config.kind === "postgres") {
     const storage = projectStorageName(projectId);
+    const url = isDefault ? config.url : directUrl(config.url); // other projects need search_path: no pooler
     if (!isDefault) {
-      const setup = new Pool({ connectionString: config.url, max: 1 });
+      const setup = new Pool({ connectionString: url, max: 1 });
       await setup.query(`create schema if not exists "${storage}"`);
       await setup.end();
     }
     const pool = new Pool({
-      connectionString: config.url,
+      connectionString: url,
       max: 5,
       ...(isDefault ? {} : { options: `-c search_path="${storage}"` }),
     });
