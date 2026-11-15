@@ -63,3 +63,23 @@ describe("getTeamPlan for DRGW on 8 Nov 2026", () => {
     await expect(getTeamPlan(db, { teamId: "T999", today: "2026-11-08" })).rejects.toThrow("Unknown team T999");
   });
 });
+
+// Country holiday calendars live once, at the top level, and every project uses them (sean, 15 Nov 2026).
+describe("shared holiday calendars", () => {
+  it("a project's planner uses the calendars kept at the top level, not its own", async () => {
+    const query = { teamId: "T017", today: "2026-11-08" };
+    const withOwn = (await getTeamPlan(db, query)).sprints.find((r) => r.periodId === "S001");
+
+    const shared = await createTestDb();
+    await shared.insert(t.publicHolidays).values(
+      (await db.select().from(t.publicHolidays)).map(({ date, country, regions, name }) => ({ date, country, regions, name })),
+    );
+    await shared.insert(t.holidayCalendars).values({ country: "DE", year: 2026, source: "OpenHolidays API" });
+    await db.delete(t.publicHolidays);
+    await db.delete(t.holidayCalendars);
+
+    const withShared = (await getTeamPlan(db, query, shared)).sprints.find((r) => r.periodId === "S001");
+    expect(withShared?.calendarAvailableDays).toBeCloseTo(withOwn!.calendarAvailableDays);
+    expect(withShared?.status).toBe(withOwn?.status);
+  });
+});

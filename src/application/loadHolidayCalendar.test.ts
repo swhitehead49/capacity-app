@@ -108,3 +108,15 @@ describe("listHolidayCalendars", () => {
   });
 });
 
+
+// Country holiday calendars live once, at the top level, and every project uses them (sean, 15 Nov 2026).
+describe("listHolidayCalendars across projects", () => {
+  it("lists what is missing for the countries any project has people in", async () => {
+    const imaging = await createTestDb();
+    await imaging.insert(t.locations).values({ code: "FR-IDF", country: "FR", name: "Paris" });
+    await db.insert(t.locations).values({ code: "DE-BY", country: "DE", name: "Bavaria" });
+    await loadHolidayCalendar(db, actor, { country: "DE", year: 2026, fetchEntries: fromApi(de2026) });
+    const { missing } = await listHolidayCalendars(db, "2026-11-08", [db, imaging]);
+    expect(missing.map((m) => `${m.country} ${m.year}`)).toEqual(["DE 2027", "FR 2026", "FR 2027"]);
+  });
+});

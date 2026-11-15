@@ -57,3 +57,10 @@ test("an unknown project is not found", async ({ page }) => {
   const response = await page.goto("/p/no-such-project/teams");
   expect(response?.status()).toBe(404);
 });
+
+// Country holiday calendars live once, at the top level, and every project uses them (sean, 15 Nov 2026).
+test("every project sees the same holiday calendars", async ({ page }) => {
+  await page.goto("/p/imaging/holidays");
+  await expect(page.getByText("shared by all projects")).toBeVisible();
+  await expect(page.getByRole("table", { name: "Loaded calendars" }).getByRole("row", { name: /DE 2026/ })).toBeVisible();
+});
