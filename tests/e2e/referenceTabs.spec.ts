@@ -24,6 +24,7 @@ test("the Sprint calendar tab shows the shared calendar and its sprints", async 
   await page.getByRole("navigation", { name: "Reference data sections" }).getByRole("link", { name: "Sprint calendar" }).click();
   await expect(page).toHaveURL(/\/reference\/sprint-calendar$/);
   await expect(page.getByText("First sprint starts 26 Oct 2026")).toBeVisible();
-  await expect(page.getByRole("table", { name: "Sprints" }).getByRole("row", { name: /S001/ })).toContainText("26 Oct 2026");
-  await expect(page.getByRole("table", { name: "Sprints" }).getByRole("row", { name: /S002/ })).toContainText("Current");
+  const s001 = page.getByRole("table", { name: "Sprints" }).getByRole("row", { name: /S001/ });
+  await expect(s001).toContainText("26 Oct 2026");
+  await expect(s001).toContainText("Current"); // the test server's today is 8 Nov 2026
 });

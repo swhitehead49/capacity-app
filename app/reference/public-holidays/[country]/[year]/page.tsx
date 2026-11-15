@@ -19,7 +19,7 @@ export default async function HolidayCalendar({ params, searchParams }: {
   return (
     <>
       <p className="muted"><Link href="/reference/public-holidays">← Public holidays</Link></p>
-      <h1>{country} {year} public holidays</h1>
+      <h2>{country} {year} public holidays</h2>
       {view.calendar ? (
         <p className="muted">
           From {view.calendar.source} · {view.holidays.length} shown, {view.weekdayCount} on weekdays
@@ -86,7 +86,7 @@ export default async function HolidayCalendar({ params, searchParams }: {
 
       {view.calendar && (
         <>
-          <h2>Add a holiday</h2>
+          <h3>Add a holiday</h3>
           <p className="muted">Holidays you add or remove here are kept when the calendar is reloaded, and apply to every project.</p>
           <AddHolidayForm country={country} year={year} regions={view.regions} />
         </>

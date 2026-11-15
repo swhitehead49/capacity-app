@@ -73,3 +73,6 @@ fieldset.checks legend { font-size: 13px; color: var(--muted); margin-bottom: 6p
 .role-choice { display: grid; gap: 12px; margin: 12px 0 20px; }
 .role-choice button { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 16px 20px; text-align: left; font-size: 17px; }
 .role-choice button span { font-size: 14px; font-weight: 400; opacity: 0.85; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 16px 0 8px; flex-wrap: wrap; }
+.tabs a { padding: 8px 14px; color: var(--muted); text-decoration: none; border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; margin-bottom: -1px; }
+.tabs a[aria-current="page"] { color: var(--fg); background: #fff; border-color: var(--line); font-weight: 600; }

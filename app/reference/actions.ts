@@ -20,12 +20,12 @@ export async function addLocationAction(previous: FormState, form: FormData): Pr
     code: read(form, "code"), country: read(form, "country"), name: read(form, "name"), standardHours: read(form, "standardHours"),
   });
   if (!result.ok) return failed(previous, form, result.errors);
-  redirect("/reference");
+  redirect("/reference/locations");
 }
 
 export async function addStartingLocationsAction() {
   await addStartingLocations(await sharedDb(), ACTOR);
-  redirect("/reference");
+  redirect("/reference/locations");
 }
 
 export async function updateLocationAction(previous: FormState, form: FormData): Promise<FormState> {
@@ -33,5 +33,5 @@ export async function updateLocationAction(previous: FormState, form: FormData):
     code: read(form, "code"), name: read(form, "name"), standardHours: read(form, "standardHours"),
   });
   if (!result.ok) return failed(previous, form, result.errors);
-  redirect("/reference");
+  redirect("/reference/locations");
 }

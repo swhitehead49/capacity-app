@@ -13,8 +13,8 @@ export default async function EditLocation({ params }: { params: Promise<{ code:
   if (!location) notFound();
   return (
     <>
-        <p className="muted"><Link href="/reference">← Reference data</Link></p>
-        <h1>{location.code}</h1>
+        <p className="muted"><Link href="/reference/locations">← Locations</Link></p>
+        <h2>{location.code}</h2>
         <p className="muted">Country {location.country}. The code and country can&apos;t change, because people&apos;s public holidays depend on them.</p>
         <EditLocationForm code={location.code} values={{ name: location.name, standardHours: location.standardHours === null ? "" : String(location.standardHours) }} />
     </>

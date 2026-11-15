@@ -1,6 +1,5 @@
 import { listHolidayCalendars } from "@/src/application/loadHolidayCalendar";
 import { today } from "@/src/infrastructure/db/appDb";
-import Link from "next/link";
 import { openProjectDbs, sharedDb } from "@/app/lib/project";
 import { loadCalendarAction, uploadCsvAction } from "./actions";
 
@@ -26,8 +25,7 @@ export default async function PublicHolidaysPage({ searchParams }: { searchParam
 
   return (
     <>
-      <p className="muted"><Link href="/reference">← Reference data</Link></p>
-      <h1>Public holidays</h1>
+      <h2>Public holidays</h2>
       <p className="muted">
         Holidays for Germany, France, Austria and Belgium come from the OpenHolidays API.
         A person whose country has no calendar for the year is shown as Provisional.
@@ -79,7 +77,7 @@ export default async function PublicHolidaysPage({ searchParams }: { searchParam
         </tbody>
       </table>
 
-      <h2>Upload a company holiday list</h2>
+      <h3>Upload a company holiday list</h3>
       <p className="muted">
         For countries OpenHolidays doesn&apos;t cover, such as India. Save the list from Excel as CSV with the headings
         {" "}<code>date,name</code>, plus an optional <code>regions</code> column (for example <code>IN-KA</code>; separate several
