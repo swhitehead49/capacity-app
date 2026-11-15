@@ -63,9 +63,10 @@ describe("linkValueStream / unlinkValueStream", () => {
     expect(await linkValueStream(db, actor, { name: "Radiology" })).toEqual({ ok: false, errors: ["Radiology is already in the project"] });
   });
 
-  it("removing a value stream unmaps its teams but keeps them in the project", async () => {
+  it("removing a value stream takes its teams out of the project (sean, 15 Nov 2026): unmapped and Excluded, never deleted", async () => {
     expect(await unlinkValueStream(db, actor, { name: "Radiology" })).toEqual({ ok: true });
-    expect((await team("T1"))?.valueStream).toBeNull();
+    expect(await team("T1")).toMatchObject({ valueStream: null, included: false });
+    expect((await getProjectMakeup(db, today)).unmapped.find((x) => x.id === "T1")?.included).toBe(false);
     expect(await audit()).toMatchObject({ entity: "project_value_streams", entityId: "Radiology", action: "remove", before: { teams: ["T1"] } });
   });
 });

@@ -92,3 +92,10 @@ test("add a value stream to a project, map teams to it, and exclude an unmapped 
   await unmapped.getByRole("button", { name: "Exclude" }).click();
   await expect(page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T900/ })).toContainText("Excluded");
 });
+
+test("removing a value stream takes its teams out of the project (Excluded)", async ({ page }) => {
+  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
+  await page.goto("/p/makeup-test");
+  await page.getByRole("table", { name: "Value streams in this project" }).getByRole("row", { name: /Radiology/ }).getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T500/ })).toContainText("Excluded");
+});
