@@ -42,11 +42,12 @@ export async function linkValueStream(db: Db, actor: string, request: { name: st
   return { ok: true };
 }
 
-/** Takes a value stream out of the project. Its teams stay in the project, without a value stream. */
+/** Takes a value stream out of the project, and its teams with it (Excluded, without a value stream). */
 export async function unlinkValueStream(db: Db, actor: string, request: { name: string }): Promise<MappingResult> {
   if (!(await projectStreamNames(db)).includes(request.name)) return { ok: false, errors: [`${request.name} is not in the project`] };
   await db.transaction(async (tx) => {
-    const unmapped = await tx.update(t.teams).set({ valueStream: null }).where(eq(t.teams.valueStream, request.name)).returning({ id: t.teams.id });
+    // Its teams leave the project too (sean, 15 Nov 2026): unmapped and Excluded, never deleted, so they can come back.
+    const unmapped = await tx.update(t.teams).set({ valueStream: null, included: false }).where(eq(t.teams.valueStream, request.name)).returning({ id: t.teams.id });
     await tx.delete(t.projectValueStreams).where(eq(t.projectValueStreams.name, request.name));
     await tx.insert(t.auditLog).values({
       actor, entity: "project_value_streams", entityId: request.name, action: "remove",
