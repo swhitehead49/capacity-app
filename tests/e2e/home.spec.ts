@@ -50,3 +50,17 @@ test("Capacity App in the top bar goes back to the home screen, to choose again"
   await page.getByRole("button", { name: "Admin" }).click();
   await expect(page).toHaveURL(/\/reference$/);
 });
+
+// sean, 15 Nov 2026: the project home page shows the project's makeup.
+test("the project home page shows the value streams in the project, or an error when there are none", async ({ page }) => {
+  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
+  await page.goto("/p/default");
+  const streams = page.getByRole("table", { name: "Value streams in this project" });
+  await expect(streams.getByRole("row", { name: /Clinical/ })).toBeVisible();
+
+  await page.goto("/projects");
+  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Empty Project");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await page.goto("/p/empty-project");
+  await expect(page.getByRole("alert")).toHaveText("No value streams in the project");
+});
