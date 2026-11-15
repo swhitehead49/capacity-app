@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { asRole, createProject } from "./helpers";
 
 // Projects (decided 15 Nov 2026): every screen belongs to a project, shown in the web address.
 // The test seed adds a second project, "imaging", with one team (T900 Imaging Core).
@@ -50,18 +51,35 @@ test("every project sees the same holiday calendars", async ({ page }) => {
 });
 
 // Projects, step 4 (sean, 15 Nov 2026): create, rename, archive and restore projects.
-test("create a project from the picker; it opens on its empty Teams page", async ({ page }) => {
-  await page.goto("/projects");
+// sean, 15 Nov 2026: adding a project moved to a Projects tab in (system) Reference data, for the Admin.
+test("an Admin adds a project on the Projects tab; managers then find it, empty", async ({ page }) => {
+  await asRole(page, "admin");
+  await page.goto("/reference");
+  await page.getByRole("navigation", { name: "Reference data sections" }).getByRole("link", { name: "Projects" }).click();
+  await expect(page).toHaveURL(/\/reference\/projects$/);
+  await expect(page.getByRole("table", { name: "Projects" }).getByRole("row", { name: /Imaging/ })).toBeVisible();
   const form = page.getByRole("form", { name: "New project" });
   await form.getByLabel("Project name").fill("Cardiology");
   await form.getByRole("button", { name: "Create project" }).click();
-  await expect(page).toHaveURL(/\/p\/cardiology\/teams$/);
+  await expect(page.getByRole("status")).toContainText("Created Cardiology");
+  await expect(page.getByRole("table", { name: "Projects" }).getByRole("row", { name: /Cardiology/ })).toBeVisible();
+
+  await asRole(page, "manager");
+  await page.goto("/projects");
+  await page.getByRole("list", { name: "Projects" }).getByRole("link", { name: /Cardiology/ }).click();
   await expect(page.getByRole("banner")).toContainText("Cardiology");
+  await page.goto("/p/cardiology/teams");
   await expect(page.getByText("0 active of 0")).toBeVisible();
 });
 
-test("a project name that is already used is explained", async ({ page }) => {
+test("Engineering managers can't add projects", async ({ page }) => {
   await page.goto("/projects");
+  await expect(page.getByRole("form", { name: "New project" })).toHaveCount(0);
+});
+
+test("a project name that is already used is explained", async ({ page }) => {
+  await asRole(page, "admin");
+  await page.goto("/reference/projects");
   const form = page.getByRole("form", { name: "New project" });
   await form.getByLabel("Project name").fill("imaging");
   await form.getByRole("button", { name: "Create project" }).click();
@@ -72,10 +90,7 @@ const asManager = (page: import("@playwright/test").Page) =>
   page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
 
 test("rename, archive and restore a project from its Project reference data", async ({ page }) => {
-  await asManager(page);
-  await page.goto("/projects");
-  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Oncology");
-  await page.getByRole("button", { name: "Create project" }).click();
+  await createProject(page, "Oncology");
   await page.goto("/p/oncology/teams");
   await page.getByRole("banner").getByRole("link", { name: "Project reference data" }).click();
   const rename = page.getByRole("form", { name: "Rename project" });

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createProject } from "./helpers";
 
 // sean, 15 Nov 2026: the app opens on a home screen with no menu that asks who you are.
 // These tests start with no role chosen (the other specs run as an Admin).
@@ -54,9 +55,7 @@ test("Capacity App in the top bar goes back to the home screen, to choose again"
 // sean, 15 Nov 2026: the project home page shows the project's makeup.
 test("the project home page shows the value streams in the project, or an error when there are none", async ({ page }) => {
   await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
-  await page.goto("/projects");
-  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Makeup Test");
-  await page.getByRole("button", { name: "Create project" }).click();
+  await createProject(page, "Makeup Test");
   await page.goto("/p/makeup-test");
   await expect(page.getByRole("alert")).toHaveText("No value streams in the project");
 

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createProject } from "./helpers";
 
 // sean, 15 Nov 2026: Reference data has a tab for each section, plus a Sprint calendar tab.
 test.use({ storageState: "tests/e2e/admin-role.json" });
@@ -6,7 +7,7 @@ test.use({ storageState: "tests/e2e/admin-role.json" });
 test("Reference data has a tab for each section", async ({ page }) => {
   await page.goto("/reference");
   const tabs = page.getByRole("navigation", { name: "Reference data sections" });
-  await expect(tabs.getByRole("link")).toHaveText(["Value streams", "Locations", "Public holidays", "Sprint calendar", "Standard allocation"]);
+  await expect(tabs.getByRole("link")).toHaveText(["Value streams", "Locations", "Public holidays", "Sprint calendar", "Standard allocation", "Projects"]);
   await expect(tabs.getByRole("link", { name: "Value streams" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("table", { name: "Value streams" })).toBeVisible();
   await expect(page.getByRole("table", { name: "Locations" })).toHaveCount(0);
@@ -51,10 +52,7 @@ test("set the system standard allocation; a project without its own uses it", as
   await form.getByRole("button", { name: "Save standard allocation" }).click();
   await expect(page.getByRole("status")).toContainText("Saved");
 
-  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
-  await page.goto("/projects");
-  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Uses System");
-  await page.getByRole("button", { name: "Create project" }).click();
+  await createProject(page, "Uses System");
   await page.goto("/p/uses-system/project-reference");
   await expect(page.getByText("Using the system standard allocation")).toBeVisible();
 });
