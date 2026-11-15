@@ -196,6 +196,6 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 ## Standard allocation (added 15 Nov 2026)
 
 Each project has one **standard allocation**: overhead %, contingency % and the Run/Fix/Sustain/Change/Enabling-Training split,
-set on the project's Settings page with the same rules as an Active team default (BR-01 to BR-03).
+set on the Reference data page (in the current project's section; Settings was merged into it on 15 Nov 2026) with the same rules as an Active team default (BR-01 to BR-03).
 A team added to the project starts with it as an Active team default from its start date. Without one, a new team
 starts with a Draft default (BR-17). Changing the standard never changes existing teams.
