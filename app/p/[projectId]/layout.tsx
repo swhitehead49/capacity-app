@@ -12,6 +12,7 @@ export default async function ProjectLayout({ children, params }: { children: Re
         <a href={base}>Capacity App</a>
         <span className="project" aria-label="Project">{project.name}</span>
         <nav><a href={`${base}/teams`}>Teams</a><a href={`${base}/holidays`}>Holidays</a></nav>
+        <a className="switch" href="/projects">Switch project</a>
       </header>
       <main>{children}</main>
     </>

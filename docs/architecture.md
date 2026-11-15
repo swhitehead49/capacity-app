@@ -42,3 +42,6 @@ because the same migrations build every project's tables.
 Every screen lives under `/p/<project>/…` (`app/p/[projectId]`). Pages and server actions get their database
 through `projectDb(projectId)` in `app/lib/project.ts`, which answers "not found" for an unknown project.
 Forms send the project as a hidden `projectId` field (`ActionForm` adds it from the web address).
+
+`/` opens the project used last (cookie `capacity-project`, set by `middleware.ts` on any `/p/<project>` page),
+or the picker at `/projects` when there is none or it is archived (`startAddress` in `projectRules.ts`).
