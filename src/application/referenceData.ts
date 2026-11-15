@@ -1,4 +1,4 @@
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { sameName } from "../domain/organisation/teamRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
@@ -34,12 +34,11 @@ export async function addLocation(
   const code = request.code.trim().toUpperCase();
   const country = request.country.trim().toUpperCase();
   const name = request.name.trim();
-  const hours = request.standardHours.trim() === "" ? null : Number(request.standardHours);
+  const hours = readHours(request.standardHours);
   const errors: string[] = [];
   if (!/^[A-Z]{2}(-[A-Z0-9]{1,3})?$/.test(code)) errors.push("Code must be a country code with an optional region, such as DE or DE-BY");
   if (!/^[A-Z]{2}$/.test(country)) errors.push("Country must be a 2-letter country code, such as DE");
-  if (!name) errors.push("Name is needed");
-  if (hours !== null && !(hours > 0)) errors.push("Standard hours must be a number above 0, or blank");
+  errors.push(...locationProblems(name, hours));
   if (!errors.length && code.slice(0, 2) !== country) errors.push(`The code ${code} doesn't start with the country ${country}`);
   if (errors.length) return { ok: false, errors };
   if ((await getReferenceData(shared)).locations.some((l) => l.code === code)) return { ok: false, errors: [`${code} is already a location`] };
@@ -50,6 +49,36 @@ export async function addLocation(
     await tx.insert(t.auditLog).values({ actor, entity: "locations", entityId: code, action: "add", before: null, after: location });
   });
   return { ok: true };
+}
+
+/** Change a location's name and standard hours (sean, 15 Nov 2026). The code and country stay as they are. */
+export async function updateLocation(
+  shared: Db, actor: string, request: { code: string; name: string; standardHours: string },
+): Promise<ReferenceResult> {
+  const current = (await getReferenceData(shared)).locations.find((l) => l.code === request.code);
+  if (!current) return { ok: false, errors: [`Unknown location ${request.code}`] };
+  const name = request.name.trim();
+  const standardHours = readHours(request.standardHours);
+  const errors = locationProblems(name, standardHours);
+  if (errors.length) return { ok: false, errors };
+  if (name === current.name && standardHours === current.standardHours) return { ok: false, errors: ["Nothing has changed"] };
+  await shared.transaction(async (tx) => {
+    await tx.update(t.locations).set({ name, standardHours }).where(eq(t.locations.code, current.code));
+    await tx.insert(t.auditLog).values({
+      actor, entity: "locations", entityId: current.code, action: "change",
+      before: { name: current.name, standardHours: current.standardHours }, after: { name, standardHours },
+    });
+  });
+  return { ok: true };
+}
+
+const readHours = (raw: string) => (raw.trim() === "" ? null : Number(raw));
+
+function locationProblems(name: string, hours: number | null): string[] {
+  const errors: string[] = [];
+  if (!name) errors.push("Name is needed");
+  if (hours !== null && !(hours > 0)) errors.push("Standard hours must be a number above 0, or blank");
+  return errors;
 }
 
 /** The locations of the original workbook's LocationProfiles sheet, as ISO region codes, plus the India office (sean, 15 Nov 2026). */
