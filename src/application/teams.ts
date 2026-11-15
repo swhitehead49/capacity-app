@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gt, inArray, isNull, lte, ne, or, sql } from "drizz
 import { nameClashes, sameName, validateTeam, type TeamDraft } from "../domain/organisation/teamRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
+import { getStandardAllocation } from "./standardAllocation";
 
 // UC15 add, UC16 rename, UC17 retire (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted; every change is logged.
 
@@ -10,7 +11,7 @@ export type TeamResult = { ok: true; id: string; warnings: string[] } | { ok: fa
 const day = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const formatDay = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
 
-/** UC15: a new team with a permanent ID, its first name, and a Draft default (BR-17). */
+/** UC15: a new team with a permanent ID, its first name, and the project's standard allocation (or a Draft default, BR-17). */
 export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<TeamResult> {
   const team = { ...draft, id: draft.id.trim(), name: draft.name.trim(), valueStream: draft.valueStream?.trim() || null, leadEmail: draft.leadEmail?.trim() || null };
   const errors = validateTeam(team);
@@ -21,15 +22,24 @@ export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<
   const clash = nameClashes(team.name, team.valueStream, await liveTeams(db));
   if (clash.errors.length) return { ok: false, errors: clash.errors };
 
+  const standard = await getStandardAllocation(db);
   await db.transaction(async (tx) => {
     const [row] = await tx.insert(t.teams).values({
       id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail,
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
-    await tx.insert(t.allocationSettings).values({
-      teamId: team.id, level: "Team default", status: "Draft", effectiveFrom: null, overhead: null,
-      run: 0, fix: 0, sustain: 0, change: 0, reason: "Created with the team", owner: actor,
-    });
+    await tx.insert(t.allocationSettings).values(standard
+      // The project's standard allocation, in force from the team's start date (sean, 15 Nov 2026).
+      ? {
+        teamId: team.id, level: "Team default", status: "Active", effectiveFrom: team.effectiveFrom,
+        overhead: standard.overhead, contingency: standard.contingency, ...standard.split,
+        reason: "Project standard allocation", owner: actor,
+      }
+      // No standard: a Draft default, so the planner shows calendar capacity only (BR-17).
+      : {
+        teamId: team.id, level: "Team default", status: "Draft", effectiveFrom: null, overhead: null,
+        run: 0, fix: 0, sustain: 0, change: 0, reason: "Created with the team", owner: actor,
+      });
     await tx.insert(t.auditLog).values({
       actor, entity: "teams", entityId: team.id, action: "add", reason: `Team starts ${team.effectiveFrom}`, before: null, after: row,
     });

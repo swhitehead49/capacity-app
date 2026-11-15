@@ -4,7 +4,7 @@ import { today } from "@/src/infrastructure/db/appDb";
 import { projectDb } from "@/app/lib/project";
 import { AddTeamForm } from "../TeamForms";
 
-/** UC15: add a team. It starts with a Draft default, so the planner shows calendar capacity only (BR-17). */
+/** UC15: add a team. It starts with the project's standard allocation, or a Draft default if there is none (BR-17). */
 export const dynamic = "force-dynamic";
 
 export default async function NewTeam({ params }: { params: Promise<{ projectId: string }> }) {
@@ -13,7 +13,9 @@ export default async function NewTeam({ params }: { params: Promise<{ projectId:
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams`}>← Teams</Link></p>
       <h1>Add a team</h1>
-      <p className="muted">The ID is permanent and can never be reused. The team starts with a Draft default; set its default to make the planner&apos;s numbers Ready.</p>
+      <p className="muted">The ID is permanent and can never be reused. The team starts with the project&apos;s{" "}
+        <Link href={`/p/${projectId}/settings`}>standard allocation</Link> as its default, from its start date.
+        If the project has none yet, it starts with a Draft default and the planner shows calendar capacity only.</p>
       <AddTeamForm today={today()} valueStreams={await listValueStreams((await projectDb(projectId)).db)} />
     </>
   );

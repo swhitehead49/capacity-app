@@ -126,6 +126,18 @@ export const allocationSettings = pgTable("allocation_settings", {
   owner: text("owner"),
 }, (t) => [check("level_needs_period", sql`(${t.level} = 'Team default') = (${t.periodId} is null)`)]);
 
+/** Standard allocation (sean, 15 Nov 2026): the project's default work allocations that a new team adopts. One row. */
+export const standardAllocation = pgTable("standard_allocation", {
+  id: integer("id").primaryKey(), // always 1
+  overhead: numeric("overhead", { mode: "number" }).notNull(),
+  contingency: numeric("contingency", { mode: "number" }).notNull(),
+  run: numeric("run", { mode: "number" }).notNull(),
+  fix: numeric("fix", { mode: "number" }).notNull(),
+  sustain: numeric("sustain", { mode: "number" }).notNull(),
+  change: numeric("change", { mode: "number" }).notNull(),
+  enabling: numeric("enabling", { mode: "number" }).notNull(),
+});
+
 /** FR-15: data-quality issue log. */
 export const dataQualityIssues = pgTable("data_quality_issues", {
   id: text("id").primaryKey(),

@@ -29,7 +29,7 @@ export default async function TeamDefault({ params }: { params: Promise<{ projec
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams/${team.id}`}>← {team.name} planner</Link></p>
       <h1>{team.name} default</h1>
-      <p className="muted">How the team&apos;s capacity is split when no quarter or sprint override applies. Overhead comes off first, then contingency is held back, and the rest is split across Run, Fix, Sustain and Change.</p>
+      <p className="muted">How the team&apos;s capacity is split when no quarter or sprint override applies. Overhead comes off first, then contingency is held back, and the rest is split across Run, Fix, Sustain, Change and Enabling/Training.</p>
 
       <section aria-label="In force today" className="reference">
         <h2>In force today <span className="muted">({formatDate(today())})</span></h2>

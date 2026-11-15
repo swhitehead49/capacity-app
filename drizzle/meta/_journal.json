@@ -43,6 +43,13 @@
       "when": 1794759894903,
       "tag": "0005_enabling_training",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794760202295,
+      "tag": "0006_standard_allocation",
+      "breakpoints": true
     }
   ]
 }

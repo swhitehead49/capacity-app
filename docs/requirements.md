@@ -187,3 +187,10 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 - Different sprint calendars for each team
 - Checking that a person's allocations across teams add up to 100% or less
 - Fiscal quarters
+
+## Standard allocation (added 15 Nov 2026)
+
+Each project has one **standard allocation**: overhead %, contingency % and the Run/Fix/Sustain/Change/Enabling-Training split,
+set on the project's Settings page with the same rules as an Active team default (BR-01 to BR-03).
+A team added to the project starts with it as an Active team default from its start date. Without one, a new team
+starts with a Draft default (BR-17). Changing the standard never changes existing teams.
