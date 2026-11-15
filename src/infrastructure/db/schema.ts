@@ -24,6 +24,8 @@ export const teams = pgTable("teams", {
   sourceHeadcount: integer("source_headcount"),
   idStatus: text("id_status").notNull().default("Provisional"), // Provisional until confirmed with the group leads (Q5)
   dataQualityFlag: text("data_quality_flag"),
+  // A team without a value stream can be left out of the project (sean, 15 Nov 2026). Teams in a value stream are always in.
+  included: boolean("included").notNull().default(true),
   retiredOn: date("retired_on"),
 });
 
@@ -54,6 +56,11 @@ export const locations = pgTable("locations", {
  * system's list, shared by every project (like \`locations\`, whose Default copy is the system's list of locations).
  */
 export const valueStreams = pgTable("value_streams", {
+  name: text("name").primaryKey(),
+});
+
+/** The value streams in this project (sean, 15 Nov 2026), picked from the system's list. Teams are mapped to them. */
+export const projectValueStreams = pgTable("project_value_streams", {
   name: text("name").primaryKey(),
 });
 

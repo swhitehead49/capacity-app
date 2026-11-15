@@ -54,7 +54,7 @@ export default async function Teams({ params, searchParams }: { params: Promise<
         <tbody key={stream}>
           <tr className="group"><th colSpan={10} scope="rowgroup">{stream}</th></tr>
           {group.map((x) => (
-            <tr key={x.id} className={x.status.startsWith("Retired") ? "muted" : ""}>
+            <tr key={x.id} className={x.status.startsWith("Retired") || !x.included ? "muted" : ""}>
               <td>{x.id}</td>
               <td>{x.name}</td>
               <td>{x.valueStream}</td>
@@ -62,7 +62,7 @@ export default async function Teams({ params, searchParams }: { params: Promise<
               <td>{x.baseLocation ?? ""}</td>
               <td>{x.leadEmail}</td>
               <td>{x.members}</td>
-              <td>{x.status}</td>
+              <td>{x.status}{!x.included && " · excluded from project"}</td>
               <td><Link className="edit" href={`/p/${projectId}/teams/${x.id}`}>Planner</Link></td>
               <td><Link className="edit" href={`/p/${projectId}/teams/${x.id}/manage`}>Manage</Link></td>
             </tr>

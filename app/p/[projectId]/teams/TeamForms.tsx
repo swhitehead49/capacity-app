@@ -5,8 +5,10 @@ import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
 import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, updateTeamDetailsAction, renameTeamAction, retireTeamAction } from "./actions";
 
 export interface Option { value: string; label: string }
+/** The project's value streams first, then the rest of the system's list (sean, 15 Nov 2026). */
+export interface ValueStreamChoices { inProject: string[]; others: string[] }
 
-export function AddTeamForm({ today, valueStreams, locations }: { today: string; valueStreams: string[]; locations: Option[] }) {
+export function AddTeamForm({ today, valueStreams, locations }: { today: string; valueStreams: ValueStreamChoices; locations: Option[] }) {
   return (
     <ActionForm action={addTeamAction} hidden={{}} values={{ effectiveFrom: today }} submitLabel="Add team" label="Add team">
       {(v) => (
@@ -55,18 +57,21 @@ export function RetireForm({ teamId, teams }: { teamId: string; teams: Option[] 
 }
 
 /** A value stream from the system's reference data (sean, 15 Nov 2026). */
-function ValueStreamSelect({ value, valueStreams }: { value: string | undefined; valueStreams: string[] }) {
+function ValueStreamSelect({ value, valueStreams }: { value: string | undefined; valueStreams: ValueStreamChoices }) {
   return (
     <label>Value stream
       <select name="valueStream" defaultValue={value ?? ""}>
         <option value="">(none)</option>
-        {valueStreams.map((v) => <option key={v} value={v}>{v}</option>)}
+        <optgroup label="In this project">{valueStreams.inProject.map((v) => <option key={v} value={v}>{v}</option>)}</optgroup>
+        {valueStreams.others.length > 0 && (
+          <optgroup label="Other value streams (adds it to the project)">{valueStreams.others.map((v) => <option key={v} value={v}>{v}</option>)}</optgroup>
+        )}
       </select>
     </label>
   );
 }
 
-export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: string; current: string; valueStreams: string[] }) {
+export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: string; current: string; valueStreams: ValueStreamChoices }) {
   return (
     <ActionForm action={changeValueStreamAction} hidden={{ teamId }} values={{ valueStream: current }} submitLabel="Change value stream" label="Value stream">
       {(v) => (

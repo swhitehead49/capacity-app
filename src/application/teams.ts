@@ -50,6 +50,7 @@ export async function insertTeam(
       ...emptyTeamDetails(), ...definedOnly(pickDetails(team)),
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
+    if (team.valueStream) await linkToProject(tx, team.valueStream);
     await tx.insert(t.allocationSettings).values(standard
       // The project's standard allocation, in force from the team's start date (sean, 15 Nov 2026).
       ? {
@@ -152,12 +153,18 @@ export async function changeValueStream(db: Db, actor: string, request: { teamId
 
   await db.transaction(async (tx) => {
     await tx.update(t.teams).set({ valueStream }).where(eq(t.teams.id, team.id));
+    if (valueStream) await linkToProject(tx, valueStream);
     await tx.insert(t.auditLog).values({
       actor, entity: "teams", entityId: team.id, action: "change value stream",
       before: { valueStream: team.valueStream }, after: { valueStream },
     });
   });
   return { ok: true, id: team.id, warnings: clash.warnings };
+}
+
+/** A team's value stream is always one of the project's (sean, 15 Nov 2026): using one adds it to the project. */
+async function linkToProject(tx: Pick<Db, "insert">, valueStream: string) {
+  await tx.insert(t.projectValueStreams).values({ name: valueStream }).onConflictDoNothing();
 }
 
 /** Where the team is based (sean, 15 Nov 2026). Blank = not set. Members keep their own location for public holidays. */

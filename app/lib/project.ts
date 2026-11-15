@@ -3,6 +3,7 @@ import { getDb, getProjectDb } from "@/src/infrastructure/db/appDb";
 import { findProject, listProjects } from "@/src/infrastructure/db/projectDatabases";
 import { getReferenceData, syncLocations } from "@/src/application/referenceData";
 import { listLocations } from "@/src/application/lookups";
+import { projectStreamNames } from "@/src/application/projectValueStreams";
 import type { Db } from "@/src/infrastructure/db/testDb";
 
 /** The project named in the web address and its database. An unknown project shows "not found". */
@@ -35,5 +36,7 @@ export async function openProjectDbs() {
 export async function projectReference(db: Db) {
   const shared = await sharedDb();
   await syncLocations(db, shared);
-  return { valueStreams: (await getReferenceData(shared)).valueStreams, locations: await listLocations(db) };
+  const inProject = await projectStreamNames(db);
+  const others = (await getReferenceData(shared)).valueStreams.filter((v) => !inProject.includes(v));
+  return { valueStreams: { inProject, others }, locations: await listLocations(db) };
 }
