@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { getSprintCalendar, setUpSprintCalendar } from "./sprintCalendar";
+import { ensurePeriods } from "./ensurePeriods";
+import { extendSprintCalendar, getSprintCalendar, setUpSprintCalendar } from "./sprintCalendar";
 
 // The sprint calendar tab in Reference data (sean, 15 Nov 2026). One calendar, shared by all projects.
 // It can be set up once; after that it is shown read-only, because sprints already created never change.
@@ -17,7 +18,7 @@ beforeEach(async () => {
 
 describe("getSprintCalendar", () => {
   it("is not set up yet on a fresh system", async () => {
-    expect(await getSprintCalendar(shared, today)).toEqual({ settings: null, sprints: [], quarters: [], canChange: true });
+    expect(await getSprintCalendar(shared, today)).toEqual({ settings: null, extendedTo: null, sprints: [], quarters: [], canChange: true });
   });
 
   it("shows the settings and the sprints and quarters they give", async () => {
@@ -47,5 +48,39 @@ describe("setUpSprintCalendar", () => {
     expect(await setUpSprintCalendar(shared, actor, { ...setup, sprintLengthDays: "21" }, today))
       .toEqual({ ok: false, errors: ["The sprint calendar is already set up"] });
     expect((await getSprintCalendar(shared, today)).canChange).toBe(false);
+  });
+});
+
+// sean, 15 Nov 2026: "can we extend the sprint calendar to Q4 2029".
+describe("extendSprintCalendar", () => {
+  beforeEach(async () => { await setUpSprintCalendar(shared, actor, setup, today); });
+
+  it("extends the calendar to the end of a chosen quarter, and logs it", async () => {
+    expect(await extendSprintCalendar(shared, actor, "2029-Q4", today)).toEqual({ ok: true });
+    const view = await getSprintCalendar(shared, today);
+    expect(view.extendedTo).toBe("2029-Q4");
+    expect(view.quarters.at(-1)?.id).toBe("2029-Q4");
+    expect(view.sprints.at(-1)?.parentId).toBe("2029-Q4");
+    expect((await shared.select().from(t.auditLog)).at(-1)).toMatchObject({ entity: "timeline_settings", action: "extend" });
+  });
+
+  it("new sprints reach every project's planner list", async () => {
+    await extendSprintCalendar(shared, actor, "2029-Q4", today);
+    const project = await createTestDb();
+    await ensurePeriods(project, today, shared);
+    const ids = (await project.select().from(t.planningPeriods)).map((p) => p.id);
+    expect(ids).toContain("2029-Q4");
+  });
+
+  it("refuses a quarter that isn't real, or one earlier than the current extension", async () => {
+    expect(await extendSprintCalendar(shared, actor, "2029-Q5", today)).toMatchObject({ ok: false });
+    await extendSprintCalendar(shared, actor, "2029-Q4", today);
+    expect(await extendSprintCalendar(shared, actor, "2028-Q4", today))
+      .toEqual({ ok: false, errors: ["The calendar already runs to 2029-Q4; it can only be extended further"] });
+  });
+
+  it("needs the calendar to be set up first", async () => {
+    expect(await extendSprintCalendar(await createTestDb(), actor, "2029-Q4", today))
+      .toEqual({ ok: false, errors: ["Set up the sprint calendar first"] });
   });
 });

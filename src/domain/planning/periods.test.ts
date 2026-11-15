@@ -66,4 +66,17 @@ describe("periodsNeeded", () => {
     expect(later.filter((p) => p.type === "Sprint").at(-1)?.start ?? "").toBe("2027-09-27"); // last sprint starting by 30 Sep 2027
     expect(later.filter((p) => p.type === "Quarter").at(-1)?.id).toBe("2028-Q4");
   });
+
+  // sean, 15 Nov 2026: the Admin can extend the calendar further ahead, e.g. to 2029-Q4.
+  it("an extension creates every sprint and quarter up to the end of that quarter", () => {
+    const needed = periodsNeeded("2026-11-08", { ...timeline, extendTo: "2029-12-31" });
+    expect(needed.filter((p) => p.type === "Quarter").map((p) => p.id).at(-1)).toBe("2029-Q4");
+    const lastSprint = needed.filter((p) => p.type === "Sprint").at(-1)!;
+    expect(lastSprint.start <= "2029-12-31" && lastSprint.end >= "2029-12-31").toBe(true);
+  });
+
+  it("an extension never shortens the automatic horizon", () => {
+    expect(periodsNeeded("2026-11-08", { ...timeline, extendTo: "2026-12-31" }))
+      .toEqual(periodsNeeded("2026-11-08", timeline));
+  });
 });

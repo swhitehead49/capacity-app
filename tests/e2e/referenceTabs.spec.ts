@@ -29,6 +29,16 @@ test("the Sprint calendar tab shows the shared calendar and its sprints", async 
   await expect(s001).toContainText("Current"); // the test server's today is 8 Nov 2026
 });
 
+// sean, 15 Nov 2026: "can we extend the sprint calendar to Q4 2029".
+test("extend the sprint calendar to a later quarter", async ({ page }) => {
+  await page.goto("/reference/sprint-calendar");
+  const form = page.getByRole("form", { name: "Extend calendar" });
+  await form.getByLabel("Extend calendar to").selectOption("2029-Q4");
+  await form.getByRole("button", { name: "Extend calendar" }).click();
+  await expect(page.getByText("Extended to the end of 2029-Q4")).toBeVisible();
+  await expect(page.getByRole("table", { name: "Quarters" }).getByRole("row").last()).toContainText("2029-Q4");
+});
+
 // sean, 15 Nov 2026: a system standard allocation that projects use until they set their own.
 test("set the system standard allocation; a project without its own uses it", async ({ page }) => {
   await page.goto("/reference");
