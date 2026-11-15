@@ -86,6 +86,7 @@ test("add a value stream to a project, map teams to it, and exclude an unmapped 
   await expect(page.getByRole("table", { name: "Teams in Clinical" }).getByRole("row", { name: /T900/ })).toBeVisible();
 
   await page.getByRole("table", { name: "Teams in Clinical" }).getByRole("row", { name: /T900/ }).getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByRole("table", { name: "Teams in Clinical" }).getByRole("row", { name: /T900/ })).toHaveCount(0);
   await page.goto("/p/imaging");
   const unmapped = page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T900/ });
   await expect(unmapped).toContainText("Included");

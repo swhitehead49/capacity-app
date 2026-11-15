@@ -6,7 +6,7 @@ test.use({ storageState: "tests/e2e/admin-role.json" });
 test("Reference data has a tab for each section", async ({ page }) => {
   await page.goto("/reference");
   const tabs = page.getByRole("navigation", { name: "Reference data sections" });
-  await expect(tabs.getByRole("link")).toHaveText(["Value streams", "Locations", "Public holidays", "Sprint calendar"]);
+  await expect(tabs.getByRole("link")).toHaveText(["Value streams", "Locations", "Public holidays", "Sprint calendar", "Standard allocation"]);
   await expect(tabs.getByRole("link", { name: "Value streams" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("table", { name: "Value streams" })).toBeVisible();
   await expect(page.getByRole("table", { name: "Locations" })).toHaveCount(0);

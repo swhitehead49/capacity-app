@@ -4,7 +4,7 @@ import { definedOnly, nameClashes, sameName, validateTeam, type TeamDraft } from
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import { getReferenceData, syncLocations } from "./referenceData";
-import { getStandardAllocation, type StandardAllocation } from "./standardAllocation";
+import { resolveStandard, type StandardAllocation } from "./standardAllocation";
 
 // UC15 add, UC16 rename, UC17 retire (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted; every change is logged.
 
@@ -34,7 +34,7 @@ export async function addTeam(db: Db, actor: string, draft: TeamDraft, shared: D
   const clash = nameClashes(team.name, team.valueStream, await liveTeams(db));
   if (clash.errors.length) return { ok: false, errors: clash.errors };
 
-  const standard = await getStandardAllocation(db);
+  const standard = (await resolveStandard(db, shared))?.standard ?? null;
   if (team.baseLocation) await syncLocations(db, shared);
   await db.transaction((tx) => insertTeam(tx, actor, team, standard));
   return { ok: true, id: team.id, warnings: clash.warnings };

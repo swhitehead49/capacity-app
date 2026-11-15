@@ -88,7 +88,7 @@ describe("system standard allocation", () => {
     expect(await resolveStandard(project, db)).toEqual({ standard: system, source: "System" });
     await addTeam(project, actor, newTeam, db);
     const { current } = await getTeamDefaults(project, { teamId: "T100", today: "2026-11-15" });
-    expect(current).toMatchObject({ status: "Active", overhead: 0.1, run: 0.3 });
+    expect(current).toMatchObject({ status: "Active", overhead: 0.1, split: system.split });
   });
 
   it("a project's own standard wins, and it can go back to the system one", async () => {

@@ -3,7 +3,7 @@ import { readTeamCsv } from "../domain/organisation/teamCsv";
 import { nameClashes } from "../domain/organisation/teamRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
-import { getStandardAllocation } from "./standardAllocation";
+import { resolveStandard } from "./standardAllocation";
 import { syncLocations } from "./referenceData";
 import { insertTeam, liveTeams, referenceChecker } from "./teams";
 
@@ -33,7 +33,7 @@ export async function importTeams(db: Db, actor: string, request: { csv: string;
   }
   if (problems.length) return { ok: false, errors: problems };
 
-  const standard = await getStandardAllocation(db);
+  const standard = (await resolveStandard(db, shared))?.standard ?? null;
   if (rows.some((r) => r.baseLocation)) await syncLocations(db, shared);
   await db.transaction(async (tx) => {
     for (const { line: _line, ...team } of rows) await insertTeam(tx, actor, team, standard);
