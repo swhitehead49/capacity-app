@@ -24,12 +24,6 @@ export function projectStorageName(projectId: string): string {
   return projectId === DEFAULT_PROJECT ? "public" : `project_${projectId.replaceAll("-", "_")}`;
 }
 
-/** Where the app opens: the project used last, if it is still open; otherwise the project picker. */
-export function startAddress(remembered: string | undefined, projects: { id: string; archivedAt: Date | null }[]): string {
-  const project = projects.find((p) => p.id === remembered && p.archivedAt === null);
-  return project ? `/p/${project.id}` : "/projects";
-}
-
 /** The project in a web address such as /p/imaging/teams, or null when the address is not inside a project. */
 export function projectInAddress(pathname: string): string | null {
   const id = /^\/p\/([^/]+)/.exec(pathname)?.[1];
