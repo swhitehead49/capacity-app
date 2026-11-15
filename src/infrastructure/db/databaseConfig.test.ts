@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { databaseConfig } from "./databaseConfig";
+import { databaseConfig, directUrl } from "./databaseConfig";
 
 // Hosting (8 Nov 2026): on your own computer the data lives in a folder; when hosted it lives in
 // an online Postgres database given by DATABASE_URL.
@@ -20,5 +20,18 @@ describe("databaseConfig", () => {
 
   it("refuses a DATABASE_URL that isn't a Postgres address, so a typo can't go unnoticed", () => {
     expect(() => databaseConfig({ DATABASE_URL: "mysql://x" })).toThrow("DATABASE_URL must start with postgres:// or postgresql://");
+  });
+});
+
+// Bug, 15 Nov 2026: creating a project crashed on Render. Neon's pooled address ("-pooler") refuses the
+// search_path setting each project's connection needs, so projects other than Default use the direct address.
+describe("directUrl", () => {
+  it("removes -pooler from a Neon address, keeping everything else", () => {
+    expect(directUrl("postgresql://u:p@ep-cool-name-123-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require"))
+      .toBe("postgresql://u:p@ep-cool-name-123.eu-central-1.aws.neon.tech/neondb?sslmode=require");
+  });
+
+  it("leaves any other address alone", () => {
+    expect(directUrl("postgresql://u:p@localhost:5499/db")).toBe("postgresql://u:p@localhost:5499/db");
   });
 });
