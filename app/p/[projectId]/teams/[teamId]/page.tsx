@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ensurePeriods } from "@/src/application/ensurePeriods";
 import { getTeamPlan, type PlanRow } from "@/src/application/getTeamPlan";
-import { today } from "@/src/infrastructure/db/appDb";
+import { getDb, today } from "@/src/infrastructure/db/appDb";
 import { projectDb } from "@/app/lib/project";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function TeamPlanner({ params }: { params: Promise<{ projectId: string; teamId: string }> }) {
   const { projectId, teamId } = await params;
   const db = (await projectDb(projectId)).db;
-  await ensurePeriods(db, today()); // UC11: create any missing periods first
+  await ensurePeriods(db, today(), await getDb()); // UC11: create any missing periods first, from the shared calendar
   const plan = await getTeamPlan(db, { teamId, today: today() }).catch(() => null);
   if (!plan) notFound();
 

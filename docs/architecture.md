@@ -34,6 +34,9 @@ so each project has its **own complete set of tables** rather than a "project" c
 - Local folders (PGlite): Default uses `DATA_DIR`; another project uses `DATA_DIR-projects/<id>`.
 - Online Postgres (`DATABASE_URL`): Default uses the original tables; another project uses its own schema `project_<id>`.
 - The list of projects lives in the Default database, in a separate `app` schema (`app.projects`).
+- The **sprint calendar is shared** by all projects (sean, 15 Nov 2026): only the Default database's `timeline_settings`
+  is used, and `ensurePeriods(projectDb, today, defaultDb)` gives every project the same sprints and quarters.
+  Allocation (defaults and overrides) stays per team and per period, inside each project.
 
 `src/infrastructure/db/appDb.ts` is the only place that knows this: `getProjectDb(id)` returns a normal `Db`,
 so domain and application code don't change. Migrations must not name the `public` schema (a test checks this),

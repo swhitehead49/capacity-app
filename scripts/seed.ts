@@ -24,8 +24,7 @@ const added = await ensurePeriods(db, today());
 // A second, separate project, so you can see that projects never share teams.
 await insertProject(db, { id: "imaging", name: "Imaging" });
 const imaging = await getProjectDb("imaging");
-await imaging.insert(t.timelineSettings).values({ id: 1, firstSprintStart: "2026-10-26", sprintLengthDays: 14, sprintPrefix: "S" });
 await imaging.insert(t.teams).values({ id: "T900", name: "Imaging Core" });
-await ensurePeriods(imaging, today());
+await ensurePeriods(imaging, today(), db); // same sprint calendar as every project
 console.log(`Seeded demo data (Default and Imaging projects); created ${added} planning periods.`);
 process.exit(0);
