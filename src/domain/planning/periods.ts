@@ -51,6 +51,8 @@ export interface TimelineSettings {
   firstSprintStart: IsoDate;
   sprintLengthDays: number;
   sprintPrefix: string;
+  /** Optional: the Admin has extended the calendar to this date, the last day of a quarter (sean, 15 Nov 2026). */
+  extendTo?: IsoDate | null;
 }
 
 /**
@@ -58,7 +60,10 @@ export interface TimelineSettings {
  * created automatically, on demand). Numbering always starts from the first sprint, so it never changes.
  */
 export function periodsNeeded(today: IsoDate, timeline: TimelineSettings): PlanningPeriod[] {
-  const { sprintLimit, quarterLimit } = horizonLimits(today);
+  const automatic = horizonLimits(today);
+  const later = (a: IsoDate, b: IsoDate | null | undefined) => (b && b > a ? b : a);
+  const sprintLimit = later(automatic.sprintLimit, timeline.extendTo);
+  const quarterLimit = later(automatic.quarterLimit, timeline.extendTo);
   const sprintCount = Math.floor(daysBetween(timeline.firstSprintStart, sprintLimit) / timeline.sprintLengthDays) + 1;
   const sprints = generateSprints({
     firstStart: timeline.firstSprintStart,
@@ -90,6 +95,13 @@ function monthsBetween(from: IsoDate, to: IsoDate): number {
 
 export function quarterId(date: IsoDate): string {
   return `${date.slice(0, 4)}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}`;
+}
+
+/** The last day of a quarter such as "2029-Q4", or null if it isn't one. */
+export function quarterEnd(id: string): IsoDate | null {
+  const match = /^(\d{4})-Q([1-4])$/.exec(id);
+  if (!match) return null;
+  return addDays(addMonths(`${match[1]}-${String((Number(match[2]) - 1) * 3 + 1).padStart(2, "0")}-01`, 3), -1);
 }
 
 function quarterStart(date: IsoDate): IsoDate {

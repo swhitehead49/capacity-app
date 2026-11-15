@@ -1,0 +1,1 @@
+ALTER TABLE "timeline_settings" ADD COLUMN "extend_to" date;

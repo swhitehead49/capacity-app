@@ -202,4 +202,5 @@ export const timelineSettings = pgTable("timeline_settings", {
   firstSprintStart: date("first_sprint_start").notNull(),
   sprintLengthDays: integer("sprint_length_days").notNull(),
   sprintPrefix: text("sprint_prefix").notNull(),
+  extendTo: date("extend_to"), // optional: the calendar runs at least to this quarter end (sean, 15 Nov 2026)
 }, (t) => [check("single_row", sql`${t.id} = 1`)]);

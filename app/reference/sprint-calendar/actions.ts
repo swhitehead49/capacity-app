@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { setUpSprintCalendar } from "@/src/application/sprintCalendar";
+import { extendSprintCalendar, setUpSprintCalendar } from "@/src/application/sprintCalendar";
 import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
 import { failed, type FormState } from "@/app/lib/formState";
@@ -15,4 +15,11 @@ export async function setUpSprintCalendarAction(previous: FormState, form: FormD
   }, today());
   if (!result.ok) return failed(previous, form, result.errors);
   redirect("/reference/sprint-calendar");
+}
+
+export async function extendSprintCalendarAction(previous: FormState, form: FormData): Promise<FormState> {
+  const quarter = String(form.get("quarter") ?? "");
+  const result = await extendSprintCalendar(await sharedDb(), ACTOR, quarter, today());
+  if (!result.ok) return failed(previous, form, result.errors);
+  redirect(`/reference/sprint-calendar?extended=${encodeURIComponent(quarter)}`);
 }

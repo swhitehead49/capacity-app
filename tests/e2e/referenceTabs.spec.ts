@@ -35,7 +35,7 @@ test("extend the sprint calendar to a later quarter", async ({ page }) => {
   const form = page.getByRole("form", { name: "Extend calendar" });
   await form.getByLabel("Extend calendar to").selectOption("2029-Q4");
   await form.getByRole("button", { name: "Extend calendar" }).click();
-  await expect(page.getByText("Extended to the end of 2029-Q4")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("now runs to the end of 2029-Q4");
   await expect(page.getByRole("table", { name: "Quarters" }).getByRole("row").last()).toContainText("2029-Q4");
 });
 
