@@ -14,6 +14,15 @@ beforeEach(async () => {
 });
 
 describe("ensurePeriods", () => {
+  it("uses the one shared sprint calendar, so every project has the same sprints (sean, 15 Nov 2026)", async () => {
+    const project = await createTestDb(); // another project: no calendar of its own
+    await ensurePeriods(project, "2026-11-08", db);
+    const ids = (await project.select().from(t.planningPeriods)).map((p) => p.id).sort();
+    await ensurePeriods(db, "2026-11-08");
+    expect(ids).toEqual((await db.select().from(t.planningPeriods)).map((p) => p.id).sort());
+    expect(await project.select().from(t.timelineSettings)).toEqual([]);
+  });
+
   it("creates the sprints and quarters for the window", async () => {
     const added = await ensurePeriods(db, "2026-11-08");
     expect(added).toBe(17); // 12 sprints + 5 quarters
