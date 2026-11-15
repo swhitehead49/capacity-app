@@ -15,6 +15,7 @@ test("add a value stream and a location on the Reference data page, then use the
   await streams.getByRole("button", { name: "Add value stream" }).click();
   await expect(page.getByRole("table", { name: "Value streams" })).toContainText("Oncology");
 
+  await page.getByRole("navigation", { name: "Reference data sections" }).getByRole("link", { name: "Locations" }).click();
   const places = page.getByRole("form", { name: "Add location" });
   await places.getByLabel("Code").fill("ES-MD");
   await places.getByLabel("Country").fill("ES");
@@ -44,7 +45,7 @@ test("a value stream that is already there is refused", async ({ page }) => {
 });
 
 test("add the original workbook's locations in one go", async ({ page }) => {
-  await page.goto("/reference");
+  await page.goto("/reference/locations");
   await page.getByRole("button", { name: "Add the starting locations" }).click();
   const locations = page.getByRole("table", { name: "Locations" });
   await expect(locations.getByRole("row", { name: /AT-9/ })).toContainText("Vienna");
@@ -53,14 +54,14 @@ test("add the original workbook's locations in one go", async ({ page }) => {
 });
 
 test("edit a location's name and standard hours", async ({ page }) => {
-  await page.goto("/reference");
+  await page.goto("/reference/locations");
   await page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ }).getByRole("link", { name: "Edit" }).click();
   await expect(page).toHaveURL(/\/reference\/locations\/AT-9$/);
   const form = page.getByRole("form", { name: "Edit location" });
   await form.getByLabel("Name").fill("Vienna office");
   await form.getByLabel("Standard hours").fill("38.5");
   await form.getByRole("button", { name: "Save location" }).click();
-  await expect(page).toHaveURL(/\/reference$/);
+  await expect(page).toHaveURL(/\/reference\/locations$/);
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ })).toContainText("Vienna office");
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ })).toContainText("38.5");
 });

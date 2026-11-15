@@ -10,7 +10,7 @@ test.use({ storageState: "tests/e2e/admin-role.json" });
 // sean, 15 Nov 2026: Public holidays are part of Reference data.
 test("Public holidays open from the Reference data page", async ({ page }) => {
   await page.goto("/reference");
-  await page.getByRole("link", { name: "Open public holidays" }).click();
+  await page.getByRole("navigation", { name: "Reference data sections" }).getByRole("link", { name: "Public holidays" }).click();
   await expect(page).toHaveURL(/\/reference\/public-holidays$/);
   await expect(page.getByRole("heading", { name: "Public holidays" })).toBeVisible();
 });
