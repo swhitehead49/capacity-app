@@ -81,7 +81,7 @@ test("filter the Teams list to one value stream", async ({ page }) => {
   await expect(table.getByRole("row", { name: /T017/ })).toHaveCount(0);
 });
 
-test("the home page groups teams by value stream", async ({ page }) => {
+test("the team list shows each team's value stream", async ({ page }) => {
   await page.goto("/p/default");
-  await expect(page.locator('optgroup[label="Clinical"] option')).toHaveText(["T001 | Example Team A"]);
+  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T001/ })).toContainText("Clinical");
 });

@@ -9,14 +9,14 @@ test("the first thing you do is choose your project", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Choose your project" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Default/ })).toBeVisible();
   await page.getByRole("link", { name: /Imaging/ }).click();
-  await expect(page).toHaveURL(/\/p\/imaging$/);
+  await expect(page).toHaveURL(/\/p\/imaging\/teams$/);
   await expect(page.getByRole("banner")).toContainText("Imaging");
 });
 
 test("next time, the app opens the project you used last", async ({ page }) => {
   await page.goto("/p/imaging/teams");
   await page.goto("/");
-  await expect(page).toHaveURL(/\/p\/imaging$/);
+  await expect(page).toHaveURL(/\/p\/imaging\/teams$/);
 });
 
 test("you can switch project from the top bar", async ({ page }) => {
@@ -24,9 +24,9 @@ test("you can switch project from the top bar", async ({ page }) => {
   await page.getByRole("banner").getByRole("link", { name: "Switch project" }).click();
   await expect(page).toHaveURL(/\/projects$/);
   await page.getByRole("link", { name: /Default/ }).click();
-  await expect(page).toHaveURL(/\/p\/default$/);
+  await expect(page).toHaveURL(/\/p\/default\/teams$/);
   await page.goto("/");
-  await expect(page).toHaveURL(/\/p\/default$/);
+  await expect(page).toHaveURL(/\/p\/default\/teams$/);
 });
 
 test("the top bar shows which project you are in", async ({ page }) => {

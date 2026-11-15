@@ -3,10 +3,11 @@ import { expect, test } from "@playwright/test";
 // UC01 Team Planner, as agreed 8 Nov 2026. The test server runs with today = 8 Nov 2026
 // and a fresh database seeded with the DRGW pilot team (scripts/seed.ts).
 
-test("pick a team from the home page", async ({ page }) => {
+// sean, 15 Nov 2026: opening a project shows its list of teams.
+test("opening a project shows its teams; Planner opens a team", async ({ page }) => {
   await page.goto("/p/default");
-  await page.getByLabel("Team").selectOption({ label: "T017 | DRGW" });
-  await page.getByRole("button", { name: "Open planner" }).click();
+  await expect(page).toHaveURL(/\/p\/default\/teams$/);
+  await page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T017/ }).getByRole("link", { name: "Planner" }).click();
   await expect(page).toHaveURL(/\/p\/default\/teams\/T017$/);
   await expect(page.getByRole("heading", { name: "DRGW" })).toBeVisible();
 });
