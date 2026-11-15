@@ -67,12 +67,16 @@ test("a project name that is already used is explained", async ({ page }) => {
   await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText('There is already a project called "Imaging"');
 });
 
-test("rename, archive and restore a project from the Reference data page", async ({ page }) => {
+const asManager = (page: import("@playwright/test").Page) =>
+  page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
+
+test("rename, archive and restore a project from its Project reference data", async ({ page }) => {
+  await asManager(page);
   await page.goto("/projects");
   await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Oncology");
   await page.getByRole("button", { name: "Create project" }).click();
   await page.goto("/p/oncology/teams");
-  await page.getByRole("banner").getByRole("link", { name: "Reference data" }).click();
+  await page.getByRole("banner").getByRole("link", { name: "Project reference data" }).click();
   const rename = page.getByRole("form", { name: "Rename project" });
   await rename.getByLabel("Project name").fill("Oncology Services");
   await rename.getByRole("button", { name: "Rename" }).click();
@@ -98,8 +102,16 @@ test("every page has the same top menu", async ({ page }) => {
   }
 });
 
-test("an old Settings link opens that project's settings on the Reference data page", async ({ page }) => {
+test("an old Settings link opens the project's Project reference data", async ({ page }) => {
+  await asManager(page);
   await page.goto("/p/imaging/settings");
+  await expect(page).toHaveURL(/\/p\/imaging\/project-reference$/);
+  await expect(page.getByRole("heading", { name: "Standard allocation for new teams" })).toBeVisible();
+});
+
+test("an Admin doesn't see Project reference data", async ({ page }) => {
+  await page.goto("/p/imaging/teams");
+  await expect(page.getByRole("banner").getByRole("link", { name: "Project reference data" })).toHaveCount(0);
+  await page.goto("/p/imaging/project-reference");
   await expect(page).toHaveURL(/\/reference$/);
-  await expect(page.getByRole("heading", { name: "Imaging: standard allocation for new teams" })).toBeVisible();
 });

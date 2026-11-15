@@ -1,7 +1,7 @@
 "use client";
 
 import { ActionForm, type Values } from "@/app/lib/ActionForm";
-import { saveStandardAction } from "./standardActions";
+import { saveStandardAction } from "./actions";
 
 const field = (label: string, name: string, v: Values) => (
   <label>{label}<input name={name} type="number" step="any" min="0" max="100" defaultValue={v[name]} /></label>

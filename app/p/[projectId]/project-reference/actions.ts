@@ -22,5 +22,5 @@ export async function saveStandardAction(previous: FormState, form: FormData): P
     },
   });
   if (!result.ok) return failed(previous, form, result.errors);
-  redirect("/reference?saved=1");
+  redirect(`/p/${projectId}/project-reference?saved=1`);
 }

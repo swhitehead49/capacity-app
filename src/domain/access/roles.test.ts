@@ -15,6 +15,11 @@ describe("parseRole", () => {
 });
 
 describe("accessFor", () => {
+  it("keeps an Admin out of a project's Project reference data (sean, 15 Nov 2026)", () => {
+    expect(accessFor("admin", "/p/imaging/project-reference")).toEqual({ allowed: false, goTo: "/reference" });
+    expect(accessFor("manager", "/p/imaging/project-reference")).toEqual({ allowed: true });
+  });
+
   it("anyone can open the home screen", () => {
     expect(accessFor(null, "/")).toEqual({ allowed: true });
     expect(accessFor("manager", "/")).toEqual({ allowed: true });
