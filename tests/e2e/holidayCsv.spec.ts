@@ -4,13 +4,13 @@ import { expect, test } from "@playwright/test";
 // The seed adds an India office (IN-KA) with no calendar loaded.
 
 test("India shows as missing, to be uploaded as a CSV", async ({ page }) => {
-  await page.goto("/p/default/holidays");
+  await page.goto("/reference/public-holidays");
   const in2027 = page.getByRole("table", { name: "Missing calendars" }).getByRole("row", { name: /IN 2027/ });
   await expect(in2027).toContainText("CSV upload");
 });
 
 test("a CSV with mistakes lists each bad line and saves nothing", async ({ page }) => {
-  await page.goto("/p/default/holidays");
+  await page.goto("/reference/public-holidays");
   const form = page.getByRole("form", { name: "Upload a holiday list" });
   await form.getByLabel("Country").fill("IN");
   await form.getByLabel("Year").fill("2027");
@@ -23,7 +23,7 @@ test("a CSV with mistakes lists each bad line and saves nothing", async ({ page 
 });
 
 test("a good CSV loads the year", async ({ page }) => {
-  await page.goto("/p/default/holidays");
+  await page.goto("/reference/public-holidays");
   const form = page.getByRole("form", { name: "Upload a holiday list" });
   await form.getByLabel("Country").fill("IN");
   await form.getByLabel("Year").fill("2027");

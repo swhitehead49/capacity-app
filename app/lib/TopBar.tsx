@@ -5,7 +5,7 @@ import { PROJECT_COOKIE } from "./rememberedProject";
 
 /**
  * The one top bar every page uses, so the menu is always the same (sean, 15 Nov 2026):
- * Capacity App · project · Teams, Holidays, Reference data · Switch project. (Settings moved into Reference data.)
+ * Capacity App · project · Teams, Reference data · Switch project. (Public holidays are part of Reference data.) (Settings moved into Reference data.)
  * Outside a project (the project list, reference data) it uses the project you were in last.
  */
 export async function TopBar({ projectId }: { projectId?: string }) {
@@ -16,7 +16,7 @@ export async function TopBar({ projectId }: { projectId?: string }) {
       <a href={base ?? "/projects"}>Capacity App</a>
       {open && <span className="project" aria-label="Project">{open.name}</span>}
       <nav>
-        {base && <><a href={`${base}/teams`}>Teams</a><a href={`${base}/holidays`}>Holidays</a></>}
+        {base && <a href={`${base}/teams`}>Teams</a>}
         <a href="/reference">Reference data</a>
       </nav>
       <a className="switch" href="/projects">{open ? "Switch project" : "Choose project"}</a>

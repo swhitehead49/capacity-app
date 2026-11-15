@@ -1,4 +1,4 @@
-import { TopBar, currentProject } from "@/app/lib/TopBar";
+import { currentProject } from "@/app/lib/TopBar";
 import { getStandardAllocation } from "@/src/application/standardAllocation";
 import { getProjectDb } from "@/src/infrastructure/db/appDb";
 import { DEFAULT_PROJECT } from "@/src/domain/projects/projectRules";
@@ -30,10 +30,9 @@ export default async function ReferenceData({ searchParams }: { searchParams: Pr
   const missing = STARTING_LOCATIONS.filter((s) => !locations.some((l) => l.code === s.code));
   return (
     <>
-      <TopBar />
-      <main>
         <h1>Reference data</h1>
-        <p className="muted">Settings for the project you are in, then the lists shared by every project.</p>
+        <p className="muted">Settings for the project you are in, then the lists shared by every project:
+          {" "}<a href="#value-streams">value streams</a>, <a href="#locations">locations</a> and <Link href="/reference/public-holidays">public holidays</Link>.</p>
 
         {project && (
           <section aria-label="This project">
@@ -60,7 +59,7 @@ export default async function ReferenceData({ searchParams }: { searchParams: Pr
           </section>
         )}
 
-        <h2>Value streams (all projects)</h2>
+        <h2 id="value-streams">Value streams (all projects)</h2>
         <p className="muted">A team&apos;s value stream is picked from this list.</p>
         <table className="members narrow">
           <caption>Value streams</caption>
@@ -72,7 +71,7 @@ export default async function ReferenceData({ searchParams }: { searchParams: Pr
         </table>
         <AddValueStreamForm />
 
-        <h2>Locations (all projects)</h2>
+        <h2 id="locations">Locations (all projects)</h2>
         <p className="muted">A team&apos;s base location and each person&apos;s location are picked from this list. The code is the ISO region code (such as DE-BY), or the country code alone for a whole country.
           It decides which public holidays apply to the people there.</p>
         <table className="members narrow">
@@ -90,7 +89,11 @@ export default async function ReferenceData({ searchParams }: { searchParams: Pr
           </form>
         )}
         <AddLocationForm />
-      </main>
+
+        <h2 id="public-holidays">Public holidays (all projects)</h2>
+        <p className="muted">Each country&apos;s public holiday calendar, by year: load or reload them, see each location&apos;s total,
+          and add or remove single holidays.</p>
+        <p><Link className="button secondary" href="/reference/public-holidays">Open public holidays</Link></p>
     </>
   );
 }

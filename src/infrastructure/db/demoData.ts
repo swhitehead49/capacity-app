@@ -7,7 +7,7 @@ export async function seedDemo(db: Db) {
   await db.insert(t.timelineSettings).values({ id: 1, firstSprintStart: "2026-10-26", sprintLengthDays: 14, sprintPrefix: "S" });
   await seedDrgw(db);
   // The pilot team's data has only the two DE 2026 holidays near sprint S001. Say so, so nobody mistakes it for the
-  // full calendar (sean, 15 Nov 2026: "no Christmas"); Reload on the Holidays page fetches every holiday.
+  // full calendar (sean, 15 Nov 2026: "no Christmas"); Reload on the Public holidays page fetches every holiday.
   await db.update(t.holidayCalendars).set({ source: "Demo data (2 holidays only): reload" });
   await db.insert(t.teams).values([
     { id: "T001", name: "Example Team A" },

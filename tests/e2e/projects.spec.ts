@@ -60,7 +60,7 @@ test("an unknown project is not found", async ({ page }) => {
 
 // Country holiday calendars live once, at the top level, and every project uses them (sean, 15 Nov 2026).
 test("every project sees the same holiday calendars", async ({ page }) => {
-  await page.goto("/p/imaging/holidays");
+  await page.goto("/reference/public-holidays");
   await expect(page.getByText("shared by all projects")).toBeVisible();
   await expect(page.getByRole("table", { name: "Loaded calendars" }).getByRole("row", { name: /DE 2026/ })).toBeVisible();
 });
@@ -106,10 +106,10 @@ test("rename, archive and restore a project from the Reference data page", async
 // sean, 15 Nov 2026: the menu across the top is the same on every page.
 test("every page has the same top menu", async ({ page }) => {
   await page.goto("/p/imaging/teams");
-  for (const address of ["/p/imaging/teams", "/p/imaging/holidays", "/projects", "/reference", "/reference/locations/DE-BY"]) {
+  for (const address of ["/p/imaging/teams", "/reference/public-holidays", "/projects", "/reference", "/reference/locations/DE-BY"]) {
     await page.goto(address);
     const bar = page.getByRole("banner");
-    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Teams", "Holidays", "Reference data", "Switch project"]);
+    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Teams", "Reference data", "Switch project"]);
     await expect(bar).toContainText("Imaging");
     await expect(bar.getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/p/imaging/teams");
   }
