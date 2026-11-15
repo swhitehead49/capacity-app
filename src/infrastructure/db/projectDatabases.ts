@@ -36,6 +36,11 @@ export async function findProject(db: Db, id: string): Promise<ProjectRow | null
   return row ? toProject(row) : null;
 }
 
+/** Adds a project to the list. Its tables are created the first time it is opened. Check the ID with validateProject first. */
+export async function insertProject(db: Db, project: { id: string; name: string }): Promise<void> {
+  await db.execute(sql`insert into app.projects (id, name) values (${project.id}, ${project.name})`);
+}
+
 /** Opens each project's database the first time it is needed, then reuses it. */
 export class ProjectDatabases {
   private readonly open = new Map<string, Promise<Db>>();

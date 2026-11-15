@@ -38,3 +38,7 @@ so each project has its **own complete set of tables** rather than a "project" c
 `src/infrastructure/db/appDb.ts` is the only place that knows this: `getProjectDb(id)` returns a normal `Db`,
 so domain and application code don't change. Migrations must not name the `public` schema (a test checks this),
 because the same migrations build every project's tables.
+
+Every screen lives under `/p/<project>/…` (`app/p/[projectId]`). Pages and server actions get their database
+through `projectDb(projectId)` in `app/lib/project.ts`, which answers "not found" for an unknown project.
+Forms send the project as a hidden `projectId` field (`ActionForm` adds it from the web address).

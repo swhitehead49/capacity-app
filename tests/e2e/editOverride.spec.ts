@@ -43,7 +43,7 @@ test("saves an Active override and the planner shows it", async ({ page }) => {
 // Requested 8 Nov 2026: show the team default read-only, and revert one or all periods to it.
 
 async function saveOverride(page: import("@playwright/test").Page, periodId: string) {
-  await page.goto(`/teams/T017/periods/${periodId}/edit`);
+  await page.goto(`/p/default/teams/T017/periods/${periodId}/edit`);
   await page.getByLabel("Run %").fill("50");
   await page.getByLabel("Fix %").fill("20");
   await page.getByLabel("Sustain %").fill("10");

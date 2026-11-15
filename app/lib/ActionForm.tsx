@@ -1,18 +1,21 @@
 "use client";
 
 import { useActionState, type ReactNode } from "react";
+import { useParams } from "next/navigation";
 import { emptyForm, type FormState } from "./formState";
 
 type Action = (previous: FormState, form: FormData) => Promise<FormState>;
 export type Values = Record<string, string>;
 
-/** A form whose errors show at the top and whose typed values survive a failed save. */
+/** A form whose errors show at the top and whose typed values survive a failed save.
+ *  It always sends the project from the web address, so the save goes to the right project. */
 export function ActionForm({ action, hidden, values, submitLabel, label, children }: {
   action: Action; hidden: Values; values: Values; submitLabel: string; label: string;
   children: (v: Values) => ReactNode;
 }) {
   const [state, formAction, saving] = useActionState(action, emptyForm);
   const v = { ...values, ...state.submitted };
+  const { projectId } = useParams<{ projectId?: string }>();
   return (
     <form action={formAction} className="edit-form" aria-label={label}>
       {state.errors.length > 0 && (
@@ -20,6 +23,7 @@ export function ActionForm({ action, hidden, values, submitLabel, label, childre
           {state.errors.map((error) => <p key={error}>{error}</p>)}
         </div>
       )}
+      {projectId && <input type="hidden" name="projectId" value={projectId} />}
       {Object.entries(hidden).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
       <fieldset key={state.attempt} className="fields">{children(v)}</fieldset>
       <div className="actions"><button type="submit" disabled={saving}>{saving ? "Saving…" : submitLabel}</button></div>

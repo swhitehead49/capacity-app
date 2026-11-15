@@ -57,3 +57,4 @@ table.narrow { max-width: 720px; margin-top: 16px; }
 .hint { font-size: 13px; align-self: flex-end; }
 .toolbar { display: flex; gap: 24px; align-items: flex-end; justify-content: space-between; margin: 16px 0; flex-wrap: wrap; }
 form.picker.inline { margin-top: 0; }
+.topbar .project { font-weight: 400; color: var(--muted); padding-left: 16px; border-left: 1px solid var(--line); }

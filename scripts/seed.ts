@@ -4,9 +4,11 @@
 import { rmSync } from "node:fs";
 import path from "node:path";
 import { ensurePeriods } from "../src/application/ensurePeriods";
-import { getDb, today } from "../src/infrastructure/db/appDb";
+import { getDb, getProjectDb, today } from "../src/infrastructure/db/appDb";
 import { databaseConfig } from "../src/infrastructure/db/databaseConfig";
 import { seedDemo } from "../src/infrastructure/db/demoData";
+import { insertProject } from "../src/infrastructure/db/projectDatabases";
+import * as t from "../src/infrastructure/db/schema";
 
 const config = databaseConfig(process.env);
 if (config.kind !== "folder") {
@@ -18,5 +20,12 @@ rmSync(path.resolve(`${config.dir}-projects`), { recursive: true, force: true })
 const db = await getDb();
 await seedDemo(db);
 const added = await ensurePeriods(db, today());
-console.log(`Seeded demo data; created ${added} planning periods.`);
+
+// A second, separate project, so you can see that projects never share teams.
+await insertProject(db, { id: "imaging", name: "Imaging" });
+const imaging = await getProjectDb("imaging");
+await imaging.insert(t.timelineSettings).values({ id: 1, firstSprintStart: "2026-10-26", sprintLengthDays: 14, sprintPrefix: "S" });
+await imaging.insert(t.teams).values({ id: "T900", name: "Imaging Core" });
+await ensurePeriods(imaging, today());
+console.log(`Seeded demo data (Default and Imaging projects); created ${added} planning periods.`);
 process.exit(0);
