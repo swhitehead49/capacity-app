@@ -33,11 +33,11 @@ function MemberTable({ caption, rows, projectId, teamId }: { caption: string; ro
       <thead>
         <tr>
           <th>Email</th><th>Role</th><th>Location</th><th>Hours</th><th>Team %</th><th>Shared</th>
-          <th>From</th><th>To</th><th>Inputs</th><th></th>
+          <th>From</th><th>To</th><th>Inputs</th><th></th><th></th>
         </tr>
       </thead>
       <tbody>
-        {rows.length === 0 && <tr><td colSpan={10} className="empty">Nobody yet.</td></tr>}
+        {rows.length === 0 && <tr><td colSpan={11} className="empty">Nobody yet.</td></tr>}
         {rows.map((m) => (
           <tr key={m.assignmentId}>
             <td>{m.email}</td>
@@ -50,6 +50,7 @@ function MemberTable({ caption, rows, projectId, teamId }: { caption: string; ro
             <td>{formatDate(m.endDate)}</td>
             <td className={m.inputStatus === "Complete" ? "" : "status-Provisional"}>{m.inputStatus}</td>
             <td><Link className="edit" href={`/p/${projectId}/teams/${teamId}/members/${m.assignmentId}`}>Edit</Link></td>
+            <td><Link className="edit" href={`/p/${projectId}/teams/${teamId}/members/${m.assignmentId}/leave`}>Leave</Link></td>
           </tr>
         ))}
       </tbody>

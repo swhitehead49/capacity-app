@@ -31,7 +31,8 @@ export default async function EditMember({ params }: { params: Promise<{ project
       <h1>{member.email}</h1>
       <p className="muted">
         On {teamId} {member.startDate ? `from ${formatDate(member.startDate)}` : "(no start date)"}
-        {member.endDate ? ` to ${formatDate(member.endDate)}` : ""} · inputs: {member.inputStatus}
+        {member.endDate ? ` to ${formatDate(member.endDate)}` : ""} · inputs: {member.inputStatus} ·{" "}
+        <Link href={`/p/${projectId}/teams/${teamId}/members/${assignmentId}/leave`}>Leave</Link>
       </p>
 
       <h2>Details</h2>
