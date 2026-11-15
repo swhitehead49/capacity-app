@@ -19,6 +19,7 @@ export interface PlanRow {
   run: number | null;
   fix: number | null;
   sustain: number | null;
+  enabling: number | null;
   change: number | null;
   splitSource: AllocationSource | null;
   status: Exclude<CapacityStatus, "Excluded">;
@@ -52,6 +53,7 @@ export async function getTeamPlan(db: Db, query: { teamId: string; today: string
       run: result.run,
       fix: result.fix,
       sustain: result.sustain,
+      enabling: result.enabling,
       change: result.change,
       splitSource: input.allocation.splitSource,
       status: counted.some((m) => m.status === "Provisional") ? "Provisional"

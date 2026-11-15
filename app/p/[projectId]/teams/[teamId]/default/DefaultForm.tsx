@@ -25,6 +25,7 @@ export function DefaultForm({ teamId, values }: { teamId: string; values: Values
             <label>Fix %<input name="fix" type="number" step="any" min="0" max="100" defaultValue={v.fix} /></label>
             <label>Sustain %<input name="sustain" type="number" step="any" min="0" max="100" defaultValue={v.sustain} /></label>
             <label>Change %<input name="change" type="number" step="any" min="0" max="100" defaultValue={v.change} /></label>
+            <label>Enabling/Training %<input name="enabling" type="number" step="any" min="0" max="100" defaultValue={v.enabling} /></label>
           </div>
           <label>Reason<input name="reason" type="text" defaultValue={v.reason} /></label>
         </>

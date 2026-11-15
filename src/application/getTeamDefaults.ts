@@ -9,7 +9,7 @@ export interface DefaultVersion {
   status: "Draft" | "Active" | "Retired";
   overhead: number | null;
   contingency: number | null; // null = none set (0%)
-  split: { run: number; fix: number; sustain: number; change: number };
+  split: { run: number; fix: number; sustain: number; change: number; enabling: number };
   reason: string | null;
 }
 
@@ -32,6 +32,6 @@ export async function getTeamDefaults(db: Db, query: { teamId: string; today: st
 function toVersion(row: typeof t.allocationSettings.$inferSelect): DefaultVersion {
   return {
     id: row.id, effectiveFrom: row.effectiveFrom, status: row.status, overhead: row.overhead, contingency: row.contingency, reason: row.reason,
-    split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change },
+    split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change, enabling: row.enabling },
   };
 }

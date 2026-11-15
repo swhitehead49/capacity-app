@@ -73,7 +73,7 @@ export async function getOverride(db: Db, query: { teamId: string; periodId: str
           status: row.status,
           overhead: row.overhead,
           contingency: row.contingency,
-          split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change },
+          split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change, enabling: row.enabling },
           reason: row.reason ?? "",
         }
       : null,
@@ -83,7 +83,7 @@ export async function getOverride(db: Db, query: { teamId: string; periodId: str
           effectiveFrom: teamDefault.effectiveFrom,
           overhead: teamDefault.overhead,
           contingency: teamDefault.contingency,
-          split: { run: teamDefault.run, fix: teamDefault.fix, sustain: teamDefault.sustain, change: teamDefault.change },
+          split: { run: teamDefault.run, fix: teamDefault.fix, sustain: teamDefault.sustain, change: teamDefault.change, enabling: teamDefault.enabling },
         }
       : null,
   };

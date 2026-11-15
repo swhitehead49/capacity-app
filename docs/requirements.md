@@ -21,8 +21,9 @@ It also shows whether the input data is complete enough to trust the result.
 | Fix | Corrective work: defects, regressions, rework, failed changes |
 | Sustain | Product health: tech debt, upgrades, security, modernisation |
 | Change | Roadmap work: features and strategic projects |
+| Enabling/Training | Planned learning and enabling work: training, onboarding, tooling, communities of practice (added 15 Nov 2026; settings saved before then count as 0%) |
 
-Overhead (meetings, training, admin and so on) is taken off **before** the Run/Fix/Sustain/Change split.
+Overhead (meetings, admin and so on) is taken off **before** the Run/Fix/Sustain/Change/Enabling split. Planned training goes in Enabling/Training.
 
 ## 2. Actor (v1)
 
@@ -43,7 +44,7 @@ Every change records **who made it, when and why**, so roles can be added later.
    - **Forecast only**: apply the forecast % only.
 7. **Engineering days** = calendar-available days × (1 − overhead %).
 8. **Contingency days** = engineering days × contingency % (held back, not split). Set on the team default (blank = 0%); a quarter or sprint override may set its own or inherit, like overhead (added 8 Nov 2026).
-9. **Run / Fix / Sustain / Change days** = (engineering days − contingency days) × the effective % for each.
+9. **Run / Fix / Sustain / Change / Enabling/Training days** = (engineering days − contingency days) × the effective % for each.
 
 The unit is **person-days**. Part-time work is handled through FTE.
 
@@ -103,7 +104,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | FR-07 | Absence | One record per absence: person, start, end, type, day fraction, status and source. Ignore cancelled absences. Leave out weekends and holidays. |
 | FR-08 | Timeline | Generate calendar quarters (fiscal quarters are reserved for later) and fixed-length sprints from a first sprint start, sprint length, sprint count and ID prefix. Mark each period Future, Open or Closed, and flag the current one. |
 | FR-09 | Timeline | Extend the horizon one sprint or quarter at a time. Warn if the sprint horizon ends before the quarter horizon. |
-| FR-10 | Allocation | Team default from an effective date: overhead %, Run %, Fix %, Sustain % and Change %. Status is Draft, Active or Retired. |
+| FR-10 | Allocation | Team default from an effective date: overhead %, Run %, Fix %, Sustain %, Change % and Enabling/Training %. Status is Draft, Active or Retired. |
 | FR-11 | Allocation | Quarter and sprint overrides of R/F/S/C, plus an optional overhead %, each with a reason, owner and status. |
 | FR-12 | Allocation | Work out the effective allocation (section 3) and show which source was used. |
 | FR-13 | Calculation | Calculate capacity for each person and as a team total, as set out in section 3. |
@@ -119,7 +120,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 
 | ID | Rule |
 | --- | --- |
-| BR-01 | Run + Fix + Sustain + Change = 100% (tolerance 0.01%). Overhead is separate and is taken off first. |
+| BR-01 | Run + Fix + Sustain + Change + Enabling/Training = 100% (tolerance 0.01%). Overhead is separate and is taken off first. |
 | BR-02 | Every percentage is between 0 and 100%. |
 | BR-03 | A team default can be Active only when its effective date, overhead and all four percentages are filled in and BR-01 passes. |
 | BR-04 | An Active override needs a team, level, period and reason. Its level must match the period type. |

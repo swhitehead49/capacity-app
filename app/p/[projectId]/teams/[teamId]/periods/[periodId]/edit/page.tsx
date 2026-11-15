@@ -17,7 +17,7 @@ export default async function EditOverride({ params }: { params: Promise<{ proje
   if (!team || !view) notFound();
 
   const applied = view.currentlyApplied;
-  const split = view.override?.split ?? applied.split ?? { run: 0, fix: 0, sustain: 0, change: 0 };
+  const split = view.override?.split ?? applied.split ?? { run: 0, fix: 0, sustain: 0, change: 0, enabling: 0 };
   const pct = (value: number | null | undefined) => (value === null || value === undefined ? "" : String(+(value * 100).toFixed(2)));
 
   return (
@@ -35,7 +35,7 @@ export default async function EditOverride({ params }: { params: Promise<{ proje
           <p>
             Overhead {pct(view.teamDefault.overhead)}% · Contingency {pct(view.teamDefault.contingency ?? 0)}% · Run {pct(view.teamDefault.split.run)}% ·
             Fix {pct(view.teamDefault.split.fix)}% · Sustain {pct(view.teamDefault.split.sustain)}% ·
-            Change {pct(view.teamDefault.split.change)}%
+            Change {pct(view.teamDefault.split.change)}% · Enabling/Training {pct(view.teamDefault.split.enabling ?? 0)}%
             <span className="muted"> · since {formatDate(view.teamDefault.effectiveFrom ?? view.period.start)}</span>
           </p>
         ) : (
@@ -55,6 +55,7 @@ export default async function EditOverride({ params }: { params: Promise<{ proje
           fix: pct(split.fix),
           sustain: pct(split.sustain),
           change: pct(split.change),
+          enabling: pct(split.enabling ?? 0),
           reason: view.override?.reason ?? "",
         }}
       />

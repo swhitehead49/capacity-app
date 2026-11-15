@@ -4,6 +4,7 @@ export interface Split {
   fix: number;
   sustain: number;
   change: number;
+  enabling?: number; // Enabling/Training (sean, 15 Nov 2026); missing = 0% for settings saved before it existed
 }
 
 /** A team default, quarter override or sprint override. */
@@ -29,10 +30,10 @@ const TOLERANCE = 0.0001; // BR-01: within 0.01%
 
 /** BR-01 and BR-02. Returns a list of problems; an empty list means the split is valid. */
 export function validateSplit(split: Split): string[] {
-  const values = [split.run, split.fix, split.sustain, split.change];
+  const values = [split.run, split.fix, split.sustain, split.change, split.enabling ?? 0];
   const problems: string[] = [];
   const total = values.reduce((sum, value) => sum + value, 0);
-  if (Math.abs(total - 1) > TOLERANCE) problems.push("Run + Fix + Sustain + Change must add up to 100%");
+  if (Math.abs(total - 1) > TOLERANCE) problems.push("Run + Fix + Sustain + Change + Enabling/Training must add up to 100%");
   if (values.some((value) => value < 0 || value > 1)) problems.push("Every percentage must be between 0% and 100%");
   return problems;
 }
@@ -75,6 +76,7 @@ export interface CapacitySplit {
   fix: number | null;
   sustain: number | null;
   change: number | null;
+  enabling: number | null;
 }
 
 /**
@@ -87,7 +89,7 @@ export function splitCapacity(
 ): CapacitySplit {
   const { overhead, split } = allocation;
   if (overhead === null || split === null) {
-    return { engineeringDays: null, contingencyDays: null, run: null, fix: null, sustain: null, change: null };
+    return { engineeringDays: null, contingencyDays: null, run: null, fix: null, sustain: null, change: null, enabling: null };
   }
   const engineeringDays = availableDays * (1 - overhead);
   const contingencyDays = engineeringDays * (allocation.contingency ?? 0);
@@ -99,5 +101,6 @@ export function splitCapacity(
     fix: plannable * split.fix,
     sustain: plannable * split.sustain,
     change: plannable * split.change,
+    enabling: plannable * (split.enabling ?? 0),
   };
 }

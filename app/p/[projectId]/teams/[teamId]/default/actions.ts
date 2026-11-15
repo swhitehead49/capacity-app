@@ -20,7 +20,7 @@ export async function saveDefaultAction(previous: FormState, form: FormData): Pr
     effectiveFrom: read("effectiveFrom") || null,
     overhead: fraction("overhead"),
     contingency: fraction("contingency"),
-    split: { run: fraction("run") ?? 0, fix: fraction("fix") ?? 0, sustain: fraction("sustain") ?? 0, change: fraction("change") ?? 0 },
+    split: { run: fraction("run") ?? 0, fix: fraction("fix") ?? 0, sustain: fraction("sustain") ?? 0, change: fraction("change") ?? 0, enabling: fraction("enabling") ?? 0 },
     reason: read("reason") || undefined,
   });
   if (!result.ok) return failed(previous, form, result.errors);

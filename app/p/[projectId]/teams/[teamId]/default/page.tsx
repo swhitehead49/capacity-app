@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const summary = (d: DefaultVersion) =>
   `Overhead ${percent(d.overhead)}% · Contingency ${percent(d.contingency ?? 0)}% · Run ${percent(d.split.run)}% · Fix ${percent(d.split.fix)}% · ` +
-  `Sustain ${percent(d.split.sustain)}% · Change ${percent(d.split.change)}%`;
+  `Sustain ${percent(d.split.sustain)}% · Change ${percent(d.split.change)}% · Enabling/Training ${percent(d.split.enabling)}%`;
 
 /** UC03 / FR-10: the team's default allocation, its history, and a form for a new version. */
 export default async function TeamDefault({ params }: { params: Promise<{ projectId: string; teamId: string }> }) {
@@ -18,11 +18,11 @@ export default async function TeamDefault({ params }: { params: Promise<{ projec
   const data = await getTeamDefaults((await projectDb(projectId)).db, { teamId, today: today() }).catch(() => null);
   if (!data) notFound();
   const { team, current, history } = data;
-  const start = current ?? { overhead: null, contingency: null, split: { run: null, fix: null, sustain: null, change: null } };
+  const start = current ?? { overhead: null, contingency: null, split: { run: null, fix: null, sustain: null, change: null, enabling: null } };
   const values = {
     effectiveFrom: today(), status: "Active", reason: "",
     overhead: percent(start.overhead), contingency: percent(start.contingency ?? 0), run: percent(start.split.run), fix: percent(start.split.fix),
-    sustain: percent(start.split.sustain), change: percent(start.split.change),
+    sustain: percent(start.split.sustain), change: percent(start.split.change), enabling: percent(start.split.enabling ?? 0),
   };
 
   return (
@@ -48,10 +48,10 @@ export default async function TeamDefault({ params }: { params: Promise<{ projec
       <table>
         <caption>Default history</caption>
         <thead>
-          <tr><th>Effective from</th><th>Status</th><th>Overhead</th><th>Contingency</th><th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Reason</th></tr>
+          <tr><th>Effective from</th><th>Status</th><th>Overhead</th><th>Contingency</th><th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Enabling/Training</th><th>Reason</th></tr>
         </thead>
         <tbody>
-          {history.length === 0 && <tr><td colSpan={9} className="empty">No versions yet.</td></tr>}
+          {history.length === 0 && <tr><td colSpan={10} className="empty">No versions yet.</td></tr>}
           {history.map((d) => (
             <tr key={d.id} className={d.status === "Retired" ? "muted" : ""}>
               <td>{d.effectiveFrom ? formatDate(d.effectiveFrom) : "(no date)"}</td>
@@ -62,6 +62,7 @@ export default async function TeamDefault({ params }: { params: Promise<{ projec
               <td>{percent(d.split.fix)}%</td>
               <td>{percent(d.split.sustain)}%</td>
               <td>{percent(d.split.change)}%</td>
+              <td>{percent(d.split.enabling)}%</td>
               <td className="left">{d.reason}</td>
             </tr>
           ))}

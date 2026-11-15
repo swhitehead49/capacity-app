@@ -14,6 +14,7 @@ export interface OverrideFormValues {
   fix: string;
   sustain: string;
   change: string;
+  enabling: string;
   reason: string;
 }
 
@@ -38,6 +39,7 @@ export function OverrideForm({ values }: { values: OverrideFormValues }) {
         <label>Fix %<input name="fix" type="number" step="any" min="0" max="100" defaultValue={v.fix} /></label>
         <label>Sustain %<input name="sustain" type="number" step="any" min="0" max="100" defaultValue={v.sustain} /></label>
         <label>Change %<input name="change" type="number" step="any" min="0" max="100" defaultValue={v.change} /></label>
+        <label>Enabling/Training %<input name="enabling" type="number" step="any" min="0" max="100" defaultValue={v.enabling} /></label>
         <label>Overhead % (blank = inherit)<input name="overhead" type="number" step="any" min="0" max="100" defaultValue={v.overhead} /></label>
         <label>Contingency % (blank = inherit)<input name="contingency" type="number" step="any" min="0" max="100" defaultValue={v.contingency} /></label>
         <label>Status

@@ -1,0 +1,1 @@
+ALTER TABLE "allocation_settings" ADD COLUMN "enabling" numeric DEFAULT 0 NOT NULL;

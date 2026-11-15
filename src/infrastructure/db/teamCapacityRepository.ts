@@ -116,7 +116,7 @@ function toSetting(row?: typeof t.allocationSettings.$inferSelect): AllocationSe
     status: row.status,
     overhead: row.overhead,
     contingency: row.contingency,
-    split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change },
+    split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change, enabling: row.enabling },
   };
 }
 

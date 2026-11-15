@@ -66,6 +66,7 @@ export interface TeamCapacity {
   fix: number | null;
   sustain: number | null;
   change: number | null;
+  enabling: number | null;
   members: MemberCapacity[];
 }
 

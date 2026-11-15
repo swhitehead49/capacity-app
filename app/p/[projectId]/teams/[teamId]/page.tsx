@@ -31,7 +31,7 @@ function PlanTable({ caption, rows, projectId, teamId }: { caption: string; rows
       <thead>
         <tr>
           <th>Period</th><th>Dates</th><th>FTE</th><th>Available</th><th>Engineering</th><th>Contingency</th>
-          <th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Allocation from</th><th>Status</th><th></th>
+          <th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Enabling/Training</th><th>Allocation from</th><th>Status</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -47,6 +47,7 @@ function PlanTable({ caption, rows, projectId, teamId }: { caption: string; rows
             <td>{days(row.fix)}</td>
             <td>{days(row.sustain)}</td>
             <td>{days(row.change)}</td>
+            <td>{days(row.enabling)}</td>
             <td>{row.splitSource ?? <span className="empty">None</span>}</td>
             <td className={`status-${row.status.replaceAll(" ", "-")}`}>{row.status}</td>
             <td><a className="edit" href={`/p/${projectId}/teams/${teamId}/periods/${row.periodId}/edit`}>Edit</a></td>

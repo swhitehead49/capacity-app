@@ -121,6 +121,7 @@ export const allocationSettings = pgTable("allocation_settings", {
   fix: numeric("fix", { mode: "number" }).notNull(),
   sustain: numeric("sustain", { mode: "number" }).notNull(),
   change: numeric("change", { mode: "number" }).notNull(),
+  enabling: numeric("enabling", { mode: "number" }).notNull().default(0), // Enabling/Training, 15 Nov 2026
   reason: text("reason"),
   owner: text("owner"),
 }, (t) => [check("level_needs_period", sql`(${t.level} = 'Team default') = (${t.periodId} is null)`)]);

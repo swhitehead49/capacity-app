@@ -29,7 +29,7 @@ export async function saveOverrideAction(previous: FormState, form: FormData): P
     status: form.get("status") as "Draft" | "Active" | "Retired",
     overhead: overheadText === "" ? null : Number(overheadText) / 100,
     contingency: contingencyText === "" ? null : Number(contingencyText) / 100,
-    split: { run: percent("run"), fix: percent("fix"), sustain: percent("sustain"), change: percent("change") },
+    split: { run: percent("run"), fix: percent("fix"), sustain: percent("sustain"), change: percent("change"), enabling: percent("enabling") },
     reason: String(form.get("reason") ?? ""),
   });
   if (!result.ok) {
