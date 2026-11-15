@@ -37,4 +37,4 @@ That only happens while the database is empty, so your later changes are never o
 - **Change the password:** Render → capacity-app → Environment → `APP_PASSWORD` → Save. It redeploys.
 - **Start again with fresh demo data:** create a new, empty Neon database, put its connection string in
   `DATABASE_URL` on Render, and save. The app fills it with the demo teams when it starts.
-- **Holidays:** "Load" on the Holidays page calls the OpenHolidays API from the server, so it works when hosted.
+- **Public holidays:** "Load" on Reference data → Public holidays calls the OpenHolidays API from the server, so it works when hosted.
