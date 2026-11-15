@@ -23,8 +23,10 @@ export default async function Teams({ params, searchParams }: { params: Promise<
         </div>
       )}
       <div className="toolbar">
-        <Link className="button" href={`/p/${projectId}/teams/new`}>Add team</Link>
-        <Link className="button secondary" href={`/p/${projectId}/teams/import`}>Import from spreadsheet</Link>
+        <div className="actions">
+          <Link className="button" href={`/p/${projectId}/teams/new`}>Add team</Link>
+          <Link className="button secondary" href={`/p/${projectId}/teams/import`}>Import from spreadsheet</Link>
+        </div>
         <form className="picker inline" method="get">
           <label>Show value stream
             <select name="valueStream" defaultValue={valueStream ?? ""}>
