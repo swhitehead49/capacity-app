@@ -3,10 +3,10 @@ import type { Db } from "./testDb";
 
 /** Test data: the DRGW pilot team (anonymised), sprint S001 and its quarter, as in the workbook. */
 export async function seedDrgw(db: Db) {
-  await db.insert(t.teams).values({ id: "T017", name: "DRGW" });
   await db.insert(t.locations).values(
     ["DE-BY", "DE-NI", "DE-RP", "DE-SL"].map((code) => ({ code, country: "DE", name: code, standardHours: 40 })),
   );
+  await db.insert(t.teams).values({ id: "T017", name: "DRGW", baseLocation: "DE-RP" });
   const people: [string, string, number | null, number][] = [
     ["a@example.com", "DE-BY", 40, 1],
     ["b@example.com", "DE-NI", 36, 0.9],

@@ -13,9 +13,15 @@ const formatDay = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
 
 /** UC15: a new team with a permanent ID, its first name, and the project's standard allocation (or a Draft default, BR-17). */
 export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<TeamResult> {
-  const team = { ...draft, id: draft.id.trim(), name: draft.name.trim(), valueStream: draft.valueStream?.trim() || null, leadEmail: draft.leadEmail?.trim() || null };
+  const team = {
+    ...draft, id: draft.id.trim(), name: draft.name.trim(), valueStream: draft.valueStream?.trim() || null,
+    leadEmail: draft.leadEmail?.trim() || null, baseLocation: draft.baseLocation?.trim() || null,
+  };
   const errors = validateTeam(team);
   if (errors.length) return { ok: false, errors };
+  if (team.baseLocation && !(await knownLocations(db)).has(team.baseLocation)) {
+    return { ok: false, errors: [`Unknown base location ${team.baseLocation}`] };
+  }
   if (await db.query.teams.findFirst({ where: eq(t.teams.id, team.id) })) {
     return { ok: false, errors: [`Team ID ${team.id} is already used`] };
   }
@@ -33,7 +39,7 @@ export async function insertTeam(
   standard: StandardAllocation | null,
 ): Promise<void> {
     const [row] = await tx.insert(t.teams).values({
-      id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail,
+      id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail, baseLocation: team.baseLocation ?? null,
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
     await tx.insert(t.allocationSettings).values(standard
@@ -144,6 +150,30 @@ export async function changeValueStream(db: Db, actor: string, request: { teamId
   return { ok: true, id: team.id, warnings: clash.warnings };
 }
 
+/** Where the team is based (sean, 15 Nov 2026). Blank = not set. Members keep their own location for public holidays. */
+export async function changeBaseLocation(db: Db, actor: string, request: { teamId: string; baseLocation: string }): Promise<TeamResult> {
+  const team = await db.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
+  if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
+  const baseLocation = request.baseLocation.trim() || null;
+  if (baseLocation && !(await knownLocations(db)).has(baseLocation)) return { ok: false, errors: [`Unknown base location ${baseLocation}`] };
+  if (baseLocation === team.baseLocation) {
+    return { ok: false, errors: [baseLocation ? `${team.id} is already based in ${baseLocation}` : `${team.id} has no base location already`] };
+  }
+  await db.transaction(async (tx) => {
+    await tx.update(t.teams).set({ baseLocation }).where(eq(t.teams.id, team.id));
+    await tx.insert(t.auditLog).values({
+      actor, entity: "teams", entityId: team.id, action: "change base location",
+      before: { baseLocation: team.baseLocation }, after: { baseLocation },
+    });
+  });
+  return { ok: true, id: team.id, warnings: [] };
+}
+
+/** The project's location codes. */
+export async function knownLocations(db: Pick<Db, "select">): Promise<Set<string>> {
+  return new Set((await db.select({ code: t.locations.code }).from(t.locations)).map((l) => l.code));
+}
+
 /** The value streams teams are in today, for filters and suggestions. */
 export async function listValueStreams(db: Db): Promise<string[]> {
   const rows = await db.selectDistinct({ v: t.teams.valueStream }).from(t.teams).orderBy(asc(t.teams.valueStream));
@@ -155,11 +185,7 @@ export async function listTeamsOverview(db: Db, today: string, filter: { valueSt
   const a = t.assignments;
   const current = and(or(isNull(a.startDate), lte(a.startDate, today)), or(isNull(a.endDate), sql`${a.endDate} >= ${today}`));
   const counts = await db.select({ teamId: a.teamId, n: sql<number>`count(*)::int` }).from(a).where(current).groupBy(a.teamId);
-  // Where each team's current members are based (sean, 15 Nov 2026: filter teams by country).
-  const places = await db.selectDistinct({ teamId: a.teamId, country: t.locations.country }).from(a)
-    .innerJoin(t.people, eq(a.personEmail, t.people.email))
-    .innerJoin(t.locations, eq(t.people.locationCode, t.locations.code))
-    .where(current);
+  const places = await db.select({ code: t.locations.code, country: t.locations.country }).from(t.locations);
   const teams = await db.select().from(t.teams)
     .where(filter.valueStream ? eq(t.teams.valueStream, filter.valueStream) : undefined)
     .orderBy(asc(t.teams.id));
@@ -168,9 +194,10 @@ export async function listTeamsOverview(db: Db, today: string, filter: { valueSt
       ...team,
       status: teamStatus(team.retiredOn, today),
       members: counts.find((c) => c.teamId === team.id)?.n ?? 0,
-      countries: places.filter((p) => p.teamId === team.id).map((p) => p.country).sort(),
+      // Country of the team's base location (sean, 15 Nov 2026: filter teams by country).
+      baseCountry: places.find((p) => p.code === team.baseLocation)?.country ?? null,
     }))
-    .filter((team) => !filter.country || team.countries.includes(filter.country));
+    .filter((team) => !filter.country || team.baseCountry === filter.country);
 }
 
 /** The countries of the project's locations, for the country filter. */

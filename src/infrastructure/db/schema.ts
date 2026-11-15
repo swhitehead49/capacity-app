@@ -12,6 +12,8 @@ export const teams = pgTable("teams", {
   name: text("name").notNull(),
   leadEmail: text("lead_email"),
   valueStream: text("value_stream"), // the level just above a team (decision 8 Nov 2026; was "parent group")
+  // Where the team is based (sean, 15 Nov 2026). Members keep their own location for public holidays.
+  baseLocation: text("base_location").references(() => locations.code),
   grandparentGroup: text("grandparent_group"),
   topLevelGroup: text("top_level_group"),
   idConfirmed: boolean("id_confirmed").notNull().default(false),

@@ -57,6 +57,13 @@
       "when": 1794763697648,
       "tag": "0007_one_hundred_percent",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794766114387,
+      "tag": "0008_team_base_location",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { addTeam, changeValueStream, renameTeam, retireTeam } from "@/src/application/teams";
+import { addTeam, changeBaseLocation, changeValueStream, renameTeam, retireTeam } from "@/src/application/teams";
 import { formProject, projectDb } from "@/app/lib/project";
 import { failed, type FormState } from "@/app/lib/formState";
 
@@ -14,7 +14,7 @@ export async function addTeamAction(previous: FormState, form: FormData): Promis
   const projectId = formProject(form);
   const result = await addTeam((await projectDb(projectId)).db, ACTOR, {
     id: read(form, "id"), name: read(form, "name"), valueStream: read(form, "valueStream") || null,
-    leadEmail: read(form, "leadEmail") || null, effectiveFrom: read(form, "effectiveFrom"),
+    leadEmail: read(form, "leadEmail") || null, baseLocation: read(form, "baseLocation") || null, effectiveFrom: read(form, "effectiveFrom"),
   });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(`/p/${projectId}/teams${result.warnings.length ? `?${new URLSearchParams({ warning: result.warnings.join("\n") })}` : ""}`);
@@ -43,6 +43,15 @@ export async function changeValueStreamAction(previous: FormState, form: FormDat
   const projectId = formProject(form);
   const teamId = read(form, "teamId");
   const result = await changeValueStream((await projectDb(projectId)).db, ACTOR, { teamId, valueStream: read(form, "valueStream") });
+  if (!result.ok) return failed(previous, form, result.errors);
+  redirect(`/p/${projectId}/teams/${teamId}/manage`);
+}
+
+/** Where the team is based (sean, 15 Nov 2026). */
+export async function changeBaseLocationAction(previous: FormState, form: FormData): Promise<FormState> {
+  const projectId = formProject(form);
+  const teamId = read(form, "teamId");
+  const result = await changeBaseLocation((await projectDb(projectId)).db, ACTOR, { teamId, baseLocation: read(form, "baseLocation") });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(`/p/${projectId}/teams/${teamId}/manage`);
 }

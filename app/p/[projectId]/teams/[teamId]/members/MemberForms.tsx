@@ -15,6 +15,7 @@ function PersonFields({ v, locations }: { v: Values; locations: Option[] }) {
           {locations.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
         </select>
       </label>
+      <p className="muted hint">Location is where the person works. It decides their public holidays, so it can differ from the team&apos;s base location.</p>
       <label>Contracted hours<input name="contractedHours" type="number" step="any" defaultValue={v.contractedHours} /></label>
       <label>Role<input name="role" defaultValue={v.role} /></label>
       <label>Employment start<input name="employmentStart" type="date" defaultValue={v.employmentStart} /></label>
@@ -31,9 +32,9 @@ function SharedBox({ v }: { v: Values }) {
   );
 }
 
-export function AddMemberForm({ teamId, locations, today }: { teamId: string; locations: Option[]; today: string }) {
+export function AddMemberForm({ teamId, locations, today, baseLocation }: { teamId: string; locations: Option[]; today: string; baseLocation: string }) {
   return (
-    <ActionForm action={addMemberAction} hidden={{ teamId }} values={{ startDate: today }} submitLabel="Add member" label="Add member">
+    <ActionForm action={addMemberAction} hidden={{ teamId }} values={{ startDate: today, locationCode: baseLocation }} submitLabel="Add member" label="Add member">
       {(v) => (
         <>
           <div className="grid">

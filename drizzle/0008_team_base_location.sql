@@ -1,0 +1,2 @@
+ALTER TABLE "teams" ADD COLUMN "base_location" text;--> statement-breakpoint
+ALTER TABLE "teams" ADD CONSTRAINT "teams_base_location_locations_code_fk" FOREIGN KEY ("base_location") REFERENCES "locations"("code") ON DELETE no action ON UPDATE no action;

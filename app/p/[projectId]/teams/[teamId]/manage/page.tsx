@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { listTeams } from "@/src/application/lookups";
+import { listLocations, listTeams } from "@/src/application/lookups";
 import { getTeamDetails, listValueStreams } from "@/src/application/teams";
 import { today } from "@/src/infrastructure/db/appDb";
 import { projectDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
-import { RenameForm, RetireForm, ValueStreamForm } from "../../TeamForms";
+import { BaseLocationForm, RenameForm, RetireForm, ValueStreamForm } from "../../TeamForms";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
       <p className="muted"><Link href={`/p/${projectId}/teams`}>← Teams</Link></p>
       <h1>{team.name}</h1>
       <p className="muted">
-        {team.id} · {team.valueStream ?? "no value stream"} · {status} ·{" "}
+        {team.id} · {team.valueStream ?? "no value stream"} · {team.baseLocation ? `Based in ${team.baseLocation}` : "no base location"} · {status} ·{" "}
         <Link href={`/p/${projectId}/teams/${team.id}`}>Planner</Link> · <Link href={`/p/${projectId}/teams/${team.id}/members`}>Members</Link> ·{" "}
         <Link href={`/p/${projectId}/teams/${team.id}/default`}>Default</Link>
       </p>
@@ -48,6 +48,10 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
       <h2>Value stream</h2>
       <p className="muted">The value stream this team belongs to. Its name must be unique within the value stream.</p>
       <ValueStreamForm teamId={team.id} current={team.valueStream ?? ""} valueStreams={await listValueStreams(db)} />
+
+      <h2>Base location</h2>
+      <p className="muted">Where the team is based. Each member keeps their own location, which decides their public holidays.</p>
+      <BaseLocationForm teamId={team.id} current={team.baseLocation ?? ""} locations={await listLocations(db)} />
 
       <h2>Retire</h2>
       {team.retiredOn ? (

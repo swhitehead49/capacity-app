@@ -5,6 +5,7 @@ export interface TeamDraft {
   name: string;
   valueStream: string | null;
   leadEmail: string | null;
+  baseLocation?: string | null; // a location code, e.g. "DE-BY" (sean, 15 Nov 2026)
   effectiveFrom: string;
 }
 

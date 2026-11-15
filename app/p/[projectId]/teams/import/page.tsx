@@ -17,8 +17,9 @@ export default async function ImportTeams({ params, searchParams }: {
       <h1>Import teams into {project.name}</h1>
       <p className="muted">
         In Excel, save the sheet as CSV (File → Save As → CSV). The first line needs the headings
-        {" "}<code>team_id,name</code>, and may also have <code>value_stream</code>, <code>lead_email</code> and
-        {" "}<code>start_date</code> (2026-11-16 or 16/11/2026; blank means today). Each team gets the same checks as Add team.
+        {" "}<code>team_id,name</code>, and may also have <code>value_stream</code>, <code>lead_email</code>,
+        {" "}<code>start_date</code> (2026-11-16 or 16/11/2026; blank means today) and <code>base_location</code> (a location
+        {" "}code the project already has, such as DE-BY). Each team gets the same checks as Add team.
         If any line has a problem, nothing is imported and every problem is listed.
         New teams start with this project&apos;s <Link href={`/p/${projectId}/settings`}>standard allocation</Link>.
       </p>

@@ -1,11 +1,11 @@
 "use client";
 
 import { ActionForm } from "@/app/lib/ActionForm";
-import { addTeamAction, changeValueStreamAction, renameTeamAction, retireTeamAction } from "./actions";
+import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, renameTeamAction, retireTeamAction } from "./actions";
 
 export interface Option { value: string; label: string }
 
-export function AddTeamForm({ today, valueStreams }: { today: string; valueStreams: string[] }) {
+export function AddTeamForm({ today, valueStreams, locations }: { today: string; valueStreams: string[]; locations: Option[] }) {
   return (
     <ActionForm action={addTeamAction} hidden={{}} values={{ effectiveFrom: today }} submitLabel="Add team" label="Add team">
       {(v) => (
@@ -15,6 +15,7 @@ export function AddTeamForm({ today, valueStreams }: { today: string; valueStrea
           <label>Value stream<input name="valueStream" list="value-streams" defaultValue={v.valueStream} /></label>
           <ValueStreamList valueStreams={valueStreams} />
           <label>Lead email<input name="leadEmail" defaultValue={v.leadEmail} /></label>
+          <BaseLocationSelect value={v.baseLocation} locations={locations} />
           <label>Start date<input name="effectiveFrom" type="date" defaultValue={v.effectiveFrom} /></label>
         </div>
       )}
@@ -67,6 +68,26 @@ export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: str
           <ValueStreamList valueStreams={valueStreams} />
         </div>
       )}
+    </ActionForm>
+  );
+}
+
+/** Where the team is based (sean, 15 Nov 2026). Members keep their own location for public holidays. */
+function BaseLocationSelect({ value, locations }: { value: string | undefined; locations: Option[] }) {
+  return (
+    <label>Base location
+      <select name="baseLocation" defaultValue={value ?? ""}>
+        <option value="">(not set)</option>
+        {locations.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+export function BaseLocationForm({ teamId, current, locations }: { teamId: string; current: string; locations: Option[] }) {
+  return (
+    <ActionForm action={changeBaseLocationAction} hidden={{ teamId }} values={{ baseLocation: current }} submitLabel="Change base location" label="Base location">
+      {(v) => <div className="grid"><BaseLocationSelect value={v.baseLocation} locations={locations} /></div>}
     </ActionForm>
   );
 }

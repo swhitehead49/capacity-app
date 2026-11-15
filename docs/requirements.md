@@ -115,6 +115,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | FR-16 | Reporting | Team readiness: headcount, people with complete inputs, completeness %, contracted and allocated FTE, shared resources, default status, and readiness (None, Partial, Ready). Include an org roll-up. |
 | FR-17 | Migration | Map legacy members onto people records. Split the old single "factor" into contracted FTE × team %. Flag people who don't match. |
 | FR-18 | Organisation | Add, rename and retire teams with an effective date and an audit trail. Never hard-delete. |
+| FR-18a | Organisation | Each team has a base location (sean, 15 Nov 2026), set on Add team, Manage or CSV import (`base_location`), shown on the Teams list and used by its Country filter. Each member keeps their own location, which decides their public holidays; a new member's location starts as the team's base. |
 | FR-19 | Organisation | All screens, reports and totals pick up new and retired teams automatically. There are no fixed limits on teams, people or members per team. |
 | FR-20 | Calendars | Load public holidays for DE, FR, AT and BE from the **OpenHolidays API** (https://openholidaysapi.org), including regional holidays by ISO 3166-2 subdivision (e.g. DE-BY). Map each location to a country and subdivision. Refresh every year in the horizon and cache the data locally, so calculations don't depend on the API being available. **India** is not covered: the Capacity Admin uploads the company holiday list as a CSV each year. |
 

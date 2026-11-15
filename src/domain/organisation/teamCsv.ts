@@ -14,7 +14,7 @@ export interface TeamCsvResult {
   errors: string[];
 }
 
-const HEADINGS = 'The first line must have the headings "team_id" and "name" (optional: value_stream, lead_email, start_date)';
+const HEADINGS = 'The first line must have the headings "team_id" and "name" (optional: value_stream, lead_email, start_date, base_location)';
 
 export function parseTeamCsv(text: string, options: { today: string }): { teams: TeamDraft[]; errors: string[] } {
   const result = readTeamCsv(text, options);
@@ -26,7 +26,7 @@ export function readTeamCsv(text: string, { today }: { today: string }): TeamCsv
   const rows = csvRows(text);
   const header = rows.shift()?.cells.map((c) => c.toLowerCase()) ?? [];
   const col = (name: string) => header.indexOf(name);
-  const c = { id: col("team_id"), name: col("name"), valueStream: col("value_stream"), lead: col("lead_email"), start: col("start_date") };
+  const c = { id: col("team_id"), name: col("name"), valueStream: col("value_stream"), lead: col("lead_email"), start: col("start_date"), base: col("base_location") };
   if (c.id < 0 || c.name < 0) return { teams: [], rows: [], errors: [HEADINGS] };
 
   const cell = (cells: string[], index: number) => (index < 0 ? "" : cells[index] ?? "");
@@ -41,6 +41,7 @@ export function readTeamCsv(text: string, { today }: { today: string }): TeamCsv
       name: cell(cells, c.name),
       valueStream: cell(cells, c.valueStream) || null,
       leadEmail: cell(cells, c.lead) || null,
+      baseLocation: cell(cells, c.base).trim() || null,
       effectiveFrom: start ?? "",
     };
     const problems = start ? validateTeam(team) : [`"${rawStart}" is not a real date (use YYYY-MM-DD or DD/MM/YYYY)`];

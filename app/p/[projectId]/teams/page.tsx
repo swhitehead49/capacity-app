@@ -37,7 +37,7 @@ export default async function Teams({ params, searchParams }: { params: Promise<
               {valueStreams.map((v) => <option key={v}>{v}</option>)}
             </select>
           </label>
-          <label>Country
+          <label>Country (of base location)
             <select name="country" defaultValue={country ?? ""}>
               <option value="">All</option>
               {countries.map((c) => <option key={c}>{c}</option>)}
@@ -48,7 +48,7 @@ export default async function Teams({ params, searchParams }: { params: Promise<
       </div>
       <table className="members">
         <caption>All teams</caption>
-        <thead><tr><th>ID</th><th>Name</th><th>Value stream</th><th>Countries</th><th>Lead</th><th>Members now</th><th>Status</th><th></th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Value stream</th><th>Base location</th><th>Lead</th><th>Members now</th><th>Status</th><th></th><th></th></tr></thead>
         {teams.length === 0 && <tbody><tr><td colSpan={9} className="empty">No teams{valueStream || country ? " match these filters" : " yet. Add one, or import them from a spreadsheet"}.</td></tr></tbody>}
         {groupByValueStream(teams).map(([stream, group]) => (
         <tbody key={stream}>
@@ -58,7 +58,7 @@ export default async function Teams({ params, searchParams }: { params: Promise<
               <td>{x.id}</td>
               <td>{x.name}</td>
               <td>{x.valueStream}</td>
-              <td>{x.countries.join(", ")}</td>
+              <td>{x.baseLocation ?? ""}</td>
               <td>{x.leadEmail}</td>
               <td>{x.members}</td>
               <td>{x.status}</td>
