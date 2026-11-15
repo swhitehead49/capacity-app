@@ -95,6 +95,20 @@ describe("listHolidayCalendars", () => {
     expect(loaded).toEqual([expect.objectContaining({ country: "DE", year: 2026, source: "OpenHolidays API", holidays: 20 })]);
   });
 
+  it("gives each location's own total: the holidays that apply there (sean, 15 Nov 2026)", async () => {
+    await db.insert(t.locations).values({ code: "DE-NI", country: "DE", name: "Lower Saxony" });
+    await loadHolidayCalendar(db, actor, { country: "DE", year: 2026, fetchEntries: fromApi(de2026) });
+    const { loaded } = await listHolidayCalendars(db, "2026-11-08");
+    expect(loaded[0]?.regions).toEqual([{ code: "DE-BY", name: "Bavaria", holidays: 13 }, { code: "DE-NI", name: "Lower Saxony", holidays: 10 }]);
+  });
+
+  it("a location for a whole country gets only the nationwide holidays", async () => {
+    await db.insert(t.locations).values({ code: "DE", country: "DE", name: "Germany" });
+    await loadHolidayCalendar(db, actor, { country: "DE", year: 2026, fetchEntries: fromApi(de2026) });
+    const { loaded } = await listHolidayCalendars(db, "2026-11-08");
+    expect(loaded[0]?.regions[0]).toEqual({ code: "DE", name: "Germany", holidays: 9 });
+  });
+
   it("lists calendars still missing for this year and next, for every country we have people in", async () => {
     await loadHolidayCalendar(db, actor, { country: "DE", year: 2026, fetchEntries: fromApi(de2026) });
     const { missing } = await listHolidayCalendars(db, "2026-11-08");

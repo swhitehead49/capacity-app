@@ -21,7 +21,8 @@ test("reloading a calendar fetches every holiday for that year", async ({ page }
   const de2026 = page.getByRole("table", { name: "Loaded calendars" }).getByRole("row", { name: /DE 2026/ });
   await de2026.getByRole("button", { name: "Reload" }).click();
   await expect(page.getByRole("status")).toHaveText("Loaded 20 public holidays for DE 2026.");
-  await expect(de2026).toContainText("20");
+  await expect(de2026).toContainText("DE-BY 13"); // each location's own total (sean, 15 Nov 2026)
+  await expect(de2026).toContainText("DE-NI 10");
 });
 
 test("a failed load says why and changes nothing", async ({ page }) => {
