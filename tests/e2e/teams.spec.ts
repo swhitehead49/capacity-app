@@ -85,3 +85,21 @@ test("the team list shows each team's value stream", async ({ page }) => {
   await page.goto("/p/default");
   await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T001/ })).toContainText("Clinical");
 });
+
+// sean, 15 Nov 2026: teams are grouped by value stream, and can be filtered by value stream and country.
+test("teams are grouped under a heading row for each value stream", async ({ page }) => {
+  await page.goto("/p/default/teams");
+  const table = page.getByRole("table", { name: "All teams" });
+  await expect(table.getByRole("row", { name: "Clinical", exact: true })).toBeVisible();
+  await expect(table.getByRole("row", { name: "No value stream", exact: true })).toBeVisible();
+});
+
+test("filter the teams by country (where their current members are based)", async ({ page }) => {
+  await page.goto("/p/default/teams");
+  await page.getByLabel("Country").selectOption("DE");
+  await page.getByRole("button", { name: "Show" }).click();
+  await expect(page).toHaveURL(/country=DE/);
+  const table = page.getByRole("table", { name: "All teams" });
+  await expect(table.getByRole("row", { name: /T017/ })).toContainText("DE");
+  await expect(table.getByRole("row", { name: /T002/ })).toHaveCount(0);
+});

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { seedDrgw } from "../infrastructure/db/fixtures";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { addTeam, changeValueStream, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
+import { addTeam, changeValueStream, listTeamCountries, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
 import { endMember } from "./teamMembers";
 
 // UC15 add, UC16 rename, UC17 retire a team (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted.
@@ -127,6 +127,23 @@ describe("listTeamsOverview", () => {
     ]);
   });
 
+  it("lists the countries where each team's current members are based (sean, 15 Nov 2026)", async () => {
+    const teams = await listTeamsOverview(db, today);
+    expect(teams.find((x) => x.id === "T017")?.countries).toEqual(["DE"]);
+    expect(teams.find((x) => x.id === "T001")?.countries).toEqual([]);
+  });
+
+  it("filters by country: teams with at least one current member there", async () => {
+    expect((await listTeamsOverview(db, today, { country: "DE" })).map((x) => x.id)).toEqual(["T017"]);
+    expect(await listTeamsOverview(db, today, { country: "FR" })).toEqual([]);
+  });
+
+  it("filters by value stream and country together", async () => {
+    await changeValueStream(db, actor, { teamId: "T017", valueStream: "Diagnostics" });
+    expect((await listTeamsOverview(db, today, { valueStream: "Diagnostics", country: "DE" })).map((x) => x.id)).toEqual(["T017"]);
+    expect(await listTeamsOverview(db, today, { valueStream: "Platform", country: "DE" })).toEqual([]);
+  });
+
   it("a team retiring later still shows as active until then", async () => {
     await retireTeam(db, actor, { teamId: "T002", retiredOn: "2026-12-31", successorTeamIds: [] });
     const teams = await listTeamsOverview(db, today);
@@ -167,5 +184,11 @@ describe("value streams (FR-01, decision 8 Nov 2026: the value stream is the lev
   it("the Teams list can be filtered to one value stream", async () => {
     const teams = await listTeamsOverview(db, today, { valueStream: "Platform" });
     expect(teams.map((x) => x.id)).toEqual(["T001", "T002"]);
+  });
+});
+
+describe("listTeamCountries", () => {
+  it("lists the countries of the project's locations, for the country filter", async () => {
+    expect(await listTeamCountries(db)).toEqual(["DE"]);
   });
 });
