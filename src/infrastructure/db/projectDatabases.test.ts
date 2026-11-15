@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import * as t from "./schema";
 import { createTestDb } from "./testDb";
-import { ensureProjectRegistry, findProject, listProjects, ProjectDatabases } from "./projectDatabases";
+import { ensureProjectRegistry, findProject, insertProject, listProjects, ProjectDatabases } from "./projectDatabases";
 
 // Projects (decided 15 Nov 2026): each project has its own complete database, so teams, people,
 // holidays and plans can never mix. A small list of projects lives next to the Default project's data.
@@ -15,6 +15,15 @@ describe("project registry", () => {
     expect(await listProjects(db)).toEqual([expect.objectContaining({ id: "default", name: "Default", archivedAt: null })]);
     expect(await findProject(db, "default")).toMatchObject({ name: "Default" });
     expect(await findProject(db, "nope")).toBeNull();
+  });
+});
+
+describe("insertProject", () => {
+  it("adds a project to the list, after Default", async () => {
+    const db = await createTestDb();
+    await ensureProjectRegistry(db);
+    await insertProject(db, { id: "imaging", name: "Imaging" });
+    expect((await listProjects(db)).map((p) => p.id)).toEqual(["default", "imaging"]);
   });
 });
 

@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 // T001 Example Team A with nobody. Changes here are dated after sprint S001, so the planner tests still hold.
 
 test("the planner links to the team's members", async ({ page }) => {
-  await page.goto("/teams/T017");
+  await page.goto("/p/default/teams/T017");
   await page.getByRole("link", { name: "Team members" }).click();
   await expect(page.getByRole("heading", { name: "DRGW members" })).toBeVisible();
   const current = page.getByRole("table", { name: "Current members" });
@@ -14,7 +14,7 @@ test("the planner links to the team's members", async ({ page }) => {
 });
 
 test("add a new person to a team", async ({ page }) => {
-  await page.goto("/teams/T001/members");
+  await page.goto("/p/default/teams/T001/members");
   await page.getByRole("link", { name: "Add member" }).click();
   await page.getByLabel("Email").fill("new.person@example.com");
   await page.getByLabel("Team %").fill("50");
@@ -22,14 +22,14 @@ test("add a new person to a team", async ({ page }) => {
   await page.getByLabel("Location").selectOption("DE-BY");
   await page.getByLabel("Contracted hours").fill("40");
   await page.getByRole("button", { name: "Add member" }).click();
-  await expect(page).toHaveURL(/\/teams\/T001\/members$/);
+  await expect(page).toHaveURL(/\/p\/default\/teams\/T001\/members$/);
   const row = page.getByRole("table", { name: "Current members" }).getByRole("row", { name: /new\.person@example\.com/ });
   await expect(row).toContainText("50");
   await expect(row).toContainText("Complete");
 });
 
 test("a mistake on the add form is explained and what was typed is kept", async ({ page }) => {
-  await page.goto("/teams/T001/members/new");
+  await page.goto("/p/default/teams/T001/members/new");
   await page.getByLabel("Email").fill("not-an-email");
   await page.getByLabel("Team %").fill("150");
   await page.getByLabel("Start date").fill("2026-11-09");
@@ -41,7 +41,7 @@ test("a mistake on the add form is explained and what was typed is kept", async 
 });
 
 test("edit a member's details", async ({ page }) => {
-  await page.goto("/teams/T001/members");
+  await page.goto("/p/default/teams/T001/members");
   await page.getByRole("row", { name: /new\.person@example\.com/ }).getByRole("link", { name: "Edit" }).click();
   await page.getByLabel("Contracted hours").fill("32");
   await page.getByLabel("Shared resource").check();
@@ -52,7 +52,7 @@ test("edit a member's details", async ({ page }) => {
 });
 
 test("end a membership", async ({ page }) => {
-  await page.goto("/teams/T017/members");
+  await page.goto("/p/default/teams/T017/members");
   await page.getByRole("row", { name: /j@example\.com/ }).getByRole("link", { name: "Edit" }).click();
   await page.getByLabel("Last day on the team").fill("2026-11-30");
   await page.getByRole("button", { name: "End membership" }).click();
@@ -61,15 +61,15 @@ test("end a membership", async ({ page }) => {
 });
 
 test("move a member to another team", async ({ page }) => {
-  await page.goto("/teams/T017/members");
+  await page.goto("/p/default/teams/T017/members");
   await page.getByRole("row", { name: /h@example\.com/ }).getByRole("link", { name: "Edit" }).click();
   await page.getByLabel("Move to team").selectOption({ label: "T001 | Example Team A" });
   await page.getByLabel("First day on the new team").fill("2026-12-01");
   await page.getByRole("button", { name: "Move" }).click();
-  await expect(page).toHaveURL(/\/teams\/T001\/members$/);
+  await expect(page).toHaveURL(/\/p\/default\/teams\/T001\/members$/);
   await expect(page.getByRole("table", { name: "Current members" }).getByRole("row", { name: /h@example\.com/ }))
     .toContainText("1 Dec 2026");
-  await page.goto("/teams/T017/members");
+  await page.goto("/p/default/teams/T017/members");
   await expect(page.getByRole("table", { name: "Current members" }).getByRole("row", { name: /h@example\.com/ }))
     .toContainText("30 Nov 2026");
 });
