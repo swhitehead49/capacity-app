@@ -10,12 +10,14 @@ test("the planner has a Contingency column (0 when none is set)", async ({ page 
 
 test("a sprint override can set its own contingency", async ({ page }) => {
   await page.goto("/p/default/teams/T017/periods/S003/edit");
-  await page.getByLabel("Contingency % (blank = inherit)").fill("10");
+  await page.getByLabel("Contingency %").fill("10");
+  await page.getByLabel("Run %").fill("14");
   await page.getByLabel("Reason").fill("Risky release");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/p\/default\/teams\/T017$/);
   await page.goto("/p/default/teams/T017/periods/S003/edit");
-  await expect(page.getByText("contingency 10% from Sprint override")).toBeVisible();
+  await expect(page.getByLabel("Contingency %")).toHaveValue("10");
+  await expect(page.getByText("Currently applied: Sprint override")).toBeVisible();
 });
 
 test("the team default form sets contingency", async ({ page }) => {
@@ -24,10 +26,10 @@ test("the team default form sets contingency", async ({ page }) => {
   await form.getByLabel("Effective from").fill("2026-11-01");
   await form.getByLabel("Overhead %").fill("20");
   await form.getByLabel("Contingency %").fill("5");
-  await form.getByLabel("Run %").fill("25");
-  await form.getByLabel("Fix %").fill("25");
-  await form.getByLabel("Sustain %").fill("25");
-  await form.getByLabel("Change %").fill("25");
+  await form.getByLabel("Run %").fill("15");
+  await form.getByLabel("Fix %").fill("20");
+  await form.getByLabel("Sustain %").fill("20");
+  await form.getByLabel("Change %").fill("20");
   await form.getByRole("button", { name: "Save default" }).click();
-  await expect(page.getByRole("region", { name: "In force today" })).toContainText("Overhead 20% · Contingency 5% · Run 25%");
+  await expect(page.getByRole("region", { name: "In force today" })).toContainText("Overhead 20% · Contingency 5% · Run 15%");
 });

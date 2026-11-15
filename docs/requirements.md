@@ -43,8 +43,10 @@ Every change records **who made it, when and why**, so roles can be added later.
    - **Explicit only**: take off booked absence only.
    - **Forecast only**: apply the forecast % only.
 7. **Engineering days** = calendar-available days × (1 − overhead %).
-8. **Contingency days** = engineering days × contingency % (held back, not split). Set on the team default (blank = 0%); a quarter or sprint override may set its own or inherit, like overhead (added 8 Nov 2026).
-9. **Run / Fix / Sustain / Change / Enabling/Training days** = (engineering days − contingency days) × the effective % for each.
+   One 100% (sean, 15 Nov 2026): overhead %, contingency % and the five work-type % add up to 100% of calendar-available days.
+8. **Contingency days** = calendar-available days × contingency % (added 8 Nov 2026; blank = 0%).
+9. **Run / Fix / Sustain / Change / Enabling/Training days** = calendar-available days × the effective % for each.
+   Settings saved before 15 Nov 2026 were converted so every number stayed the same (migration 0007).
 
 The unit is **person-days**. Part-time work is handled through FTE.
 
@@ -120,12 +122,12 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 
 | ID | Rule |
 | --- | --- |
-| BR-01 | Run + Fix + Sustain + Change + Enabling/Training = 100% (tolerance 0.01%). Overhead is separate and is taken off first. |
+| BR-01 | Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training = 100% (tolerance 0.01%). The error message shows the actual total. |
 | BR-02 | Every percentage is between 0 and 100%. |
 | BR-03 | A team default can be Active only when its effective date, overhead and all four percentages are filled in and BR-01 passes. |
 | BR-04 | An Active override needs a team, level, period and reason. Its level must match the period type. |
 | BR-05 | Draft and Retired allocations are ignored. With no Active allocation, show calendar capacity only. |
-| BR-06 | An override can set overhead %. If it is blank, the value is inherited from the quarter override, then the team default. |
+| BR-06 | Replaced 15 Nov 2026: an Active override gives all seven numbers (the Edit form starts from what currently applies); nothing is inherited. |
 | BR-07 | A person counts only if they are active and their inputs are complete. |
 | BR-08 | Capacity counts only within the employment dates. A blank date means no limit. |
 | BR-09 | Holidays are taken off only if they fall on a weekday and match the person's location. |

@@ -42,7 +42,7 @@ const novemberForecast = ["DE-BY", "DE-NI", "DE-RP", "DE-SL"].map((region) => ({
 }));
 
 const activeDefault = resolveAllocation({
-  teamDefault: { status: "Active", overhead: 0.2, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3 } },
+  teamDefault: { status: "Active", overhead: 0.2, split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24 } }, // one 100%
 });
 
 const baseInput: TeamCapacityInput = {
@@ -73,7 +73,7 @@ describe("teamCapacity for DRGW, sprint S001", () => {
     expect(result.calendarAvailableDays).toBeCloseTo(72.54);
   });
 
-  it("takes 20% overhead and splits 30/20/20/30", () => {
+  it("takes 20% overhead; Run 24%, Fix 16%, Sustain 16%, Change 24% of available days", () => {
     expect(result.engineeringDays).toBeCloseTo(58.032);
     expect(result.run).toBeCloseTo(17.4096);
     expect(result.fix).toBeCloseTo(11.6064);
@@ -89,9 +89,9 @@ describe("teamCapacity for DRGW, sprint S001", () => {
 });
 
 describe("teamCapacity with contingency", () => {
-  it("DRGW S001 with 10% contingency holds back 5.80 of 58.03 engineering days", () => {
+  it("DRGW S001 with 8% contingency (of available days) holds back 5.80 days", () => {
     const allocation = resolveAllocation({
-      teamDefault: { status: "Active", overhead: 0.2, contingency: 0.1, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3 } },
+      teamDefault: { status: "Active", overhead: 0.2, contingency: 0.08, split: { run: 0.216, fix: 0.144, sustain: 0.144, change: 0.216 } },
     });
     const result = teamCapacity({ ...baseInput, allocation });
     expect(result.engineeringDays).toBeCloseTo(58.032);

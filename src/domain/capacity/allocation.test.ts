@@ -13,7 +13,7 @@ const sprint: AllocationSetting = { status: "Active", overhead: 0.3, contingency
 
 describe("validateAllocation (BR-01, BR-02)", () => {
   it("accepts overhead, contingency and the five work types adding up to 100%", () => {
-    expect(validateAllocation({ overhead: 0.2, contingency: 0.05, split: split(0.2, 0.15, 0.15, 0.35, 0.1) })).toEqual([]);
+    expect(validateAllocation({ overhead: 0.2, contingency: 0.05, split: split(0.2, 0.15, 0.1, 0.2, 0.1) })).toEqual([]);
   });
 
   it("a blank contingency counts as 0%", () => {
@@ -72,13 +72,13 @@ describe("resolveAllocation (FR-12, BR-05)", () => {
 
 describe("splitCapacity (steps 7–8)", () => {
   it("gives each part its % of the available days", () => {
-    const result = splitCapacity(100, { overhead: 0.2, contingency: 0.05, split: split(0.2, 0.15, 0.15, 0.35, 0.1) });
+    const result = splitCapacity(100, { overhead: 0.2, contingency: 0.05, split: split(0.2, 0.15, 0.1, 0.2, 0.1) });
     expect(result.engineeringDays).toBeCloseTo(80); // available minus overhead
     expect(result.contingencyDays).toBeCloseTo(5);
     expect(result.run).toBeCloseTo(20);
     expect(result.fix).toBeCloseTo(15);
-    expect(result.sustain).toBeCloseTo(15);
-    expect(result.change).toBeCloseTo(35);
+    expect(result.sustain).toBeCloseTo(10);
+    expect(result.change).toBeCloseTo(20);
     expect(result.enabling).toBeCloseTo(10);
   });
 

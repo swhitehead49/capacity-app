@@ -12,8 +12,9 @@ const request = {
   teamId: "T017",
   periodId: "S001",
   status: "Active" as const,
-  overhead: null,
-  split: { run: 0.5, fix: 0.2, sustain: 0.1, change: 0.2 },
+  overhead: 0.2,
+  contingency: 0,
+  split: { run: 0.4, fix: 0.2, sustain: 0.1, change: 0.1 }, // one 100% with the overhead
   reason: "Release sprint",
 };
 
@@ -26,7 +27,7 @@ describe("saveOverride", () => {
   it("creates a sprint override for a sprint, and logs it", async () => {
     expect(await saveOverride(db, actor, request)).toMatchObject({ ok: true });
     const rows = (await db.select().from(t.allocationSettings)).filter((r) => r.level !== "Team default");
-    expect(rows).toEqual([expect.objectContaining({ level: "Sprint override", periodId: "S001", run: 0.5, overhead: null, owner: actor })]);
+    expect(rows).toEqual([expect.objectContaining({ level: "Sprint override", periodId: "S001", run: 0.4, overhead: 0.2, owner: actor })]);
     expect((await db.select().from(t.auditLog)).map((e) => e.action)).toEqual(["create"]);
   });
 
@@ -38,13 +39,13 @@ describe("saveOverride", () => {
 
   it("changes the existing override instead of adding a second one", async () => {
     await saveOverride(db, actor, request);
-    await saveOverride(db, actor, { ...request, split: { run: 0.4, fix: 0.3, sustain: 0.1, change: 0.2 } });
+    await saveOverride(db, actor, { ...request, split: { run: 0.3, fix: 0.3, sustain: 0.1, change: 0.1 } });
     const rows = (await db.select().from(t.allocationSettings)).filter((r) => r.level !== "Team default");
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.run).toBe(0.4);
+    expect(rows[0]?.run).toBe(0.3);
     const log = await db.select().from(t.auditLog);
     expect(log.map((e) => e.action)).toEqual(["create", "update"]);
-    expect(log[1]?.before).toMatchObject({ run: 0.5 });
+    expect(log[1]?.before).toMatchObject({ run: 0.4 });
   });
 
   it("refuses an invalid override and saves nothing", async () => {

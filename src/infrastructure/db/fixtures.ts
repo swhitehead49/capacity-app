@@ -35,6 +35,6 @@ export async function seedDrgw(db: Db) {
   );
   await db.insert(t.allocationSettings).values({
     teamId: "T017", level: "Team default", effectiveFrom: "2026-01-01", status: "Active",
-    overhead: 0.2, run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3,
+    overhead: 0.2, contingency: 0, run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24, // one 100%
   });
 }

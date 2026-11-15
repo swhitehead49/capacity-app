@@ -20,6 +20,7 @@ export function DefaultForm({ teamId, values }: { teamId: string; values: Values
               </select>
             </label>
           </div>
+          <p className="muted">Overhead, contingency and the five types of work add up to 100% of available days.</p>
           <div className="grid">
             <label>Run %<input name="run" type="number" step="any" min="0" max="100" defaultValue={v.run} /></label>
             <label>Fix %<input name="fix" type="number" step="any" min="0" max="100" defaultValue={v.fix} /></label>

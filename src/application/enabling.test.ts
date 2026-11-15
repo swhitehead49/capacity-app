@@ -11,7 +11,7 @@ import { saveTeamDefault } from "./saveTeamDefault";
 // Enabling/Training (sean, 15 Nov 2026): a fifth work type, saved on defaults and overrides, shown in the planner.
 
 const actor = "Capacity Admin";
-const split = { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.2, enabling: 0.1 };
+const split = { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.16, enabling: 0.08 }; // with 20% overhead = 100%
 let db: Db;
 
 beforeEach(async () => {
@@ -32,14 +32,14 @@ describe("Enabling/Training", () => {
   it("is saved on the team default and planned in days: DRGW S001 gets 5.8 Enabling/Training days", async () => {
     await saveTeamDefault(db, actor, { teamId: "T017", status: "Active", effectiveFrom: "2026-01-01", overhead: 0.2, split });
     const { current } = await getTeamDefaults(db, { teamId: "T017", today: "2026-11-08" });
-    expect(current?.split.enabling).toBe(0.1);
+    expect(current?.split.enabling).toBe(0.08);
     const plan = await getTeamPlan(db, { teamId: "T017", today: "2026-11-08" });
     expect(plan.sprints.find((r) => r.periodId === "S001")?.enabling).toBeCloseTo(5.8032);
   });
 
   it("an override can set its own", async () => {
-    await saveOverride(db, actor, { teamId: "T017", periodId: "S001", status: "Active", overhead: null, contingency: null, split: { ...split, change: 0.1, enabling: 0.2 }, reason: "Training sprint" });
+    await saveOverride(db, actor, { teamId: "T017", periodId: "S001", status: "Active", overhead: 0.2, contingency: 0, split: { ...split, change: 0.08, enabling: 0.16 }, reason: "Training sprint" });
     const view = await getOverride(db, { teamId: "T017", periodId: "S001" });
-    expect(view.override?.split.enabling).toBe(0.2);
+    expect(view.override?.split.enabling).toBe(0.16);
   });
 });

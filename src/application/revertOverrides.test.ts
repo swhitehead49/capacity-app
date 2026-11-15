@@ -13,8 +13,8 @@ import { getOverride, saveOverride } from "./saveOverride";
 let db: Db;
 const actor = "Capacity Admin";
 const override = (periodId: string) => ({
-  teamId: "T017", periodId, status: "Active" as const, overhead: null,
-  split: { run: 0.5, fix: 0.2, sustain: 0.1, change: 0.2 }, reason: "Test",
+  teamId: "T017", periodId, status: "Active" as const, overhead: 0.2, contingency: 0,
+  split: { run: 0.4, fix: 0.2, sustain: 0.1, change: 0.1 }, reason: "Test",
 });
 const liveOverrides = () => db.select().from(t.allocationSettings)
   .where(and(ne(t.allocationSettings.level, "Team default"), ne(t.allocationSettings.status, "Retired")));
@@ -70,7 +70,7 @@ describe("getOverride shows the team default for reference", () => {
   it("includes the default in force for the period", async () => {
     const view = await getOverride(db, { teamId: "T017", periodId: "S001" });
     expect(view.teamDefault).toEqual({
-      effectiveFrom: "2026-01-01", overhead: 0.2, contingency: null, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3, enabling: 0 },
+      effectiveFrom: "2026-01-01", overhead: 0.2, contingency: 0, split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24, enabling: 0 },
     });
   });
 });

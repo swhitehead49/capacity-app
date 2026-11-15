@@ -27,7 +27,7 @@ describe("importTeams", () => {
   });
 
   it("new teams adopt the project's standard allocation", async () => {
-    await saveStandardAllocation(db, actor, { overhead: 0.2, contingency: 0, split: { run: 0.25, fix: 0.25, sustain: 0.25, change: 0.25, enabling: 0 } });
+    await saveStandardAllocation(db, actor, { overhead: 0.2, contingency: 0, split: { run: 0.2, fix: 0.2, sustain: 0.2, change: 0.2, enabling: 0 } });
     await importTeams(db, actor, { today, csv: `${head}\nT074,Payments Core,Platform,,\n` });
     const { current } = await getTeamDefaults(db, { teamId: "T074", today });
     expect(current).toMatchObject({ status: "Active", overhead: 0.2 });

@@ -29,11 +29,11 @@ describe("loadTeamCapacityInput", () => {
   it("uses an Active quarter override for a sprint inside that quarter (FR-12)", async () => {
     await db.insert(t.allocationSettings).values({
       teamId: "T017", level: "Quarter override", periodId: "2026-Q4", status: "Active",
-      overhead: null, run: 0.4, fix: 0.2, sustain: 0.1, change: 0.3, reason: "Release quarter",
+      overhead: 0.2, contingency: 0, run: 0.3, fix: 0.2, sustain: 0.1, change: 0.2, reason: "Release quarter",
     });
     const input = await loadTeamCapacityInput(db, { teamId: "T017", periodId: "S001", mode: "Auto" });
     expect(input.allocation.splitSource).toBe("Quarter override");
-    expect(input.allocation.overheadSource).toBe("Team default");
+    expect(input.allocation.overheadSource).toBe("Quarter override"); // one 100%: the override gives every number
   });
 
   it("leaves out someone whose assignment ended before the sprint (BR-22)", async () => {

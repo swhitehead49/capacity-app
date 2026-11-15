@@ -13,7 +13,7 @@ const request = {
   status: "Active" as const,
   effectiveFrom: "2026-01-01",
   overhead: 0.2,
-  split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3 },
+  split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24 }, // with 20% overhead: one 100%
   reason: "Agreed in planning",
 };
 
@@ -28,7 +28,7 @@ describe("saveTeamDefault", () => {
     expect(result.ok).toBe(true);
     const rows = await db.select().from(t.allocationSettings);
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ teamId: "T017", level: "Team default", status: "Active", overhead: 0.2, run: 0.3 });
+    expect(rows[0]).toMatchObject({ teamId: "T017", level: "Team default", status: "Active", overhead: 0.2, run: 0.24 });
   });
 
   it("records who saved it, when and why in the audit log", async () => {
@@ -40,7 +40,7 @@ describe("saveTeamDefault", () => {
 
   it("refuses an invalid default and saves nothing", async () => {
     const result = await saveTeamDefault(db, actor, { ...request, split: { run: 0.5, fix: 0.5, sustain: 0.5, change: 0 } });
-    expect(result).toEqual({ ok: false, errors: ["Run + Fix + Sustain + Change + Enabling/Training must add up to 100%"] });
+    expect(result).toEqual({ ok: false, errors: ["Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100% (they add up to 170%)"] });
     expect(await db.select().from(t.allocationSettings)).toHaveLength(0);
     expect(await db.select().from(t.auditLog)).toHaveLength(0);
   });
@@ -52,7 +52,7 @@ describe("saveTeamDefault", () => {
 
   it("retires the previous Active default with the same date, so only one is in force", async () => {
     await saveTeamDefault(db, actor, request);
-    await saveTeamDefault(db, actor, { ...request, overhead: 0.25 });
+    await saveTeamDefault(db, actor, { ...request, overhead: 0.25, split: { run: 0.19, fix: 0.16, sustain: 0.16, change: 0.24 } });
     const active = await db.select().from(t.allocationSettings).where(eq(t.allocationSettings.status, "Active"));
     expect(active).toHaveLength(1);
     expect(active[0]?.overhead).toBe(0.25);

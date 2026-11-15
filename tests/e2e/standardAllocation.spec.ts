@@ -12,8 +12,8 @@ test("set the project's standard allocation; a new team starts with it", async (
   await form.getByLabel("Contingency %").fill("5");
   await form.getByLabel("Run %").fill("20");
   await form.getByLabel("Fix %").fill("15");
-  await form.getByLabel("Sustain %").fill("15");
-  await form.getByLabel("Change %").fill("40");
+  await form.getByLabel("Sustain %").fill("10");
+  await form.getByLabel("Change %").fill("20");
   await form.getByLabel("Enabling/Training %").fill("10");
   await form.getByRole("button", { name: "Save standard allocation" }).click();
   await expect(page.getByRole("status")).toContainText("Saved");
@@ -25,7 +25,7 @@ test("set the project's standard allocation; a new team starts with it", async (
   await add.getByRole("button", { name: "Add team" }).click();
   await page.goto("/p/imaging/teams/T901/default");
   await expect(page.getByRole("region", { name: "In force today" }))
-    .toContainText("Overhead 20% · Contingency 5% · Run 20% · Fix 15% · Sustain 15% · Change 40% · Enabling/Training 10%");
+    .toContainText("Overhead 20% · Contingency 5% · Run 20% · Fix 15% · Sustain 10% · Change 20% · Enabling/Training 10%");
 });
 
 test("a standard allocation that doesn't add up is explained", async ({ page }) => {

@@ -17,6 +17,7 @@ export function StandardForm({ values }: { values: Values }) {
             {field("Overhead %", "overhead", v)}
             {field("Contingency %", "contingency", v)}
           </div>
+          <p className="muted">All seven add up to 100% of available days.</p>
           <div className="grid">
             {field("Run %", "run", v)}
             {field("Fix %", "fix", v)}

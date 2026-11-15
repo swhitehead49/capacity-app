@@ -50,6 +50,13 @@
       "when": 1794760202295,
       "tag": "0006_standard_allocation",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794763697648,
+      "tag": "0007_one_hundred_percent",
+      "breakpoints": true
     }
   ]
 }
