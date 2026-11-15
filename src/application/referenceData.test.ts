@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { STARTING_LOCATIONS, addLocation, addStartingLocations, addValueStream, getReferenceData, syncLocations } from "./referenceData";
+import { STARTING_LOCATIONS, addLocation, updateLocation, addStartingLocations, addValueStream, getReferenceData, syncLocations } from "./referenceData";
 
 // Reference data set once at system level and used by every project (sean, 15 Nov 2026):
 // the value streams and the locations a team's Value stream and Base location are picked from.
@@ -55,6 +55,34 @@ describe("locations", () => {
   it("refuses a code already there", async () => {
     await addLocation(shared, actor, bavaria);
     expect(await addLocation(shared, actor, bavaria)).toEqual({ ok: false, errors: ["DE-BY is already a location"] });
+  });
+});
+
+describe("updateLocation (sean, 15 Nov 2026: edit a location's name and standard hours)", () => {
+  beforeEach(async () => {
+    await addLocation(shared, actor, { code: "AT-9", country: "AT", name: "Vienna", standardHours: "" });
+  });
+
+  it("changes the name and standard hours, and logs what changed", async () => {
+    expect(await updateLocation(shared, actor, { code: "AT-9", name: "Vienna office", standardHours: "38.5" })).toEqual({ ok: true });
+    expect((await getReferenceData(shared)).locations).toEqual([{ code: "AT-9", country: "AT", name: "Vienna office", standardHours: 38.5 }]);
+    const entry = (await shared.select().from(t.auditLog)).at(-1);
+    expect(entry).toMatchObject({ entity: "locations", entityId: "AT-9", action: "change", before: { name: "Vienna", standardHours: null }, after: { name: "Vienna office", standardHours: 38.5 } });
+  });
+
+  it("checks the name and hours, and that something changed", async () => {
+    expect(await updateLocation(shared, actor, { code: "AT-9", name: " ", standardHours: "0" }))
+      .toEqual({ ok: false, errors: ["Name is needed", "Standard hours must be a number above 0, or blank"] });
+    expect(await updateLocation(shared, actor, { code: "AT-9", name: "Vienna", standardHours: "" })).toEqual({ ok: false, errors: ["Nothing has changed"] });
+    expect(await updateLocation(shared, actor, { code: "XX", name: "X", standardHours: "" })).toEqual({ ok: false, errors: ["Unknown location XX"] });
+  });
+
+  it("projects pick up the change", async () => {
+    const project = await createTestDb();
+    await syncLocations(project, shared);
+    await updateLocation(shared, actor, { code: "AT-9", name: "Vienna", standardHours: "40" });
+    await syncLocations(project, shared);
+    expect((await project.select().from(t.locations))[0]?.standardHours).toBe(40);
   });
 });
 

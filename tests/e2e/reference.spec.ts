@@ -19,6 +19,7 @@ test("add a value stream and a location on the Reference data page, then use the
   await places.getByLabel("Standard hours").fill("35");
   await places.getByRole("button", { name: "Add location" }).click();
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /ES-MD/ })).toContainText("Madrid");
+  await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /ES-MD/ })).toContainText("35");
 
   // Another project can pick them straight away.
   await page.goto("/p/imaging/teams/new");
@@ -45,4 +46,17 @@ test("add the original workbook's locations in one go", async ({ page }) => {
   await expect(locations.getByRole("row", { name: /AT-9/ })).toContainText("Vienna");
   await expect(locations.getByRole("row", { name: /BE-VOV/ })).toContainText("Ghent");
   await expect(page.getByRole("button", { name: "Add the starting locations" })).toHaveCount(0);
+});
+
+test("edit a location's name and standard hours", async ({ page }) => {
+  await page.goto("/reference");
+  await page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ }).getByRole("link", { name: "Edit" }).click();
+  await expect(page).toHaveURL(/\/reference\/locations\/AT-9$/);
+  const form = page.getByRole("form", { name: "Edit location" });
+  await form.getByLabel("Name").fill("Vienna office");
+  await form.getByLabel("Standard hours").fill("38.5");
+  await form.getByRole("button", { name: "Save location" }).click();
+  await expect(page).toHaveURL(/\/reference$/);
+  await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ })).toContainText("Vienna office");
+  await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ })).toContainText("38.5");
 });
