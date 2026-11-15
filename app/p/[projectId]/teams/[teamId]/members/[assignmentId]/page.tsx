@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { listLocations, listTeams } from "@/src/application/lookups";
+import { listTeams } from "@/src/application/lookups";
 import { getMember } from "@/src/application/teamMembers";
-import { projectDb } from "@/app/lib/project";
+import { projectDb, projectReference } from "@/app/lib/project";
 import { formatDate, percent } from "@/app/lib/format";
 import { EditMemberForm, EndMemberForm, MoveMemberForm } from "../MemberForms";
 
@@ -36,7 +36,7 @@ export default async function EditMember({ params }: { params: Promise<{ project
       </p>
 
       <h2>Details</h2>
-      <EditMemberForm teamId={teamId} assignmentId={assignmentId} values={values} locations={await listLocations(db)} />
+      <EditMemberForm teamId={teamId} assignmentId={assignmentId} values={values} locations={(await projectReference(db)).locations} />
 
       <h2>End membership</h2>
       <p className="muted">They stop counting for this team after this day. Nothing is deleted.</p>

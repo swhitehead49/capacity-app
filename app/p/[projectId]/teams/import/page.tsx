@@ -16,10 +16,14 @@ export default async function ImportTeams({ params, searchParams }: {
       <p className="muted"><Link href={`/p/${projectId}/teams`}>← Teams</Link></p>
       <h1>Import teams into {project.name}</h1>
       <p className="muted">
-        In Excel, save the sheet as CSV (File → Save As → CSV). The first line needs the headings
-        {" "}<code>team_id,name</code>, and may also have <code>value_stream</code>, <code>lead_email</code>,
-        {" "}<code>start_date</code> (2026-11-16 or 16/11/2026; blank means today) and <code>base_location</code> (a location
-        {" "}code the project already has, such as DE-BY). Each team gets the same checks as Add team.
+        In Excel, save the sheet as CSV (File → Save As → CSV UTF-8). The first line holds the headings of the original Teams
+        sheet: <code>Team_ID</code> and <code>Team_Name</code> are needed; <code>Team_Lead_Email</code>, <code>Parent_Team_Name</code>,
+        {" "}<code>Parent_Team_Lead_Email</code>, <code>Grandparent_Team_Name</code>, <code>Grandparent_Team_Lead_Email</code>,
+        {" "}<code>Top_Level_Group</code>, <code>Top_Level_Lead_Email</code>, <code>Source_Headcount</code>, <code>ID_Status</code>
+        {" "}(Provisional or Confirmed; blank means Provisional), <code>Data_Quality_Flag</code>, <code>Value_Stream</code>,
+        {" "}<code>Base_Location</code> and <code>Start_Date</code> (2026-11-16 or 16/11/2026; blank means today) are optional.
+        Value streams and base locations must already be in the <Link href="/reference">reference data</Link>.
+        Each team gets the same checks as Add team.
         If any line has a problem, nothing is imported and every problem is listed.
         New teams start with this project&apos;s <Link href={`/p/${projectId}/settings`}>standard allocation</Link>.
       </p>

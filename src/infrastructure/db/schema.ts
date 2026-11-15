@@ -14,9 +14,16 @@ export const teams = pgTable("teams", {
   valueStream: text("value_stream"), // the level just above a team (decision 8 Nov 2026; was "parent group")
   // Where the team is based (sean, 15 Nov 2026). Members keep their own location for public holidays.
   baseLocation: text("base_location").references(() => locations.code),
-  grandparentGroup: text("grandparent_group"),
+  // The original workbook's Teams sheet (sean, 15 Nov 2026).
+  parentTeamName: text("parent_team_name"),
+  parentTeamLeadEmail: text("parent_team_lead_email"),
+  grandparentTeamName: text("grandparent_group"),
+  grandparentTeamLeadEmail: text("grandparent_team_lead_email"),
   topLevelGroup: text("top_level_group"),
-  idConfirmed: boolean("id_confirmed").notNull().default(false),
+  topLevelLeadEmail: text("top_level_lead_email"),
+  sourceHeadcount: integer("source_headcount"),
+  idStatus: text("id_status").notNull().default("Provisional"), // Provisional until confirmed with the group leads (Q5)
+  dataQualityFlag: text("data_quality_flag"),
   retiredOn: date("retired_on"),
 });
 
@@ -40,6 +47,14 @@ export const locations = pgTable("locations", {
   country: text("country").notNull(), // e.g. "DE"
   name: text("name").notNull(),
   standardHours: numeric("standard_hours", { mode: "number" }),
+});
+
+/**
+ * System reference data (sean, 15 Nov 2026): the value streams a team can be in. The Default database's copy is the
+ * system's list, shared by every project (like \`locations\`, whose Default copy is the system's list of locations).
+ */
+export const valueStreams = pgTable("value_streams", {
+  name: text("name").primaryKey(),
 });
 
 /** FR-03: a person and their contract. */

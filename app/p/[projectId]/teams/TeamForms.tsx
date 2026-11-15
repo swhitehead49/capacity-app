@@ -1,7 +1,8 @@
 "use client";
 
 import { ActionForm } from "@/app/lib/ActionForm";
-import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, renameTeamAction, retireTeamAction } from "./actions";
+import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
+import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, updateTeamDetailsAction, renameTeamAction, retireTeamAction } from "./actions";
 
 export interface Option { value: string; label: string }
 
@@ -12,8 +13,7 @@ export function AddTeamForm({ today, valueStreams, locations }: { today: string;
         <div className="grid">
           <label>Team ID<input name="id" defaultValue={v.id} placeholder="e.g. T074" /></label>
           <label>Name<input name="name" defaultValue={v.name} /></label>
-          <label>Value stream<input name="valueStream" list="value-streams" defaultValue={v.valueStream} /></label>
-          <ValueStreamList valueStreams={valueStreams} />
+          <ValueStreamSelect value={v.valueStream} valueStreams={valueStreams} />
           <label>Lead email<input name="leadEmail" defaultValue={v.leadEmail} /></label>
           <BaseLocationSelect value={v.baseLocation} locations={locations} />
           <label>Start date<input name="effectiveFrom" type="date" defaultValue={v.effectiveFrom} /></label>
@@ -54,9 +54,16 @@ export function RetireForm({ teamId, teams }: { teamId: string; teams: Option[] 
   );
 }
 
-/** Suggests existing value streams while still allowing a new one to be typed. */
-function ValueStreamList({ valueStreams }: { valueStreams: string[] }) {
-  return <datalist id="value-streams">{valueStreams.map((v) => <option key={v} value={v} />)}</datalist>;
+/** A value stream from the system's reference data (sean, 15 Nov 2026). */
+function ValueStreamSelect({ value, valueStreams }: { value: string | undefined; valueStreams: string[] }) {
+  return (
+    <label>Value stream
+      <select name="valueStream" defaultValue={value ?? ""}>
+        <option value="">(none)</option>
+        {valueStreams.map((v) => <option key={v} value={v}>{v}</option>)}
+      </select>
+    </label>
+  );
 }
 
 export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: string; current: string; valueStreams: string[] }) {
@@ -64,8 +71,7 @@ export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: str
     <ActionForm action={changeValueStreamAction} hidden={{ teamId }} values={{ valueStream: current }} submitLabel="Change value stream" label="Value stream">
       {(v) => (
         <div className="grid">
-          <label>Value stream<input name="valueStream" list="value-streams" defaultValue={v.valueStream} /></label>
-          <ValueStreamList valueStreams={valueStreams} />
+          <ValueStreamSelect value={v.valueStream} valueStreams={valueStreams} />
         </div>
       )}
     </ActionForm>
@@ -88,6 +94,30 @@ export function BaseLocationForm({ teamId, current, locations }: { teamId: strin
   return (
     <ActionForm action={changeBaseLocationAction} hidden={{ teamId }} values={{ baseLocation: current }} submitLabel="Change base location" label="Base location">
       {(v) => <div className="grid"><BaseLocationSelect value={v.baseLocation} locations={locations} /></div>}
+    </ActionForm>
+  );
+}
+
+/** The workbook's team attributes (sean, 15 Nov 2026). */
+export function DetailsForm({ teamId, values }: { teamId: string; values: Record<string, string> }) {
+  return (
+    <ActionForm action={updateTeamDetailsAction} hidden={{ teamId }} values={values} submitLabel="Save details" label="Details">
+      {(v) => (
+        <div className="grid">
+          <label>Team lead email<input name="leadEmail" defaultValue={v.leadEmail} /></label>
+          <label>Parent team name<input name="parentTeamName" defaultValue={v.parentTeamName} /></label>
+          <label>Parent team lead email<input name="parentTeamLeadEmail" defaultValue={v.parentTeamLeadEmail} /></label>
+          <label>Grandparent team name<input name="grandparentTeamName" defaultValue={v.grandparentTeamName} /></label>
+          <label>Grandparent team lead email<input name="grandparentTeamLeadEmail" defaultValue={v.grandparentTeamLeadEmail} /></label>
+          <label>Top-level group<input name="topLevelGroup" defaultValue={v.topLevelGroup} /></label>
+          <label>Top-level lead email<input name="topLevelLeadEmail" defaultValue={v.topLevelLeadEmail} /></label>
+          <label>Source headcount<input name="sourceHeadcount" type="number" step="1" min="0" defaultValue={v.sourceHeadcount} /></label>
+          <label>ID status
+            <select name="idStatus" defaultValue={v.idStatus}>{ID_STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
+          </label>
+          <label>Data quality flag<input name="dataQualityFlag" defaultValue={v.dataQualityFlag} /></label>
+        </div>
+      )}
     </ActionForm>
   );
 }

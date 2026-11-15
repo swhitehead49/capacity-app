@@ -64,6 +64,20 @@
       "when": 1794766114387,
       "tag": "0008_team_base_location",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794768013600,
+      "tag": "0009_team_attributes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794768014522,
+      "tag": "0010_drop_id_confirmed",
+      "breakpoints": true
     }
   ]
 }

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { listLocations } from "@/src/application/lookups";
 import { today } from "@/src/infrastructure/db/appDb";
-import { projectDb } from "@/app/lib/project";
+import { projectDb, projectReference } from "@/app/lib/project";
 import * as t from "@/src/infrastructure/db/schema";
 import { AddMemberForm } from "../MemberForms";
 
@@ -19,7 +18,7 @@ export default async function AddMember({ params }: { params: Promise<{ projectI
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams/${team.id}/members`}>← {team.name} members</Link></p>
       <h1>Add a member to {team.name}</h1>
-      <AddMemberForm teamId={team.id} locations={await listLocations(db)} today={today()} baseLocation={team.baseLocation ?? ""} />
+      <AddMemberForm teamId={team.id} locations={(await projectReference(db)).locations} today={today()} baseLocation={team.baseLocation ?? ""} />
     </>
   );
 }

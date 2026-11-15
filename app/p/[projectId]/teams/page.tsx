@@ -48,16 +48,17 @@ export default async function Teams({ params, searchParams }: { params: Promise<
       </div>
       <table className="members">
         <caption>All teams</caption>
-        <thead><tr><th>ID</th><th>Name</th><th>Value stream</th><th>Base location</th><th>Lead</th><th>Members now</th><th>Status</th><th></th><th></th></tr></thead>
-        {teams.length === 0 && <tbody><tr><td colSpan={9} className="empty">No teams{valueStream || country ? " match these filters" : " yet. Add one, or import them from a spreadsheet"}.</td></tr></tbody>}
+        <thead><tr><th>ID</th><th>Name</th><th>Value stream</th><th>Parent team</th><th>Base location</th><th>Lead</th><th>Members now</th><th>Status</th><th></th><th></th></tr></thead>
+        {teams.length === 0 && <tbody><tr><td colSpan={10} className="empty">No teams{valueStream || country ? " match these filters" : " yet. Add one, or import them from a spreadsheet"}.</td></tr></tbody>}
         {groupByValueStream(teams).map(([stream, group]) => (
         <tbody key={stream}>
-          <tr className="group"><th colSpan={9} scope="rowgroup">{stream}</th></tr>
+          <tr className="group"><th colSpan={10} scope="rowgroup">{stream}</th></tr>
           {group.map((x) => (
             <tr key={x.id} className={x.status.startsWith("Retired") ? "muted" : ""}>
               <td>{x.id}</td>
               <td>{x.name}</td>
               <td>{x.valueStream}</td>
+              <td>{x.parentTeamName}</td>
               <td>{x.baseLocation ?? ""}</td>
               <td>{x.leadEmail}</td>
               <td>{x.members}</td>

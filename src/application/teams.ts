@@ -1,7 +1,9 @@
 import { and, asc, desc, eq, gt, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
-import { nameClashes, sameName, validateTeam, type TeamDraft } from "../domain/organisation/teamRules";
+import { TEAM_DETAIL_FIELDS, emptyTeamDetails, looksLikeEmail, validateTeamDetails, type TeamDetails } from "../domain/organisation/teamDetails";
+import { definedOnly, nameClashes, sameName, validateTeam, type TeamDraft } from "../domain/organisation/teamRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
+import { getReferenceData, syncLocations } from "./referenceData";
 import { getStandardAllocation, type StandardAllocation } from "./standardAllocation";
 
 // UC15 add, UC16 rename, UC17 retire (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted; every change is logged.
@@ -11,17 +13,21 @@ export type TeamResult = { ok: true; id: string; warnings: string[] } | { ok: fa
 const day = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const formatDay = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
 
-/** UC15: a new team with a permanent ID, its first name, and the project's standard allocation (or a Draft default, BR-17). */
-export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<TeamResult> {
+/**
+ * UC15: a new team with a permanent ID, its first name, and the project's standard allocation (or a Draft default, BR-17).
+ * Its value stream and base location come from the system's reference data in "shared" (sean, 15 Nov 2026).
+ */
+export async function addTeam(db: Db, actor: string, draft: TeamDraft, shared: Db = db): Promise<TeamResult> {
   const team = {
     ...draft, id: draft.id.trim(), name: draft.name.trim(), valueStream: draft.valueStream?.trim() || null,
     leadEmail: draft.leadEmail?.trim() || null, baseLocation: draft.baseLocation?.trim() || null,
   };
   const errors = validateTeam(team);
   if (errors.length) return { ok: false, errors };
-  if (team.baseLocation && !(await knownLocations(db)).has(team.baseLocation)) {
-    return { ok: false, errors: [`Unknown base location ${team.baseLocation}`] };
-  }
+  const reference = await referenceChecker(shared);
+  const checked = reference.check(team);
+  if (checked.errors.length) return { ok: false, errors: checked.errors };
+  team.valueStream = checked.valueStream;
   if (await db.query.teams.findFirst({ where: eq(t.teams.id, team.id) })) {
     return { ok: false, errors: [`Team ID ${team.id} is already used`] };
   }
@@ -29,6 +35,7 @@ export async function addTeam(db: Db, actor: string, draft: TeamDraft): Promise<
   if (clash.errors.length) return { ok: false, errors: clash.errors };
 
   const standard = await getStandardAllocation(db);
+  if (team.baseLocation) await syncLocations(db, shared);
   await db.transaction((tx) => insertTeam(tx, actor, team, standard));
   return { ok: true, id: team.id, warnings: clash.warnings };
 }
@@ -40,6 +47,7 @@ export async function insertTeam(
 ): Promise<void> {
     const [row] = await tx.insert(t.teams).values({
       id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail, baseLocation: team.baseLocation ?? null,
+      ...emptyTeamDetails(), ...definedOnly(pickDetails(team)),
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
     await tx.insert(t.allocationSettings).values(standard
@@ -130,10 +138,12 @@ export async function retireTeam(
 }
 
 /** FR-01: move a team to another value stream (the level just above it). Blank = none. */
-export async function changeValueStream(db: Db, actor: string, request: { teamId: string; valueStream: string }): Promise<TeamResult> {
+export async function changeValueStream(db: Db, actor: string, request: { teamId: string; valueStream: string }, shared: Db = db): Promise<TeamResult> {
   const team = await db.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
   if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
-  const valueStream = request.valueStream.trim() || null;
+  const checked = (await referenceChecker(shared)).check({ valueStream: request.valueStream.trim() || null });
+  if (checked.errors.length) return { ok: false, errors: checked.errors };
+  const valueStream = checked.valueStream;
   if (sameName(valueStream ?? "", team.valueStream ?? "")) {
     return { ok: false, errors: [`${team.id} is already in ${team.valueStream ?? "no value stream"}`] };
   }
@@ -151,14 +161,16 @@ export async function changeValueStream(db: Db, actor: string, request: { teamId
 }
 
 /** Where the team is based (sean, 15 Nov 2026). Blank = not set. Members keep their own location for public holidays. */
-export async function changeBaseLocation(db: Db, actor: string, request: { teamId: string; baseLocation: string }): Promise<TeamResult> {
+export async function changeBaseLocation(db: Db, actor: string, request: { teamId: string; baseLocation: string }, shared: Db = db): Promise<TeamResult> {
   const team = await db.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
   if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
   const baseLocation = request.baseLocation.trim() || null;
-  if (baseLocation && !(await knownLocations(db)).has(baseLocation)) return { ok: false, errors: [`Unknown base location ${baseLocation}`] };
+  const checked = (await referenceChecker(shared)).check({ baseLocation });
+  if (checked.errors.length) return { ok: false, errors: checked.errors };
   if (baseLocation === team.baseLocation) {
     return { ok: false, errors: [baseLocation ? `${team.id} is already based in ${baseLocation}` : `${team.id} has no base location already`] };
   }
+  if (baseLocation) await syncLocations(db, shared);
   await db.transaction(async (tx) => {
     await tx.update(t.teams).set({ baseLocation }).where(eq(t.teams.id, team.id));
     await tx.insert(t.auditLog).values({
@@ -169,9 +181,53 @@ export async function changeBaseLocation(db: Db, actor: string, request: { teamI
   return { ok: true, id: team.id, warnings: [] };
 }
 
-/** The project's location codes. */
-export async function knownLocations(db: Pick<Db, "select">): Promise<Set<string>> {
-  return new Set((await db.select({ code: t.locations.code }).from(t.locations)).map((l) => l.code));
+/**
+ * Checks a value stream and base location against the system's reference data (sean, 15 Nov 2026).
+ * A value stream is matched ignoring capitals and comes back spelt as in the reference data.
+ */
+export async function referenceChecker(shared: Db) {
+  const { valueStreams, locations } = await getReferenceData(shared);
+  return {
+    check(team: { valueStream?: string | null; baseLocation?: string | null }) {
+      const errors: string[] = [];
+      let valueStream = team.valueStream ?? null;
+      if (valueStream) {
+        const match = valueStreams.find((v) => sameName(v, valueStream ?? ""));
+        if (match) valueStream = match;
+        else errors.push(`Unknown value stream ${valueStream}: add it under Reference data first`);
+      }
+      if (team.baseLocation && !locations.some((l) => l.code === team.baseLocation)) errors.push(`Unknown base location ${team.baseLocation}`);
+      return { errors, valueStream };
+    },
+  };
+}
+
+/** The workbook attributes and lead email (sean, 15 Nov 2026). Only what changed goes in the audit log. */
+export async function updateTeamDetails(
+  db: Db, actor: string, request: { teamId: string; leadEmail: string | null } & TeamDetails,
+): Promise<TeamResult> {
+  const team = await db.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
+  if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
+  const next = { leadEmail: request.leadEmail, ...pickDetails(request) } as Record<string, unknown>;
+  const errors = validateTeamDetails(pickDetails(request) as TeamDetails);
+  if (request.leadEmail && !looksLikeEmail(request.leadEmail)) errors.unshift("Lead email must look like name@company.com");
+  if (errors.length) return { ok: false, errors };
+  const current = team as Record<string, unknown>;
+  const changed = Object.keys(next).filter((k) => (current[k] ?? null) !== (next[k] ?? null));
+  if (!changed.length) return { ok: false, errors: ["Nothing has changed"] };
+  await db.transaction(async (tx) => {
+    await tx.update(t.teams).set(next).where(eq(t.teams.id, team.id));
+    await tx.insert(t.auditLog).values({
+      actor, entity: "teams", entityId: team.id, action: "change details",
+      before: Object.fromEntries(changed.map((k) => [k, current[k] ?? null])),
+      after: Object.fromEntries(changed.map((k) => [k, next[k] ?? null])),
+    });
+  });
+  return { ok: true, id: team.id, warnings: [] };
+}
+
+function pickDetails(source: Partial<TeamDetails>): Partial<TeamDetails> {
+  return Object.fromEntries(TEAM_DETAIL_FIELDS.map((k) => [k, source[k]])) as Partial<TeamDetails>;
 }
 
 /** The value streams teams are in today, for filters and suggestions. */

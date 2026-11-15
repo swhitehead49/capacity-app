@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { getDb, getProjectDb } from "@/src/infrastructure/db/appDb";
 import { findProject, listProjects } from "@/src/infrastructure/db/projectDatabases";
+import { getReferenceData, syncLocations } from "@/src/application/referenceData";
+import { listLocations } from "@/src/application/lookups";
+import type { Db } from "@/src/infrastructure/db/testDb";
 
 /** The project named in the web address and its database. An unknown project shows "not found". */
 export async function projectDb(projectId: string) {
@@ -23,4 +26,14 @@ export function sharedDb() {
 export async function openProjectDbs() {
   const projects = (await listProjects(await getDb())).filter((p) => p.archivedAt === null);
   return Promise.all(projects.map((p) => getProjectDb(p.id)));
+}
+
+/**
+ * The system's reference data for a project's forms (sean, 15 Nov 2026): value streams, and locations as choices.
+ * The system's locations are copied into the project first, so its teams and people can use any of them.
+ */
+export async function projectReference(db: Db) {
+  const shared = await sharedDb();
+  await syncLocations(db, shared);
+  return { valueStreams: (await getReferenceData(shared)).valueStreams, locations: await listLocations(db) };
 }

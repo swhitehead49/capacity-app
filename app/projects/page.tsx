@@ -14,7 +14,7 @@ export default async function ChooseProject() {
   const archived = all.filter((p) => p.archivedAt !== null);
   return (
     <>
-      <header className="topbar" role="banner"><a href="/projects">Capacity App</a></header>
+      <header className="topbar" role="banner"><a href="/projects">Capacity App</a><nav><a href="/reference">Reference data</a></nav></header>
       <main>
         <h1>Choose your project</h1>
         <p className="muted">Each project has its own value streams, teams, people and plan. The sprint calendar and public holidays are shared. You can switch later from the top bar.</p>

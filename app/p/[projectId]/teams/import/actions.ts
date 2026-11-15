@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { importTeams } from "@/src/application/importTeams";
 import { today } from "@/src/infrastructure/db/appDb";
-import { formProject, projectDb } from "@/app/lib/project";
+import { formProject, projectDb, sharedDb } from "@/app/lib/project";
 
 // v1 has one actor (decision 8 Nov 2026).
 const ACTOR = "Capacity Admin";
@@ -14,7 +14,7 @@ export async function importTeamsAction(form: FormData) {
   const projectId = formProject(form);
   const file = form.get("file");
   const csv = file instanceof File ? await file.text() : "";
-  const result = await importTeams((await projectDb(projectId)).db, ACTOR, { csv, today: today() });
+  const result = await importTeams((await projectDb(projectId)).db, ACTOR, { csv, today: today() }, await sharedDb());
   if (result.ok) {
     const params = new URLSearchParams({ imported: String(result.count) });
     if (result.warnings.length) params.set("warning", result.warnings.join("\n"));

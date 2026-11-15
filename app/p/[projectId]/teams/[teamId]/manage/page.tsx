@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { listLocations, listTeams } from "@/src/application/lookups";
-import { getTeamDetails, listValueStreams } from "@/src/application/teams";
+import { listTeams } from "@/src/application/lookups";
+import { getTeamDetails } from "@/src/application/teams";
 import { today } from "@/src/infrastructure/db/appDb";
-import { projectDb } from "@/app/lib/project";
+import { projectDb, projectReference } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
-import { BaseLocationForm, RenameForm, RetireForm, ValueStreamForm } from "../../TeamForms";
+import { BaseLocationForm, DetailsForm, RenameForm, RetireForm, ValueStreamForm } from "../../TeamForms";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
   if (!details) notFound();
   const { team, status, names, successors } = details;
   const otherTeams = (await listTeams(db)).filter((x) => x.value !== team.id);
+  const reference = await projectReference(db);
 
   return (
     <>
@@ -33,6 +34,15 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
         ))}</p>
       )}
 
+      <h2>Details</h2>
+      <p className="muted">The team&apos;s attributes from the original Teams spreadsheet. The ID stays Provisional until it is confirmed with the group leads.</p>
+      <DetailsForm teamId={team.id} values={{
+        leadEmail: team.leadEmail ?? "", parentTeamName: team.parentTeamName ?? "", parentTeamLeadEmail: team.parentTeamLeadEmail ?? "",
+        grandparentTeamName: team.grandparentTeamName ?? "", grandparentTeamLeadEmail: team.grandparentTeamLeadEmail ?? "",
+        topLevelGroup: team.topLevelGroup ?? "", topLevelLeadEmail: team.topLevelLeadEmail ?? "",
+        sourceHeadcount: team.sourceHeadcount === null ? "" : String(team.sourceHeadcount), idStatus: team.idStatus, dataQualityFlag: team.dataQualityFlag ?? "",
+      }} />
+
       <h2>Rename</h2>
       <p className="muted">The ID, members and settings stay the same. The old name is kept in the history.</p>
       <RenameForm teamId={team.id} today={today()} />
@@ -46,12 +56,12 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
       </table>
 
       <h2>Value stream</h2>
-      <p className="muted">The value stream this team belongs to. Its name must be unique within the value stream.</p>
-      <ValueStreamForm teamId={team.id} current={team.valueStream ?? ""} valueStreams={await listValueStreams(db)} />
+      <p className="muted">The value stream this team belongs to, from the <Link href="/reference">reference data</Link>. Its name must be unique within the value stream.</p>
+      <ValueStreamForm teamId={team.id} current={team.valueStream ?? ""} valueStreams={reference.valueStreams} />
 
       <h2>Base location</h2>
       <p className="muted">Where the team is based. Each member keeps their own location, which decides their public holidays.</p>
-      <BaseLocationForm teamId={team.id} current={team.baseLocation ?? ""} locations={await listLocations(db)} />
+      <BaseLocationForm teamId={team.id} current={team.baseLocation ?? ""} locations={reference.locations} />
 
       <h2>Retire</h2>
       {team.retiredOn ? (

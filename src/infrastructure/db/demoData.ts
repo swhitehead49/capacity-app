@@ -10,6 +10,8 @@ export async function seedDemo(db: Db) {
     { id: "T001", name: "Example Team A" },
     { id: "T002", name: "Example Team B" },
   ]);
+  // System reference data (sean, 15 Nov 2026): the value streams teams are picked from.
+  await db.insert(t.valueStreams).values(["Clinical", "Diagnostics", "Platform", "Radiology"].map((name) => ({ name })));
   // An India office (no people yet), so the Holidays page shows the CSV upload calendars.
   await db.insert(t.locations).values({ code: "IN-KA", country: "IN", name: "Bangalore", standardHours: 40 });
 }

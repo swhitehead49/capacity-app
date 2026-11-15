@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { addLocation, addValueStream, getReferenceData, syncLocations } from "./referenceData";
+import { STARTING_LOCATIONS, addLocation, addStartingLocations, addValueStream, getReferenceData, syncLocations } from "./referenceData";
 
 // Reference data set once at system level and used by every project (sean, 15 Nov 2026):
 // the value streams and the locations a team's Value stream and Base location are picked from.
@@ -55,6 +55,17 @@ describe("locations", () => {
   it("refuses a code already there", async () => {
     await addLocation(shared, actor, bavaria);
     expect(await addLocation(shared, actor, bavaria)).toEqual({ ok: false, errors: ["DE-BY is already a location"] });
+  });
+});
+
+describe("addStartingLocations (the original workbook's LocationProfiles, as ISO codes)", () => {
+  it("adds the ones that are missing and leaves the others alone", async () => {
+    await addLocation(shared, actor, { code: "DE-BY", country: "DE", name: "Bayern", standardHours: "38" });
+    expect(await addStartingLocations(shared, actor)).toBe(STARTING_LOCATIONS.length - 1);
+    const { locations } = await getReferenceData(shared);
+    expect(locations.map((l) => l.code)).toEqual(["AT-6", "AT-9", "BE-VOV", "DE-BY", "DE-NI", "DE-RP", "DE-SL", "FR-NAQ", "IN-KA"]);
+    expect(locations.find((l) => l.code === "DE-BY")?.name).toBe("Bayern");
+    expect(await addStartingLocations(shared, actor)).toBe(0);
   });
 });
 

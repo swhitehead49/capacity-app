@@ -128,12 +128,12 @@ test("a new member's location starts as the team's base location, and can be cha
 test("edit a team's details on its Manage page", async ({ page }) => {
   await page.goto("/p/default/teams/T100/manage");
   const form = page.getByRole("form", { name: "Details" });
-  await form.getByLabel("Parent team name").fill("Clinical Services");
+  await form.getByLabel("Parent team name", { exact: true }).fill("Clinical Services");
   await form.getByLabel("Top-level group", { exact: true }).fill("ORBIS");
   await form.getByLabel("Source headcount").fill("5");
   await form.getByLabel("ID status").selectOption("Confirmed");
   await form.getByRole("button", { name: "Save details" }).click();
-  await expect(page.getByRole("form", { name: "Details" }).getByLabel("Parent team name")).toHaveValue("Clinical Services");
+  await expect(page.getByRole("form", { name: "Details" }).getByLabel("Parent team name", { exact: true })).toHaveValue("Clinical Services");
   await expect(page.getByRole("form", { name: "Details" }).getByLabel("ID status")).toHaveValue("Confirmed");
   await page.goto("/p/default/teams");
   await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ })).toContainText("Clinical Services");

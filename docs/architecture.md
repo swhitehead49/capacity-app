@@ -38,8 +38,12 @@ so each project has its **own complete set of tables** rather than a "project" c
   is used, and `ensurePeriods(projectDb, today, defaultDb)` gives every project the same sprints and quarters.
   Allocation (defaults and overrides) stays per team and per period, inside each project.
 - **Country holiday calendars are shared** too (sean, 15 Nov 2026): `public_holidays` and `holiday_calendars` are
-  read and written only in the Default database (`sharedDb()` in `app/lib/project.ts`). Locations, people and
+  read and written only in the Default database (`sharedDb()` in `app/lib/project.ts`). People and
   their own leave (`absences`) stay per project.
+- **Reference data is shared** (sean, 15 Nov 2026): the Default database's `value_streams` and `locations` are the
+  system's lists, edited on `/reference` (`src/application/referenceData.ts`). Teams keep the value stream name as text,
+  checked against the list. Each project keeps a copy of the locations (so `people` and `teams` can point at them):
+  `syncLocations(projectDb, sharedDb)` refreshes it, via `projectReference()` whenever a form lists locations.
 
 `src/infrastructure/db/appDb.ts` is the only place that knows this: `getProjectDb(id)` returns a normal `Db`,
 so domain and application code don't change. Migrations must not name the `public` schema (a test checks this),

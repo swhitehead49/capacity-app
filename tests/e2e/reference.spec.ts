@@ -13,21 +13,21 @@ test("add a value stream and a location on the Reference data page, then use the
   await expect(page.getByRole("table", { name: "Value streams" })).toContainText("Oncology");
 
   const places = page.getByRole("form", { name: "Add location" });
-  await places.getByLabel("Code").fill("FR-NAQ");
-  await places.getByLabel("Country").fill("FR");
-  await places.getByLabel("Name").fill("Bordeaux");
+  await places.getByLabel("Code").fill("ES-MD");
+  await places.getByLabel("Country").fill("ES");
+  await places.getByLabel("Name").fill("Madrid");
   await places.getByLabel("Standard hours").fill("35");
   await places.getByRole("button", { name: "Add location" }).click();
-  await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /FR-NAQ/ })).toContainText("Bordeaux");
+  await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /ES-MD/ })).toContainText("Madrid");
 
   // Another project can pick them straight away.
   await page.goto("/p/imaging/teams/new");
-  await page.getByLabel("Team ID").fill("T901");
+  await page.getByLabel("Team ID").fill("T902");
   await page.getByLabel("Name").fill("Imaging Oncology");
   await page.getByLabel("Value stream").selectOption("Oncology");
-  await page.getByLabel("Base location").selectOption("FR-NAQ");
+  await page.getByLabel("Base location").selectOption("ES-MD");
   await page.getByRole("button", { name: "Add team" }).click();
-  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T901/ })).toContainText("FR-NAQ");
+  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T902/ })).toContainText("ES-MD");
 });
 
 test("a value stream that is already there is refused", async ({ page }) => {
@@ -36,4 +36,13 @@ test("a value stream that is already there is refused", async ({ page }) => {
   await streams.getByLabel("Name").fill("platform");
   await streams.getByRole("button", { name: "Add value stream" }).click();
   await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText('"platform" is already a value stream');
+});
+
+test("add the original workbook's locations in one go", async ({ page }) => {
+  await page.goto("/reference");
+  await page.getByRole("button", { name: "Add the starting locations" }).click();
+  const locations = page.getByRole("table", { name: "Locations" });
+  await expect(locations.getByRole("row", { name: /AT-9/ })).toContainText("Vienna");
+  await expect(locations.getByRole("row", { name: /BE-VOV/ })).toContainText("Ghent");
+  await expect(page.getByRole("button", { name: "Add the starting locations" })).toHaveCount(0);
 });

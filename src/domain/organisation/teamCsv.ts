@@ -1,7 +1,9 @@
 import { csvRows, toIsoDate } from "../shared/csv";
+import { readHeadcount, type TeamDetails } from "./teamDetails";
 import { sameName, validateTeam, type TeamDraft } from "./teamRules";
 
 // Import teams from a spreadsheet saved as CSV (sean, 15 Nov 2026). Pure: the file's text in, teams or problems out.
+// The headings are those of the original workbook's Teams sheet, plus Value_Stream, Base_Location and Start_Date.
 // Same rules as Add team (FR-18, BR-15, BR-16). Any problem means nothing is imported.
 
 export interface TeamCsvRow extends TeamDraft {
@@ -14,7 +16,26 @@ export interface TeamCsvResult {
   errors: string[];
 }
 
-const HEADINGS = 'The first line must have the headings "team_id" and "name" (optional: value_stream, lead_email, start_date, base_location)';
+const HEADINGS = 'The first line must have the headings "Team_ID" and "Team_Name"';
+
+/** Each field and the headings it can have (compared ignoring case, with spaces read as "_"). */
+const COLUMNS = {
+  id: ["team_id"],
+  name: ["team_name", "name"],
+  leadEmail: ["team_lead_email", "lead_email"],
+  parentTeamName: ["parent_team_name"],
+  parentTeamLeadEmail: ["parent_team_lead_email"],
+  grandparentTeamName: ["grandparent_team_name"],
+  grandparentTeamLeadEmail: ["grandparent_team_lead_email"],
+  topLevelGroup: ["top_level_group"],
+  topLevelLeadEmail: ["top_level_lead_email"],
+  sourceHeadcount: ["source_headcount"],
+  idStatus: ["id_status"],
+  dataQualityFlag: ["data_quality_flag"],
+  valueStream: ["value_stream"],
+  baseLocation: ["base_location"],
+  start: ["start_date"],
+} as const;
 
 export function parseTeamCsv(text: string, options: { today: string }): { teams: TeamDraft[]; errors: string[] } {
   const result = readTeamCsv(text, options);
@@ -24,29 +45,43 @@ export function parseTeamCsv(text: string, options: { today: string }): { teams:
 /** Like parseTeamCsv, but keeps each team's line number. */
 export function readTeamCsv(text: string, { today }: { today: string }): TeamCsvResult {
   const rows = csvRows(text);
-  const header = rows.shift()?.cells.map((c) => c.toLowerCase()) ?? [];
-  const col = (name: string) => header.indexOf(name);
-  const c = { id: col("team_id"), name: col("name"), valueStream: col("value_stream"), lead: col("lead_email"), start: col("start_date"), base: col("base_location") };
+  const header = rows.shift()?.cells.map((c) => c.toLowerCase().trim().replace(/\s+/g, "_")) ?? [];
+  const c = Object.fromEntries(Object.entries(COLUMNS).map(([field, names]) => [
+    field, header.findIndex((h) => (names as readonly string[]).includes(h)),
+  ])) as Record<keyof typeof COLUMNS, number>;
   if (c.id < 0 || c.name < 0) return { teams: [], rows: [], errors: [HEADINGS] };
 
-  const cell = (cells: string[], index: number) => (index < 0 ? "" : cells[index] ?? "");
   const teams: TeamCsvRow[] = [];
   const errors: string[] = [];
   for (const { number, cells } of rows) {
-    const rawStart = cell(cells, c.start);
+    const cell = (field: keyof typeof COLUMNS) => (c[field] < 0 ? "" : cells[c[field]] ?? "").trim();
+    const optional = (field: keyof typeof COLUMNS) => cell(field) || null;
+    const rawStart = cell("start");
     const start = rawStart ? toIsoDate(rawStart) : today;
+    const details: TeamDetails = {
+      parentTeamName: optional("parentTeamName"),
+      parentTeamLeadEmail: optional("parentTeamLeadEmail"),
+      grandparentTeamName: optional("grandparentTeamName"),
+      grandparentTeamLeadEmail: optional("grandparentTeamLeadEmail"),
+      topLevelGroup: optional("topLevelGroup"),
+      topLevelLeadEmail: optional("topLevelLeadEmail"),
+      sourceHeadcount: readHeadcount(cell("sourceHeadcount")),
+      idStatus: cell("idStatus") || "Provisional",
+      dataQualityFlag: optional("dataQualityFlag"),
+    };
     const team: TeamCsvRow = {
       line: number,
-      id: cell(cells, c.id),
-      name: cell(cells, c.name),
-      valueStream: cell(cells, c.valueStream) || null,
-      leadEmail: cell(cells, c.lead) || null,
-      baseLocation: cell(cells, c.base).trim() || null,
+      id: cell("id"),
+      name: cell("name"),
+      leadEmail: optional("leadEmail"),
+      valueStream: optional("valueStream"),
+      baseLocation: optional("baseLocation"),
       effectiveFrom: start ?? "",
+      ...details,
     };
     const problems = start ? validateTeam(team) : [`"${rawStart}" is not a real date (use YYYY-MM-DD or DD/MM/YYYY)`];
     const sameId = teams.find((x) => x.id.toLowerCase() === team.id.toLowerCase());
-    const sameNameInStream = teams.find((x) => sameName(x.name, team.name) && (x.valueStream ?? "") === (team.valueStream ?? ""));
+    const sameNameInStream = teams.find((x) => sameName(x.name, team.name) && sameName(x.valueStream ?? "", team.valueStream ?? ""));
     if (!problems.length && sameId) problems.push(`Team ID ${team.id} is also on line ${sameId.line}`);
     else if (!problems.length && sameNameInStream) {
       problems.push(`"${team.name}" is also on line ${sameNameInStream.line} in ${team.valueStream ?? "(no value stream)"}`);

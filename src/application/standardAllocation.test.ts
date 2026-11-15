@@ -15,6 +15,7 @@ let db: Db;
 
 beforeEach(async () => {
   db = await createTestDb();
+  await db.insert(t.valueStreams).values({ name: "Platform" }); // system reference data (sean, 15 Nov 2026)
 });
 
 describe("standard allocation", () => {
