@@ -25,3 +25,16 @@ Application code calls domain rules first, then saves through infrastructure ins
 3. **One idea per file.** Small files with clear names beat big files.
 4. **No personal data in tests.** Test cases describe situations ("part-time, 30 of 40 hours"),
    not real employees.
+
+## Projects (decided 15 Nov 2026)
+
+The top of the hierarchy is the **project**: project → value streams → teams. Projects are fully separate,
+so each project has its **own complete set of tables** rather than a "project" column on every table:
+
+- Local folders (PGlite): Default uses `DATA_DIR`; another project uses `DATA_DIR-projects/<id>`.
+- Online Postgres (`DATABASE_URL`): Default uses the original tables; another project uses its own schema `project_<id>`.
+- The list of projects lives in the Default database, in a separate `app` schema (`app.projects`).
+
+`src/infrastructure/db/appDb.ts` is the only place that knows this: `getProjectDb(id)` returns a normal `Db`,
+so domain and application code don't change. Migrations must not name the `public` schema (a test checks this),
+because the same migrations build every project's tables.

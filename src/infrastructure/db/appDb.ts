@@ -6,36 +6,65 @@ import { migrate as migratePostgres } from "drizzle-orm/node-postgres/migrator";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { Pool } from "pg";
-import { databaseConfig } from "./databaseConfig";
+import { DEFAULT_PROJECT, projectStorageName } from "../../domain/projects/projectRules";
+import { databaseConfig, type DatabaseConfig } from "./databaseConfig";
 import { seedDemoIfEmpty } from "./demoData";
+import { ensureProjectRegistry, ProjectDatabases } from "./projectDatabases";
 import * as schema from "./schema";
 import type { Db } from "./testDb";
 
-// The app's database: Postgres either in a local folder (PGlite) or online (DATABASE_URL, e.g. Neon).
-// This is the only file that knows which; everything else just uses `Db`.
+// The app's databases: Postgres either in local folders (PGlite) or online (DATABASE_URL, e.g. Neon).
+// Each project has its own complete set of tables (decided 15 Nov 2026):
+//   - local folders: Default uses DATA_DIR, another project uses DATA_DIR-projects/<id>
+//   - online: Default uses the original tables, another project its own Postgres schema (project_<id>)
+// This is the only file that knows where data lives; everything else just uses `Db`.
 
-const globalForDb = globalThis as unknown as { capacityDb?: Promise<Db> };
+const globalForDb = globalThis as unknown as { capacityProjects?: ProjectDatabases };
 
-export function getDb(): Promise<Db> {
-  globalForDb.capacityDb ??= open();
-  return globalForDb.capacityDb;
+function projects(): ProjectDatabases {
+  globalForDb.capacityProjects ??= new ProjectDatabases((id) => openProject(databaseConfig(process.env), id));
+  return globalForDb.capacityProjects;
 }
 
-async function open(): Promise<Db> {
-  const config = databaseConfig(process.env);
+/** One project's database. */
+export function getProjectDb(projectId: string): Promise<Db> {
+  return projects().get(projectId);
+}
+
+/** The Default project's database, which also holds the list of projects. */
+export function getDb(): Promise<Db> {
+  return getProjectDb(DEFAULT_PROJECT);
+}
+
+async function openProject(config: DatabaseConfig, projectId: string): Promise<Db> {
   const migrationsFolder = path.resolve("./drizzle");
+  const isDefault = projectId === DEFAULT_PROJECT;
   let db: Db;
   if (config.kind === "postgres") {
-    const online = drizzlePostgres(new Pool({ connectionString: config.url, max: 5 }), { schema });
-    await migratePostgres(online, { migrationsFolder });
+    const storage = projectStorageName(projectId);
+    if (!isDefault) {
+      const setup = new Pool({ connectionString: config.url, max: 1 });
+      await setup.query(`create schema if not exists "${storage}"`);
+      await setup.end();
+    }
+    const pool = new Pool({
+      connectionString: config.url,
+      max: 5,
+      ...(isDefault ? {} : { options: `-c search_path="${storage}"` }),
+    });
+    const online = drizzlePostgres(pool, { schema });
+    await migratePostgres(online, { migrationsFolder, ...(isDefault ? {} : { migrationsSchema: storage }) });
     db = online as unknown as Db; // same Postgres and same queries; only the driver differs
   } else {
-    const dir = path.resolve(config.dir);
+    const dir = path.resolve(isDefault ? config.dir : `${config.dir}-projects/${projectId}`);
     mkdirSync(path.dirname(dir), { recursive: true });
     db = drizzlePglite(new PGlite(dir), { schema });
     await migratePglite(db, { migrationsFolder });
   }
-  if (process.env.SEED_DEMO_DATA === "true" && (await seedDemoIfEmpty(db))) console.log("Loaded demo data into an empty database.");
+  if (isDefault) {
+    await ensureProjectRegistry(db);
+    if (process.env.SEED_DEMO_DATA === "true" && (await seedDemoIfEmpty(db))) console.log("Loaded demo data into an empty database.");
+  }
   return db;
 }
 

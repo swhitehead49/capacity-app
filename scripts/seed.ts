@@ -14,6 +14,7 @@ if (config.kind !== "folder") {
   process.exit(1);
 }
 rmSync(path.resolve(config.dir), { recursive: true, force: true });
+rmSync(path.resolve(`${config.dir}-projects`), { recursive: true, force: true }); // other projects too
 const db = await getDb();
 await seedDemo(db);
 const added = await ensurePeriods(db, today());
