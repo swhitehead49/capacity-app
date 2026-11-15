@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { seedDrgw } from "../infrastructure/db/fixtures";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { addTeam, changeBaseLocation, changeValueStream, listTeamCountries, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
+import { addTeam, changeBaseLocation, changeValueStream, updateTeamDetails, listTeamCountries, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
 import { endMember } from "./teamMembers";
 
 // UC15 add, UC16 rename, UC17 retire a team (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted.
@@ -19,6 +19,8 @@ beforeEach(async () => {
     { id: "T001", name: "Example Team A", valueStream: "Platform" },
     { id: "T002", name: "Example Team B", valueStream: "Platform" },
   ]);
+  // System reference data (sean, 15 Nov 2026). In these tests the project's database also holds the system's lists.
+  await db.insert(t.valueStreams).values(["Platform", "Clinical", "Diagnostics", "Radiology"].map((name) => ({ name })));
 });
 
 const team = (id: string) => db.query.teams.findFirst({ where: eq(t.teams.id, id) });
@@ -59,6 +61,33 @@ describe("addTeam (UC15)", () => {
   it("refuses a base location the project doesn't have", async () => {
     expect(await addTeam(db, actor, { ...newTeam, baseLocation: "XX-YY" }))
       .toEqual({ ok: false, errors: ["Unknown base location XX-YY"] });
+  });
+
+  it("only takes a value stream from the system's reference data (sean, 15 Nov 2026)", async () => {
+    expect(await addTeam(db, actor, { ...newTeam, valueStream: "Nowhere" }))
+      .toEqual({ ok: false, errors: ["Unknown value stream Nowhere: add it under Reference data first"] });
+    await addTeam(db, actor, { ...newTeam, valueStream: "platform" });
+    expect((await team("T100"))?.valueStream).toBe("Platform"); // spelt as in the reference data
+  });
+
+  it("saves the workbook attributes, and a new team's ID is Provisional", async () => {
+    await addTeam(db, actor, { ...newTeam, parentTeamName: "Clinical Services", topLevelGroup: "ORBIS", sourceHeadcount: 5, dataQualityFlag: "Encoding review" });
+    expect(await team("T100")).toMatchObject({
+      parentTeamName: "Clinical Services", topLevelGroup: "ORBIS", sourceHeadcount: 5, dataQualityFlag: "Encoding review", idStatus: "Provisional",
+    });
+  });
+
+  it("refuses details that don't look right", async () => {
+    expect(await addTeam(db, actor, { ...newTeam, sourceHeadcount: -2 })).toEqual({ ok: false, errors: ["Source headcount must be a whole number, 0 or more"] });
+  });
+
+  it("takes the base location from the system's list and copies it into the project", async () => {
+    const shared = await createTestDb();
+    await shared.insert(t.valueStreams).values({ name: "Platform" });
+    await shared.insert(t.locations).values({ code: "AT-9", country: "AT", name: "Vienna" });
+    expect(await addTeam(db, actor, { ...newTeam, baseLocation: "AT-9" }, shared)).toMatchObject({ ok: true });
+    expect((await team("T100"))?.baseLocation).toBe("AT-9");
+    expect(await db.query.locations.findFirst({ where: eq(t.locations.code, "AT-9") })).toMatchObject({ name: "Vienna" });
   });
 
   it("needs an ID, a name and a start date; the lead email must look right", async () => {
@@ -183,6 +212,11 @@ describe("value streams (FR-01, decision 8 Nov 2026: the value stream is the lev
       .toEqual({ ok: false, errors: ["T001 is already in Platform"] });
   });
 
+  it("refuses a value stream that isn't in the reference data", async () => {
+    expect(await changeValueStream(db, actor, { teamId: "T001", valueStream: "Nowhere" }))
+      .toEqual({ ok: false, errors: ["Unknown value stream Nowhere: add it under Reference data first"] });
+  });
+
   it("blank means no value stream", async () => {
     await changeValueStream(db, actor, { teamId: "T001", valueStream: "" });
     expect((await team("T001"))?.valueStream).toBeNull();
@@ -222,6 +256,34 @@ describe("base location (sean, 15 Nov 2026: a team has its own base location; me
   it("members keep their own location, whatever the team's base", async () => {
     await changeBaseLocation(db, actor, { teamId: "T017", baseLocation: "DE-BY" });
     expect((await db.query.people.findFirst({ where: eq(t.people.email, "b@example.com") }))?.locationCode).toBe("DE-NI");
+  });
+});
+
+describe("updateTeamDetails (sean, 15 Nov 2026: the workbook's team attributes)", () => {
+  const details = {
+    leadEmail: "lead@example.com", parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com",
+    grandparentTeamName: "ORBIS Vienna", grandparentTeamLeadEmail: null, topLevelGroup: "ORBIS", topLevelLeadEmail: null,
+    sourceHeadcount: 7, idStatus: "Confirmed", dataQualityFlag: null,
+  };
+
+  it("saves the details and logs only what changed", async () => {
+    expect(await updateTeamDetails(db, actor, { teamId: "T001", ...details })).toEqual({ ok: true, id: "T001", warnings: [] });
+    expect(await team("T001")).toMatchObject(details);
+    const [entry] = await audit();
+    expect(entry).toMatchObject({ entity: "teams", entityId: "T001", action: "change details" });
+    expect(entry?.before).toEqual({ leadEmail: null, parentTeamName: null, parentTeamLeadEmail: null, grandparentTeamName: null, topLevelGroup: null, sourceHeadcount: null, idStatus: "Provisional" });
+    expect(entry?.after).toEqual({ leadEmail: "lead@example.com", parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com", grandparentTeamName: "ORBIS Vienna", topLevelGroup: "ORBIS", sourceHeadcount: 7, idStatus: "Confirmed" });
+  });
+
+  it("says when nothing changed", async () => {
+    await updateTeamDetails(db, actor, { teamId: "T001", ...details });
+    expect(await updateTeamDetails(db, actor, { teamId: "T001", ...details })).toEqual({ ok: false, errors: ["Nothing has changed"] });
+  });
+
+  it("refuses details that don't look right, or an unknown team", async () => {
+    expect(await updateTeamDetails(db, actor, { teamId: "T001", ...details, topLevelLeadEmail: "x" }))
+      .toEqual({ ok: false, errors: ["Top-level lead email must look like name@company.com"] });
+    expect(await updateTeamDetails(db, actor, { teamId: "T999", ...details })).toEqual({ ok: false, errors: ["Unknown team T999"] });
   });
 });
 

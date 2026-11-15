@@ -47,7 +47,7 @@ test("links and saves stay inside the project", async ({ page }) => {
   await page.getByRole("row", { name: /T900/ }).getByRole("link", { name: "Manage" }).click();
   await expect(page).toHaveURL(/\/p\/imaging\/teams\/T900\/manage$/);
   const form = page.getByRole("form", { name: "Value stream" });
-  await form.getByLabel("Value stream").fill("Radiology");
+  await form.getByLabel("Value stream").selectOption("Radiology");
   await form.getByRole("button", { name: "Change value stream" }).click();
   await expect(page).toHaveURL(/\/p\/imaging\/teams\/T900\/manage$/);
   await expect(page.getByText("T900 · Radiology")).toBeVisible();

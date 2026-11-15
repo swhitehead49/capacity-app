@@ -14,7 +14,7 @@ test("add a team", async ({ page }) => {
   await page.getByRole("link", { name: "Add team" }).click();
   await page.getByLabel("Team ID").fill("T100");
   await page.getByLabel("Name").fill("Payments");
-  await page.getByLabel("Value stream").fill("Platform");
+  await page.getByLabel("Value stream").selectOption("Platform");
   await page.getByLabel("Base location").selectOption("IN-KA");
   await page.getByLabel("Start date").fill("2026-11-09");
   await page.getByRole("button", { name: "Add team" }).click();
@@ -70,7 +70,7 @@ test("retire an empty team and name its successor", async ({ page }) => {
 test("move a team to another value stream", async ({ page }) => {
   await page.goto("/p/default/teams/T001/manage");
   const form = page.getByRole("form", { name: "Value stream" });
-  await form.getByLabel("Value stream").fill("Clinical");
+  await form.getByLabel("Value stream").selectOption("Clinical");
   await form.getByRole("button", { name: "Change value stream" }).click();
   await expect(page.getByText("T001 · Clinical")).toBeVisible();
 });
@@ -122,4 +122,19 @@ test("a new member's location starts as the team's base location, and can be cha
   await page.goto("/p/default/teams/T017/members/new");
   await expect(page.getByLabel("Location")).toHaveValue("DE-RP");
   await expect(page.getByText(/public holidays/)).toBeVisible();
+});
+
+// sean, 15 Nov 2026: teams carry the original workbook's attributes.
+test("edit a team's details on its Manage page", async ({ page }) => {
+  await page.goto("/p/default/teams/T100/manage");
+  const form = page.getByRole("form", { name: "Details" });
+  await form.getByLabel("Parent team name").fill("Clinical Services");
+  await form.getByLabel("Top-level group", { exact: true }).fill("ORBIS");
+  await form.getByLabel("Source headcount").fill("5");
+  await form.getByLabel("ID status").selectOption("Confirmed");
+  await form.getByRole("button", { name: "Save details" }).click();
+  await expect(page.getByRole("form", { name: "Details" }).getByLabel("Parent team name")).toHaveValue("Clinical Services");
+  await expect(page.getByRole("form", { name: "Details" }).getByLabel("ID status")).toHaveValue("Confirmed");
+  await page.goto("/p/default/teams");
+  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ })).toContainText("Clinical Services");
 });

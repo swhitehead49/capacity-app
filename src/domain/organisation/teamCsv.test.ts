@@ -2,49 +2,73 @@ import { describe, expect, it } from "vitest";
 import { parseTeamCsv } from "./teamCsv";
 
 // Import teams from a spreadsheet saved as CSV (sean, 15 Nov 2026). Same rules as Add team (FR-18, BR-15, BR-16).
+// The headings are those of the original workbook's Teams sheet, plus Value_Stream and Base_Location.
 // Any problem means nothing is imported, and every problem is listed with its line number.
 
 const today = "2026-11-15";
-const head = "team_id,name,value_stream,lead_email,start_date";
+const workbook = "Team_ID,Team_Name,Team_Lead_Email,Parent_Team_Name,Parent_Team_Lead_Email,Grandparent_Team_Name,Grandparent_Team_Lead_Email,"
+  + "Top_Level_Group,Top_Level_Lead_Email,Source_Headcount,ID_Status,Data_Quality_Flag,Value_Stream,Base_Location";
+const head = "team_id,team_name,value_stream,team_lead_email,start_date";
 
 describe("parseTeamCsv", () => {
-  it("reads one team per line; optional columns may be blank, and a blank start date means today", () => {
-    const csv = `${head}\nT074,Payments Core,Platform,,2026-11-16\nT075,Imaging Viewer,Radiology,lead@example.com,\n`;
+  it("reads the workbook's Teams headings, plus Value_Stream and Base_Location", () => {
+    const csv = `${workbook}\nT074,Payments Core,lead@example.com,Clinical Services,p@example.com,ORBIS Vienna,g@example.com,ORBIS,t@example.com,5,Confirmed,Multiple team leads,Platform,DE-BY\n`;
     expect(parseTeamCsv(csv, { today })).toEqual({
-      teams: [
-        { id: "T074", name: "Payments Core", valueStream: "Platform", leadEmail: null, baseLocation: null, effectiveFrom: "2026-11-16" },
-        { id: "T075", name: "Imaging Viewer", valueStream: "Radiology", leadEmail: "lead@example.com", baseLocation: null, effectiveFrom: today },
-      ],
+      teams: [{
+        id: "T074", name: "Payments Core", leadEmail: "lead@example.com", valueStream: "Platform", baseLocation: "DE-BY", effectiveFrom: today,
+        parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com",
+        grandparentTeamName: "ORBIS Vienna", grandparentTeamLeadEmail: "g@example.com",
+        topLevelGroup: "ORBIS", topLevelLeadEmail: "t@example.com",
+        sourceHeadcount: 5, idStatus: "Confirmed", dataQualityFlag: "Multiple team leads",
+      }],
       errors: [],
     });
   });
 
-  it("only needs team_id and name; headings can be in any order and any case; DD/MM/YYYY works", () => {
-    const csv = "Name,Team_ID,Start_Date\n\"Payments, Core\",T074,16/11/2026\n";
+  it("blank optional cells are empty, and a blank ID status means Provisional", () => {
+    const csv = `${workbook}\nT074,Payments Core,,,,,,,,,,,,\n`;
+    expect(parseTeamCsv(csv, { today }).teams[0]).toMatchObject({
+      leadEmail: null, parentTeamName: null, sourceHeadcount: null, idStatus: "Provisional", dataQualityFlag: null, valueStream: null, baseLocation: null,
+    });
+  });
+
+  it("only needs Team_ID and Team_Name; headings can be in any order, any case, with spaces; DD/MM/YYYY works", () => {
+    const csv = "team name,Team ID,Start_Date,Base Location\n\"Payments, Core\",T074,16/11/2026,DE-BY\n";
     expect(parseTeamCsv(csv, { today }).teams).toEqual([
-      { id: "T074", name: "Payments, Core", valueStream: null, leadEmail: null, baseLocation: null, effectiveFrom: "2026-11-16" },
+      expect.objectContaining({ id: "T074", name: "Payments, Core", effectiveFrom: "2026-11-16", baseLocation: "DE-BY" }),
     ]);
   });
 
-  it("reads the optional base_location column (sean, 15 Nov 2026)", () => {
-    const csv = "team_id,name,base_location\nT074,Payments Core, DE-BY \n";
-    expect(parseTeamCsv(csv, { today }).teams[0]?.baseLocation).toBe("DE-BY");
+  it("still reads the shorter headings name and lead_email", () => {
+    const csv = "team_id,name,lead_email\nT074,Payments Core,lead@example.com\n";
+    expect(parseTeamCsv(csv, { today }).teams[0]).toMatchObject({ name: "Payments Core", leadEmail: "lead@example.com" });
+  });
+
+  it("ignores columns it doesn't know, such as Team_Display", () => {
+    const csv = "Team_ID,Team_Name,Team_Display\nT074,Payments Core,T074 | Payments Core\n";
+    expect(parseTeamCsv(csv, { today }).errors).toEqual([]);
   });
 
   it("says which headings are missing", () => {
     expect(parseTeamCsv("id,team\nT1,A\n", { today }).errors)
-      .toEqual(['The first line must have the headings "team_id" and "name" (optional: value_stream, lead_email, start_date, base_location)']);
+      .toEqual(['The first line must have the headings "Team_ID" and "Team_Name"']);
   });
 
   it("lists every bad line and imports nothing", () => {
-    const csv = `${head}\nT074,,Platform,,\nT075,Viewer,,not-an-email,\nT076,Core,,,31/02/2027\n`;
+    const csv = `${workbook}\nT074,,,,,,,,,,,,,\nT075,Viewer,not-an-email,,,,,,,,,,,\nT076,Core,,,,,,,,lots,,,,\nT077,Core 2,,,,,,,,,Maybe,,,\n`;
     const result = parseTeamCsv(csv, { today });
     expect(result.teams).toEqual([]);
     expect(result.errors).toEqual([
       "Line 2: Name is needed",
       "Line 3: Lead email must look like name@company.com",
-      'Line 4: "31/02/2027" is not a real date (use YYYY-MM-DD or DD/MM/YYYY)',
+      'Line 4: Source headcount must be a whole number, 0 or more',
+      "Line 5: ID status must be Provisional or Confirmed",
     ]);
+  });
+
+  it("says when a start date is not a real date", () => {
+    expect(parseTeamCsv(`${head}\nT076,Core,,,31/02/2027\n`, { today }).errors)
+      .toEqual(['Line 2: "31/02/2027" is not a real date (use YYYY-MM-DD or DD/MM/YYYY)']);
   });
 
   it("refuses the same ID twice, or the same name twice in one value stream (BR-15, BR-16)", () => {

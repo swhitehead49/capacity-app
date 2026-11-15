@@ -15,6 +15,7 @@ let db: Db;
 beforeEach(async () => {
   db = await createTestDb();
   await db.insert(t.teams).values({ id: "T017", name: "DRGW", valueStream: "Platform" });
+  await db.insert(t.valueStreams).values(["Platform", "Radiology"].map((name) => ({ name })));
 });
 
 describe("importTeams", () => {
@@ -51,6 +52,19 @@ describe("importTeams", () => {
   it("refuses a base location the project doesn't have, and adds nothing", async () => {
     const result = await importTeams(db, actor, { today, csv: "team_id,name,base_location\nT074,Payments Core,XX-YY\n" });
     expect(result).toEqual({ ok: false, errors: ["Line 2: Unknown base location XX-YY"] });
+    expect(await db.select().from(t.teams)).toHaveLength(1);
+  });
+
+  it("reads the workbook's attributes (sean, 15 Nov 2026)", async () => {
+    const csv = "Team_ID,Team_Name,Parent_Team_Name,Source_Headcount,ID_Status,Value_Stream\nT074,Payments Core,Clinical Services,5,Confirmed,radiology\n";
+    expect(await importTeams(db, actor, { today, csv })).toMatchObject({ ok: true, count: 1 });
+    expect((await db.select().from(t.teams)).find((x) => x.id === "T074"))
+      .toMatchObject({ parentTeamName: "Clinical Services", sourceHeadcount: 5, idStatus: "Confirmed", valueStream: "Radiology" });
+  });
+
+  it("refuses value streams that aren't in the reference data, and adds nothing", async () => {
+    const result = await importTeams(db, actor, { today, csv: "Team_ID,Team_Name,Value_Stream\nT074,Payments Core,Nowhere\n" });
+    expect(result).toEqual({ ok: false, errors: ["Line 2: Unknown value stream Nowhere: add it under Reference data first"] });
     expect(await db.select().from(t.teams)).toHaveLength(1);
   });
 
