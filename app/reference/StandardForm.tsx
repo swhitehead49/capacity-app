@@ -1,16 +1,16 @@
 "use client";
 
 import { ActionForm, type Values } from "@/app/lib/ActionForm";
-import { saveStandardAction } from "./actions";
+import { saveStandardAction } from "./standardActions";
 
 const field = (label: string, name: string, v: Values) => (
   <label>{label}<input name={name} type="number" step="any" min="0" max="100" defaultValue={v[name]} /></label>
 );
 
 /** The project's standard allocation: what a new team starts with. */
-export function StandardForm({ values }: { values: Values }) {
+export function StandardForm({ projectId, values }: { projectId: string; values: Values }) {
   return (
-    <ActionForm action={saveStandardAction} hidden={{}} values={values} submitLabel="Save standard allocation" label="Standard allocation">
+    <ActionForm action={saveStandardAction} hidden={{ projectId }} values={values} submitLabel="Save standard allocation" label="Standard allocation">
       {(v) => (
         <>
           <div className="grid">

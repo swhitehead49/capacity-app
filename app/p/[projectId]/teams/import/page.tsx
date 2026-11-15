@@ -25,7 +25,7 @@ export default async function ImportTeams({ params, searchParams }: {
         Value streams and base locations must already be in the <Link href="/reference">reference data</Link>.
         Each team gets the same checks as Add team.
         If any line has a problem, nothing is imported and every problem is listed.
-        New teams start with this project&apos;s <Link href={`/p/${projectId}/settings`}>standard allocation</Link>.
+        New teams start with this project&apos;s <Link href="/reference#standard-allocation">standard allocation</Link>.
       </p>
       {error && (
         <div role="alert" aria-label="Problems importing" className="errors">

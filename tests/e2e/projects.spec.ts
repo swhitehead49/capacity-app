@@ -84,11 +84,12 @@ test("a project name that is already used is explained", async ({ page }) => {
   await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText('There is already a project called "Imaging"');
 });
 
-test("rename, archive and restore a project from its Settings page", async ({ page }) => {
+test("rename, archive and restore a project from the Reference data page", async ({ page }) => {
   await page.goto("/projects");
   await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Oncology");
   await page.getByRole("button", { name: "Create project" }).click();
-  await page.goto("/p/oncology/settings");
+  await page.goto("/p/oncology/teams");
+  await page.getByRole("banner").getByRole("link", { name: "Reference data" }).click();
   const rename = page.getByRole("form", { name: "Rename project" });
   await rename.getByLabel("Project name").fill("Oncology Services");
   await rename.getByRole("button", { name: "Rename" }).click();
@@ -105,11 +106,17 @@ test("rename, archive and restore a project from its Settings page", async ({ pa
 // sean, 15 Nov 2026: the menu across the top is the same on every page.
 test("every page has the same top menu", async ({ page }) => {
   await page.goto("/p/imaging/teams");
-  for (const address of ["/p/imaging/teams", "/p/imaging/settings", "/projects", "/reference", "/reference/locations/DE-BY"]) {
+  for (const address of ["/p/imaging/teams", "/p/imaging/holidays", "/projects", "/reference", "/reference/locations/DE-BY"]) {
     await page.goto(address);
     const bar = page.getByRole("banner");
-    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Teams", "Holidays", "Settings", "Reference data", "Switch project"]);
+    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Teams", "Holidays", "Reference data", "Switch project"]);
     await expect(bar).toContainText("Imaging");
     await expect(bar.getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/p/imaging/teams");
   }
+});
+
+test("an old Settings link opens that project's settings on the Reference data page", async ({ page }) => {
+  await page.goto("/p/imaging/settings");
+  await expect(page).toHaveURL(/\/reference$/);
+  await expect(page.getByRole("heading", { name: "Imaging: standard allocation for new teams" })).toBeVisible();
 });

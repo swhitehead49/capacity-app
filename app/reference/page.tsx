@@ -1,4 +1,11 @@
-import { TopBar } from "@/app/lib/TopBar";
+import { TopBar, currentProject } from "@/app/lib/TopBar";
+import { getStandardAllocation } from "@/src/application/standardAllocation";
+import { getProjectDb } from "@/src/infrastructure/db/appDb";
+import { DEFAULT_PROJECT } from "@/src/domain/projects/projectRules";
+import { percent } from "@/app/lib/format";
+import { archiveProjectAction } from "@/app/projects/actions";
+import { RenameProjectForm } from "@/app/projects/ProjectForms";
+import { StandardForm } from "./StandardForm";
 import Link from "next/link";
 import { STARTING_LOCATIONS, getReferenceData } from "@/src/application/referenceData";
 import { sharedDb } from "@/app/lib/project";
@@ -8,18 +15,53 @@ import { AddLocationForm, AddValueStreamForm } from "./ReferenceForms";
 export const dynamic = "force-dynamic";
 
 /** Reference data set once for the whole system and used by every project (sean, 15 Nov 2026). */
-export default async function ReferenceData() {
+export default async function ReferenceData({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
+  const { saved } = await searchParams;
   const { valueStreams, locations } = await getReferenceData(await sharedDb());
+  const project = await currentProject();
+  const standard = project ? await getStandardAllocation(await getProjectDb(project.id)) : null;
+  const standardValues: Record<string, string> = standard
+    ? {
+      overhead: percent(standard.overhead), contingency: percent(standard.contingency),
+      run: percent(standard.split.run), fix: percent(standard.split.fix), sustain: percent(standard.split.sustain),
+      change: percent(standard.split.change), enabling: percent(standard.split.enabling),
+    }
+    : {};
   const missing = STARTING_LOCATIONS.filter((s) => !locations.some((l) => l.code === s.code));
   return (
     <>
       <TopBar />
       <main>
         <h1>Reference data</h1>
-        <p className="muted">Set once for the whole system and shared by every project. A team&apos;s value stream and base location,
-          and each person&apos;s location, are picked from these lists.</p>
+        <p className="muted">Settings for the project you are in, then the lists shared by every project.</p>
 
-        <h2>Value streams</h2>
+        {project && (
+          <section aria-label="This project">
+            <h2 id="standard-allocation">{project.name}: standard allocation for new teams</h2>
+            <p className="muted">
+              A team added to {project.name} starts with these percentages as its team default, in force from its start date,
+              so its planner is Ready straight away. You can still change any team&apos;s default afterwards.
+              Changing the standard here does not change existing teams.
+              {!standard && " Until it is set, a new team starts with a Draft default."}
+            </p>
+            {saved && <p role="status" className="notice">Saved. New teams will start with this allocation.</p>}
+            <StandardForm projectId={project.id} values={standardValues} />
+
+            <h2 id="project">{project.name}: project</h2>
+            <p className="muted">Its web address stays /p/{project.id} after a rename, so links keep working.</p>
+            <RenameProjectForm projectId={project.id} name={project.name} />
+            {project.id !== DEFAULT_PROJECT && (
+              <form action={archiveProjectAction} className="archive">
+                <input type="hidden" name="projectId" value={project.id} />
+                <p className="muted">Archiving hides the project from the project list. Nothing is deleted, and you can restore it there.</p>
+                <button type="submit" className="secondary danger">Archive project</button>
+              </form>
+            )}
+          </section>
+        )}
+
+        <h2>Value streams (all projects)</h2>
+        <p className="muted">A team&apos;s value stream is picked from this list.</p>
         <table className="members narrow">
           <caption>Value streams</caption>
           <thead><tr><th>Name</th></tr></thead>
@@ -30,8 +72,8 @@ export default async function ReferenceData() {
         </table>
         <AddValueStreamForm />
 
-        <h2>Locations</h2>
-        <p className="muted">The code is the ISO region code (such as DE-BY), or the country code alone for a whole country.
+        <h2>Locations (all projects)</h2>
+        <p className="muted">A team&apos;s base location and each person&apos;s location are picked from this list. The code is the ISO region code (such as DE-BY), or the country code alone for a whole country.
           It decides which public holidays apply to the people there.</p>
         <table className="members narrow">
           <caption>Locations</caption>

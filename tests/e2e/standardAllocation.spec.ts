@@ -4,9 +4,11 @@ import { expect, test } from "@playwright/test";
 // Uses the Imaging project so the Default project's teams are not affected.
 
 test("set the project's standard allocation; a new team starts with it", async ({ page }) => {
+  // sean, 15 Nov 2026: the project's settings are on the Reference data page.
   await page.goto("/p/imaging");
-  await page.getByRole("banner").getByRole("link", { name: "Settings" }).click();
-  await expect(page).toHaveURL(/\/p\/imaging\/settings$/);
+  await page.getByRole("banner").getByRole("link", { name: "Reference data" }).click();
+  await expect(page).toHaveURL(/\/reference$/);
+  await expect(page.getByRole("heading", { name: "Imaging: standard allocation for new teams" })).toBeVisible();
   const form = page.getByRole("form", { name: "Standard allocation" });
   await form.getByLabel("Overhead %").fill("20");
   await form.getByLabel("Contingency %").fill("5");
@@ -29,7 +31,8 @@ test("set the project's standard allocation; a new team starts with it", async (
 });
 
 test("a standard allocation that doesn't add up is explained", async ({ page }) => {
-  await page.goto("/p/imaging/settings");
+  await page.goto("/p/imaging/teams");
+  await page.goto("/reference");
   const form = page.getByRole("form", { name: "Standard allocation" });
   await form.getByLabel("Overhead %").fill("20");
   await form.getByLabel("Run %").fill("50");

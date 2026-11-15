@@ -19,7 +19,7 @@ export async function createProjectAction(previous: FormState, form: FormData): 
 export async function renameProjectAction(previous: FormState, form: FormData): Promise<FormState> {
   const result = await renameProject(await getDb(), ACTOR, { id: read(form, "projectId"), name: read(form, "name") });
   if (!result.ok) return failed(previous, form, result.errors);
-  redirect(`/p/${result.id}/settings`);
+  redirect("/reference");
 }
 
 export async function archiveProjectAction(form: FormData) {
