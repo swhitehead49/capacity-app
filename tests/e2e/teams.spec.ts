@@ -85,7 +85,7 @@ test("filter the Teams list to one value stream", async ({ page }) => {
 });
 
 test("the team list shows each team's value stream", async ({ page }) => {
-  await page.goto("/p/default");
+  await page.goto("/p/default/teams");
   await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T001/ })).toContainText("Clinical");
 });
 

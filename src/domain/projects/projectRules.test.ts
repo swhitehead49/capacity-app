@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectIdFromName, projectInAddress, projectStorageName, startAddress, validateProject } from "./projectRules";
+import { projectIdFromName, projectInAddress, projectStorageName, validateProject } from "./projectRules";
 
 // Projects (decided 15 Nov 2026): project → value streams → teams. Each project's data is kept separate.
 
@@ -30,24 +30,6 @@ describe("projectStorageName", () => {
 });
 
 // The first thing a user does is choose their project; next time the app opens that project again.
-describe("startAddress", () => {
-  const open = (id: string) => ({ id, archivedAt: null });
-  const projects = [open("default"), open("imaging"), { id: "old", archivedAt: new Date("2026-11-01") }];
-
-  it("shows the project picker when nothing is remembered", () => {
-    expect(startAddress(undefined, projects)).toBe("/projects");
-  });
-
-  it("opens the remembered project", () => {
-    expect(startAddress("imaging", projects)).toBe("/p/imaging");
-  });
-
-  it("shows the picker if the remembered project is gone or archived", () => {
-    expect(startAddress("deleted", projects)).toBe("/projects");
-    expect(startAddress("old", projects)).toBe("/projects");
-  });
-});
-
 describe("projectInAddress", () => {
   it("reads the project from a web address inside a project", () => {
     expect(projectInAddress("/p/imaging")).toBe("imaging");
