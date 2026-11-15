@@ -21,7 +21,7 @@ describe("validateOverride", () => {
 
   it("checks the split adds up to 100% (BR-01)", () => {
     expect(validateOverride({ ...good, split: { run: 0.5, fix: 0.2, sustain: 0.1, change: 0.1 } }))
-      .toContain("Run + Fix + Sustain + Change must add up to 100%");
+      .toContain("Run + Fix + Sustain + Change + Enabling/Training must add up to 100%");
   });
 
   it("checks an overhead it sets is between 0% and 100% (BR-02)", () => {

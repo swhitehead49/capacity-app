@@ -15,7 +15,7 @@ describe("validateSplit", () => {
   });
 
   it("rejects a split that does not add up to 100% (BR-01)", () => {
-    expect(validateSplit(split(0.3, 0.2, 0.2, 0.2))).toContain("Run + Fix + Sustain + Change must add up to 100%");
+    expect(validateSplit(split(0.3, 0.2, 0.2, 0.2))).toContain("Run + Fix + Sustain + Change + Enabling/Training must add up to 100%");
   });
 
   it("rejects a percentage below 0 or above 100% (BR-02)", () => {
@@ -81,7 +81,7 @@ describe("splitCapacity", () => {
 
   it("shows calendar capacity only when there is no active allocation", () => {
     const result = splitCapacity(100, { overhead: null, split: null });
-    expect(result).toEqual({ engineeringDays: null, contingencyDays: null, run: null, fix: null, sustain: null, change: null });
+    expect(result).toEqual({ engineeringDays: null, contingencyDays: null, run: null, fix: null, sustain: null, change: null, enabling: null });
   });
 });
 
@@ -117,5 +117,29 @@ describe("contingency", () => {
     const result = splitCapacity(100, { overhead: 0.2, contingency: 0, split: split(0.3, 0.2, 0.2, 0.3) });
     expect(result.contingencyDays).toBe(0);
     expect(result.run).toBeCloseTo(24);
+  });
+});
+
+// Enabling/Training (sean, 15 Nov 2026): a fifth work type in the split. Settings saved before it existed count as 0%.
+describe("Enabling/Training", () => {
+  it("is part of the 100%", () => {
+    expect(validateSplit({ run: 0.3, fix: 0.2, sustain: 0.2, change: 0.2, enabling: 0.1 })).toEqual([]);
+    expect(validateSplit({ run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3, enabling: 0.1 }))
+      .toContain("Run + Fix + Sustain + Change + Enabling/Training must add up to 100%");
+  });
+
+  it("must be between 0% and 100%", () => {
+    expect(validateSplit({ run: 0.5, fix: 0.3, sustain: 0.2, change: 0.2, enabling: -0.2 }))
+      .toContain("Every percentage must be between 0% and 100%");
+  });
+
+  it("gets its share of the days", () => {
+    const result = splitCapacity(100, { overhead: 0.2, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.2, enabling: 0.1 } });
+    expect(result.enabling).toBeCloseTo(8);
+    expect(result.change).toBeCloseTo(16);
+  });
+
+  it("is 0 days for a split saved before it existed", () => {
+    expect(splitCapacity(100, { overhead: 0.2, split: split(0.3, 0.2, 0.2, 0.3) }).enabling).toBe(0);
   });
 });

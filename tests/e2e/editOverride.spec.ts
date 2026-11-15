@@ -19,7 +19,7 @@ test("refuses a split that does not add up to 100%", async ({ page }) => {
   await page.getByLabel("Change %").fill("10");
   await page.getByLabel("Reason").fill("Release sprint");
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText("Run + Fix + Sustain + Change must add up to 100%");
+  await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText("Run + Fix + Sustain + Change + Enabling/Training must add up to 100%");
   await expect(page.getByLabel("Change %")).toHaveValue("10"); // what was typed is kept
   await expect(page.getByLabel("Reason")).toHaveValue("Release sprint");
 });

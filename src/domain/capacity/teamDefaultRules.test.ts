@@ -29,7 +29,7 @@ describe("validateTeamDefault", () => {
 
   it("passes on the split rules (BR-01)", () => {
     expect(validateTeamDefault({ ...good, split: { run: 0.5, fix: 0.5, sustain: 0.5, change: 0 } }))
-      .toContain("Run + Fix + Sustain + Change must add up to 100%");
+      .toContain("Run + Fix + Sustain + Change + Enabling/Training must add up to 100%");
   });
 
   it("lets a Draft be saved unfinished, so work in progress isn't lost", () => {

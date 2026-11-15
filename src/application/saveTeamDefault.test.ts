@@ -40,7 +40,7 @@ describe("saveTeamDefault", () => {
 
   it("refuses an invalid default and saves nothing", async () => {
     const result = await saveTeamDefault(db, actor, { ...request, split: { run: 0.5, fix: 0.5, sustain: 0.5, change: 0 } });
-    expect(result).toEqual({ ok: false, errors: ["Run + Fix + Sustain + Change must add up to 100%"] });
+    expect(result).toEqual({ ok: false, errors: ["Run + Fix + Sustain + Change + Enabling/Training must add up to 100%"] });
     expect(await db.select().from(t.allocationSettings)).toHaveLength(0);
     expect(await db.select().from(t.auditLog)).toHaveLength(0);
   });
