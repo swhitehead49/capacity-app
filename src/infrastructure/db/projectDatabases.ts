@@ -41,6 +41,15 @@ export async function insertProject(db: Db, project: { id: string; name: string 
   await db.execute(sql`insert into app.projects (id, name) values (${project.id}, ${project.name})`);
 }
 
+export async function updateProject(db: Db, id: string, change: { name?: string; archived?: boolean }): Promise<void> {
+  if (change.name !== undefined) await db.execute(sql`update app.projects set name = ${change.name} where id = ${id}`);
+  if (change.archived !== undefined) {
+    await db.execute(change.archived
+      ? sql`update app.projects set archived_at = now() where id = ${id}`
+      : sql`update app.projects set archived_at = null where id = ${id}`);
+  }
+}
+
 /** Opens each project's database the first time it is needed, then reuses it. */
 export class ProjectDatabases {
   private readonly open = new Map<string, Promise<Db>>();

@@ -2,6 +2,9 @@ import { getStandardAllocation } from "@/src/application/standardAllocation";
 import { projectDb } from "@/app/lib/project";
 import { percent } from "@/app/lib/format";
 import { StandardForm } from "./StandardForm";
+import { archiveProjectAction } from "@/app/projects/actions";
+import { RenameProjectForm } from "@/app/projects/ProjectForms";
+import { DEFAULT_PROJECT } from "@/src/domain/projects/projectRules";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +35,17 @@ export default async function ProjectSettings({ params, searchParams }: {
       </p>
       {saved && <p role="status" className="notice">Saved. New teams will start with this allocation.</p>}
       <StandardForm values={values} />
+
+      <h2>Project</h2>
+      <p className="muted">Its web address stays /p/{project.id} after a rename, so links keep working.</p>
+      <RenameProjectForm name={project.name} />
+      {project.id !== DEFAULT_PROJECT && (
+        <form action={archiveProjectAction} className="archive">
+          <input type="hidden" name="projectId" value={project.id} />
+          <p className="muted">Archiving hides the project from the project list. Nothing is deleted, and you can restore it there.</p>
+          <button type="submit" className="secondary danger">Archive project</button>
+        </form>
+      )}
     </>
   );
 }

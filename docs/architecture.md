@@ -51,3 +51,5 @@ Forms send the project as a hidden `projectId` field (`ActionForm` adds it from 
 
 `/` opens the project used last (cookie `capacity-project`, set by `middleware.ts` on any `/p/<project>` page),
 or the picker at `/projects` when there is none or it is archived (`startAddress` in `projectRules.ts`).
+Projects are created (name only; the ID comes from `projectIdFromName`), renamed and archived/restored through
+`src/application/projects.ts`; a new project's tables are made the first time it is opened. Nothing is deleted.
