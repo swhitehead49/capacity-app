@@ -54,13 +54,18 @@ test("Capacity App in the top bar goes back to the home screen, to choose again"
 // sean, 15 Nov 2026: the project home page shows the project's makeup.
 test("the project home page shows the value streams in the project, or an error when there are none", async ({ page }) => {
   await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
-  await page.goto("/p/default");
-  const streams = page.getByRole("table", { name: "Value streams in this project" });
-  await expect(streams.getByRole("row", { name: /Clinical/ })).toBeVisible();
-
   await page.goto("/projects");
-  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Empty Project");
+  await page.getByRole("form", { name: "New project" }).getByLabel("Project name").fill("Makeup Test");
   await page.getByRole("button", { name: "Create project" }).click();
-  await page.goto("/p/empty-project");
+  await page.goto("/p/makeup-test");
   await expect(page.getByRole("alert")).toHaveText("No value streams in the project");
+
+  await page.goto("/p/makeup-test/teams/new");
+  await page.getByLabel("Team ID").fill("T500");
+  await page.getByLabel("Name").fill("Viewer");
+  await page.getByLabel("Value stream").selectOption("Radiology");
+  await page.getByRole("button", { name: "Add team" }).click();
+  await page.goto("/p/makeup-test");
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByRole("table", { name: "Value streams in this project" }).getByRole("row", { name: /Radiology/ })).toContainText("1");
 });
