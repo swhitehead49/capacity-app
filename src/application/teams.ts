@@ -151,19 +151,32 @@ export async function listValueStreams(db: Db): Promise<string[]> {
 }
 
 /** FR-19: every team, its status today and how many people are on it now. Optionally one value stream only. */
-export async function listTeamsOverview(db: Db, today: string, filter: { valueStream?: string } = {}) {
+export async function listTeamsOverview(db: Db, today: string, filter: { valueStream?: string; country?: string } = {}) {
   const a = t.assignments;
-  const counts = await db.select({ teamId: a.teamId, n: sql<number>`count(*)::int` }).from(a)
-    .where(and(or(isNull(a.startDate), lte(a.startDate, today)), or(isNull(a.endDate), sql`${a.endDate} >= ${today}`)))
-    .groupBy(a.teamId);
+  const current = and(or(isNull(a.startDate), lte(a.startDate, today)), or(isNull(a.endDate), sql`${a.endDate} >= ${today}`));
+  const counts = await db.select({ teamId: a.teamId, n: sql<number>`count(*)::int` }).from(a).where(current).groupBy(a.teamId);
+  // Where each team's current members are based (sean, 15 Nov 2026: filter teams by country).
+  const places = await db.selectDistinct({ teamId: a.teamId, country: t.locations.country }).from(a)
+    .innerJoin(t.people, eq(a.personEmail, t.people.email))
+    .innerJoin(t.locations, eq(t.people.locationCode, t.locations.code))
+    .where(current);
   const teams = await db.select().from(t.teams)
     .where(filter.valueStream ? eq(t.teams.valueStream, filter.valueStream) : undefined)
     .orderBy(asc(t.teams.id));
-  return teams.map((team) => ({
-    ...team,
-    status: teamStatus(team.retiredOn, today),
-    members: counts.find((c) => c.teamId === team.id)?.n ?? 0,
-  }));
+  return teams
+    .map((team) => ({
+      ...team,
+      status: teamStatus(team.retiredOn, today),
+      members: counts.find((c) => c.teamId === team.id)?.n ?? 0,
+      countries: places.filter((p) => p.teamId === team.id).map((p) => p.country).sort(),
+    }))
+    .filter((team) => !filter.country || team.countries.includes(filter.country));
+}
+
+/** The countries of the project's locations, for the country filter. */
+export async function listTeamCountries(db: Db): Promise<string[]> {
+  const rows = await db.selectDistinct({ country: t.locations.country }).from(t.locations).orderBy(asc(t.locations.country));
+  return rows.map((r) => r.country);
 }
 
 /** One team for the Manage page: details, name history (newest first) and successors. */
