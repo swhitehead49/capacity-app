@@ -109,3 +109,11 @@ export async function deleteTeamAction(previous: FormState, form: FormData): Pro
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(`/reference/teams?deleted=${encodeURIComponent(teamId)}`);
 }
+
+/** Delete from the table's row button (sean, 16 Nov 2026). Unsaved edits in the table are not kept. */
+export async function deleteFromTableAction(teamId: string, _form: FormData) {
+  const shared = await sharedDb();
+  const projects = await Promise.all((await listProjects(shared)).filter((p) => p.id !== DEFAULT_PROJECT).map((p) => getProjectDb(p.id)));
+  const result = await deleteMasterTeam(shared, projects, ACTOR, { teamId });
+  redirect(`/reference/teams?${new URLSearchParams(result.ok ? { deleted: teamId } : { error: result.errors.join(" ") })}`);
+}

@@ -35,3 +35,14 @@ test("a team with members can't be deleted", async ({ page }) => {
   await page.getByRole("form", { name: "Delete team" }).getByRole("button", { name: "Delete team" }).click();
   await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText("retire it instead");
 });
+
+test("delete a Provisional team from its row in the table", async ({ page }) => {
+  await addMasterTeam(page, { id: "T703", name: "Grid Four" });
+  await asRole(page, "admin");
+  await page.goto("/reference/teams");
+  await page.getByRole("button", { name: "Delete T703" }).click();
+  await expect(page.getByRole("status")).toContainText("Deleted T703");
+  await expect(page.getByLabel("Name of T703")).toHaveCount(0);
+  await page.getByRole("button", { name: "Delete T017" }).click();
+  await expect(page.getByRole("alert", { name: "Problems deleting" })).toContainText("retire it instead");
+});

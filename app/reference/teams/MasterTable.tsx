@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { ActionForm, type Values } from "@/app/lib/ActionForm";
 import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
-import { deleteTeamAction, saveMasterTeamsAction } from "./actions";
+import { deleteFromTableAction, deleteTeamAction, saveMasterTeamsAction } from "./actions";
 
 export interface Option { value: string; label: string }
-export interface MasterRow { id: string; parentTeamName: string | null }
+export interface MasterRow { id: string; parentTeamName: string | null; provisional: boolean }
 
 /**
  * The master team list as an editable table (sean, 16 Nov 2026): name, value stream, base location, lead email and
@@ -20,10 +20,10 @@ export function MasterTable({ groups, values, valueStreams, locations }: {
       {(v) => (
         <table className="members editable">
           <caption>Master team list</caption>
-          <thead><tr><th>ID</th><th>Name</th><th>Value stream</th><th>Base location</th><th>Lead email</th><th>ID status</th><th>Parent team</th><th></th></tr></thead>
+          <thead><tr><th>ID</th><th>Name</th><th>Value stream</th><th>Base location</th><th>Lead email</th><th>ID status</th><th>Parent team</th><th></th><th></th></tr></thead>
           {groups.map(([stream, rows]) => (
             <tbody key={stream}>
-              <tr className="group"><th colSpan={8} scope="rowgroup">{stream}</th></tr>
+              <tr className="group"><th colSpan={9} scope="rowgroup">{stream}</th></tr>
               {rows.map((x) => (
                 <tr key={x.id}>
                   <td>{x.id}<input type="hidden" name="teamId" value={x.id} /></td>
@@ -48,6 +48,12 @@ export function MasterTable({ groups, values, valueStreams, locations }: {
                   </td>
                   <td>{x.parentTeamName}</td>
                   <td><Link className="edit" href={`/reference/teams/${encodeURIComponent(x.id)}`}>Edit</Link></td>
+                  <td>
+                    {x.provisional && (
+                      <button type="submit" className="secondary danger" formAction={deleteFromTableAction.bind(null, x.id)}
+                        aria-label={`Delete ${x.id}`}>Delete</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
