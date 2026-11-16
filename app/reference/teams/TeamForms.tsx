@@ -4,7 +4,7 @@
 
 import { ActionForm } from "@/app/lib/ActionForm";
 import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
-import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, updateTeamDetailsAction, renameTeamAction } from "./actions";
+import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, updateTeamDetailsAction, renameTeamAction, retireTeamAction } from "./actions";
 
 export interface Option { value: string; label: string }
 
@@ -32,6 +32,25 @@ export function RenameForm({ teamId, today }: { teamId: string; today: string })
         <div className="grid">
           <label>New name<input name="name" defaultValue={v.name} /></label>
           <label>From<input name="effectiveFrom" type="date" defaultValue={v.effectiveFrom} /></label>
+        </div>
+      )}
+    </ActionForm>
+  );
+}
+
+/** UC17: retire a team in every project at once (sean, 16 Nov 2026). */
+export function RetireForm({ teamId, teams }: { teamId: string; teams: Option[] }) {
+  return (
+    <ActionForm action={retireTeamAction} hidden={{ teamId }} values={{}} submitLabel="Retire team" label="Retire">
+      {(v) => (
+        <div className="grid">
+          <label>Last day<input name="retiredOn" type="date" defaultValue={v.retiredOn} /></label>
+          <label>Replaced by (optional)
+            <select name="successors" multiple size={Math.min(6, Math.max(3, teams.length))}>
+              {teams.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </label>
+          <p className="muted hint">Pick the team(s) that take over its work. Ctrl/Cmd-click to pick several.</p>
         </div>
       )}
     </ActionForm>

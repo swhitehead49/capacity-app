@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { listTeams } from "@/src/application/lookups";
 import { getTeamDetails } from "@/src/application/teams";
 import { today } from "@/src/infrastructure/db/appDb";
 import { projectDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
-import { RetireForm } from "../../RetireForm";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +14,6 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
   const details = await getTeamDetails(db, { teamId, today: today() }).catch(() => null);
   if (!details) notFound();
   const { team, status, names, successors } = details;
-  const otherTeams = (await listTeams(db)).filter((x) => x.value !== team.id);
 
   return (
     <>
@@ -47,17 +44,10 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
       </table>
 
       <h2>Retire</h2>
-      {team.retiredOn ? (
-        <p>Retired after {formatDate(team.retiredOn)}. Past periods are still reported.</p>
-      ) : (
-        <>
-          <p className="muted">
-            Everyone must be moved or ended on or before the last day first. Defaults and overrides that start after it are retired;
-            earlier ones stay so past periods still report. Nothing is deleted.
-          </p>
-          <RetireForm teamId={team.id} teams={otherTeams} />
-        </>
-      )}
+      {team.retiredOn
+        ? <p>Retired after {formatDate(team.retiredOn)}. Past periods are still reported.</p>
+        : <p className="muted">An Admin retires a team in the master team list, for every project at once.
+          Before that, move or end its members here on the Team members tab.</p>}
     </>
   );
 }

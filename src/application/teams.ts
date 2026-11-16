@@ -99,6 +99,15 @@ export async function renameTeam(db: Db, actor: string, request: { teamId: strin
   return { ok: true, id: team.id, warnings: clash.warnings };
 }
 
+/** BR-18: the people still on a team after its last day. */
+export async function membersStillOn(db: Pick<Db, "select">, teamId: string, lastDay: string): Promise<string[]> {
+  const a = t.assignments;
+  const rows = await db.select({ email: a.personEmail }).from(a)
+    .where(and(eq(a.teamId, teamId), or(isNull(a.endDate), gt(a.endDate, lastDay))))
+    .orderBy(asc(a.personEmail));
+  return rows.map((r) => r.email);
+}
+
 /**
  * UC17: retire a team from its last day. Only once nobody is on it after that day (BR-18).
  * Settings that start after that day are retired; earlier ones stay so past periods still report (BR-19).
@@ -118,11 +127,8 @@ export async function retireTeam(
     if (!(await db.query.teams.findFirst({ where: eq(t.teams.id, id) }))) return { ok: false, errors: [`Unknown successor team ${id}`] };
   }
 
-  const a = t.assignments;
-  const stillOn = await db.select({ email: a.personEmail }).from(a)
-    .where(and(eq(a.teamId, team.id), or(isNull(a.endDate), gt(a.endDate, request.retiredOn))))
-    .orderBy(asc(a.personEmail));
-  if (stillOn.length) return { ok: false, errors: [`Move or end these members first: ${stillOn.map((m) => m.email).join(", ")}`] };
+  const stillOn = await membersStillOn(db, team.id, request.retiredOn);
+  if (stillOn.length) return { ok: false, errors: [`Move or end these members first: ${stillOn.join(", ")}`] };
 
   await db.transaction(async (tx) => {
     const s = t.allocationSettings;

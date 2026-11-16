@@ -68,8 +68,10 @@ test("rename a team and keep its old name in the history", async ({ page }) => {
   await expect(history.getByRole("row", { name: /^Payments 9 Nov 2026/ })).toBeVisible();
 });
 
+// sean, 16 Nov 2026: the Admin retires a team in the master list, for every project at once.
 test("a team with members can't be retired; the page says who to move", async ({ page }) => {
-  await page.goto("/p/default/teams/T017/manage");
+  await asRole(page, "admin");
+  await page.goto("/reference/teams/T017");
   const form = page.getByRole("form", { name: "Retire" });
   await form.getByLabel("Last day").fill("2026-12-31");
   await form.getByRole("button", { name: "Retire team" }).click();
@@ -77,13 +79,15 @@ test("a team with members can't be retired; the page says who to move", async ({
 });
 
 test("retire an empty team and name its successor", async ({ page }) => {
-  await page.goto("/p/default/teams/T002/manage");
+  await asRole(page, "admin");
+  await page.goto("/reference/teams/T002");
   const form = page.getByRole("form", { name: "Retire" });
   await form.getByLabel("Last day").fill("2026-12-31");
   await form.getByLabel("Replaced by").selectOption({ label: "T100 | Payments & Billing" });
   await form.getByRole("button", { name: "Retire team" }).click();
   await expect(page.getByText("Retiring 31 Dec 2026")).toBeVisible();
   await expect(page.getByRole("link", { name: "T100 | Payments & Billing" })).toBeVisible();
+  await asRole(page, "manager");
   await page.goto("/p/default/teams?choose=1");
   await expect(page.getByRole("row", { name: /T002/ })).toContainText("Retiring 31 Dec 2026");
 });
@@ -162,6 +166,7 @@ test("the Admin edits a team's details", async ({ page }) => {
   await form.getByLabel("Source headcount").fill("5");
   await form.getByLabel("ID status").selectOption("Confirmed");
   await form.getByRole("button", { name: "Save details" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved");
   await expect(page.getByRole("form", { name: "Details" }).getByLabel("Parent team name", { exact: true })).toHaveValue("Clinical Services");
   await expect(page.getByRole("form", { name: "Details" }).getByLabel("ID status")).toHaveValue("Confirmed");
   await asRole(page, "manager");

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { readHeadcount } from "@/src/domain/organisation/teamDetails";
 import { addTeam, changeBaseLocation, changeValueStream, renameTeam, updateTeamDetails } from "@/src/application/teams";
 import { importTeams } from "@/src/application/importTeams";
-import { deleteMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
+import { deleteMasterTeam, retireMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
 import { DEFAULT_PROJECT } from "@/src/domain/projects/projectRules";
 import { getProjectDb, today } from "@/src/infrastructure/db/appDb";
 import { listProjects } from "@/src/infrastructure/db/projectDatabases";
@@ -16,7 +16,7 @@ import { failed, type FormState } from "@/app/lib/formState";
 const ACTOR = "Capacity Admin";
 const MAX_SHOWN = 20;
 const read = (form: FormData, name: string) => String(form.get(name) ?? "").trim();
-const teamPage = (teamId: string) => `/reference/teams/${encodeURIComponent(teamId)}`;
+const teamPage = (teamId: string) => `/reference/teams/${encodeURIComponent(teamId)}?saved=1`;
 
 /** UC15. Warnings (same name in another value stream) are shown on the Teams tab. */
 export async function addTeamAction(previous: FormState, form: FormData): Promise<FormState> {
@@ -108,4 +108,17 @@ export async function deleteTeamAction(previous: FormState, form: FormData): Pro
   const result = await deleteMasterTeam(shared, projects, ACTOR, { teamId });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(`/reference/teams?deleted=${encodeURIComponent(teamId)}`);
+}
+
+/** UC17: retire a team in every project at once (sean, 16 Nov 2026). */
+export async function retireTeamAction(previous: FormState, form: FormData): Promise<FormState> {
+  const teamId = read(form, "teamId");
+  const shared = await sharedDb();
+  const projects = await Promise.all((await listProjects(shared)).filter((p) => p.id !== DEFAULT_PROJECT)
+    .map(async (p) => ({ name: p.name, db: await getProjectDb(p.id) })));
+  const result = await retireMasterTeam(shared, projects, ACTOR, today(), {
+    teamId, retiredOn: read(form, "retiredOn"), successorTeamIds: form.getAll("successors").map(String),
+  });
+  if (!result.ok) return failed(previous, form, result.errors);
+  redirect(teamPage(teamId));
 }

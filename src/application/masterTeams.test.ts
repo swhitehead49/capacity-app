@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import { getTeamDefaults } from "./getTeamDefaults";
-import { deleteMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
+import { deleteMasterTeam, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
 import { saveStandardAllocation } from "./standardAllocation";
 import { addTeam, renameTeam, updateTeamDetails } from "./teams";
 
@@ -125,5 +125,33 @@ describe("saveMasterTeamRows", () => {
       { teamId: "T2", name: "Payments", valueStream: "Radiology", baseLocation: "", leadEmail: "", idStatus: "Provisional" },
     ]);
     expect(result).toEqual({ ok: false, changed: 1, errors: ["T1: Unknown value stream Nowhere: add it under Reference data first"] });
+  });
+});
+
+// sean, 16 Nov 2026: retiring is done once, in the master list, for every project.
+describe("retireMasterTeam", () => {
+  const projects = () => [{ name: "Imaging", db: project }];
+
+  it("retires the team in the master list and in every project, with its successor", async () => {
+    expect(await retireMasterTeam(shared, projects(), actor, today, { teamId: "T2", retiredOn: "2026-12-31", successorTeamIds: ["T1"] }))
+      .toEqual({ ok: true });
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toMatchObject({ retiredOn: "2026-12-31" });
+    expect(await copy("T2")).toMatchObject({ retiredOn: "2026-12-31" });
+    expect(await project.select().from(t.teamSuccessors)).toEqual([{ teamId: "T2", successorTeamId: "T1" }]);
+  });
+
+  it("first lists anyone still on the team in any project, and retires nothing", async () => {
+    await syncTeams(project, shared, today);
+    await project.insert(t.people).values({ email: "a@example.com" });
+    await project.insert(t.assignments).values({ personEmail: "a@example.com", teamId: "T2", startDate: "2026-11-01" });
+    expect(await retireMasterTeam(shared, projects(), actor, today, { teamId: "T2", retiredOn: "2026-12-31", successorTeamIds: [] }))
+      .toEqual({ ok: false, errors: ["Move or end these members first: a@example.com (Imaging)"] });
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toMatchObject({ retiredOn: null });
+  });
+
+  it("a project opened later gets the team as retired", async () => {
+    await retireMasterTeam(shared, [], actor, today, { teamId: "T2", retiredOn: "2026-12-31", successorTeamIds: [] });
+    await syncTeams(project, shared, today);
+    expect(await copy("T2")).toMatchObject({ retiredOn: "2026-12-31" });
   });
 });

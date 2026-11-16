@@ -36,11 +36,12 @@ test("the Capacity tab shows sprints and quarters, the team default and edit by 
     .toHaveAttribute("aria-current", "page");
 });
 
-test("the Team details tab shows the details read-only and can retire the team", async ({ page }) => {
+test("the Team details tab shows the details read-only; the Admin retires teams", async ({ page }) => {
   await page.goto("/p/default/teams/T017/members");
   await page.getByRole("navigation", { name: "Team sections" }).getByRole("link", { name: "Team details" }).click();
   await expect(page.getByText("From the master team list")).toBeVisible();
-  await expect(page.getByRole("form", { name: "Retire" })).toBeVisible();
+  await expect(page.getByRole("form", { name: "Retire" })).toHaveCount(0);
+  await expect(page.getByText("An Admin retires a team in the master team list")).toBeVisible();
 });
 
 test("on Team members you can add, edit, end or move members, and book their leave", async ({ page }) => {
