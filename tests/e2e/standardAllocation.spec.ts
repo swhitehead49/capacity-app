@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { addMasterTeam, linkValueStream } from "./helpers";
 
 // Standard allocation (sean, 15 Nov 2026): each project's default work allocations, adopted by new teams.
 // Uses the Imaging project so the Default project's teams are not affected.
@@ -21,11 +22,9 @@ test("set the project's standard allocation; a new team starts with it", async (
   await form.getByRole("button", { name: "Save standard allocation" }).click();
   await expect(page.getByRole("status")).toContainText("Saved");
 
-  await page.goto("/p/imaging/teams/new");
-  const add = page.getByRole("form", { name: "Add team" });
-  await add.getByLabel("Team ID").fill("T901");
-  await add.getByLabel("Name").fill("Imaging Viewer");
-  await add.getByRole("button", { name: "Add team" }).click();
+  // Master team list (sean, 15 Nov 2026): the Admin adds the team; Imaging gets it through its Diagnostics value stream.
+  await addMasterTeam(page, { id: "T901", name: "Imaging Viewer", valueStream: "Diagnostics" });
+  await linkValueStream(page, "imaging", "Diagnostics");
   await page.goto("/p/imaging/teams/T901/default");
   await expect(page.getByRole("region", { name: "In force today" }))
     .toContainText("Overhead 20% · Contingency 5% · Run 20% · Fix 15% · Sustain 10% · Change 20% · Enabling/Training 10%");

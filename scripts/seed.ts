@@ -21,7 +21,7 @@ const db = await getDb();
 await seedDemo(db);
 const added = await ensurePeriods(db, today());
 
-// A second, separate project, so you can see that projects never share teams.
+// A second project with a team that so far only exists there: it joins the master team list when Imaging is opened.
 await insertProject(db, { id: "imaging", name: "Imaging" });
 const imaging = await getProjectDb("imaging");
 await imaging.insert(t.teams).values({ id: "T900", name: "Imaging Core" });

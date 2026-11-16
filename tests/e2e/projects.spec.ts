@@ -26,15 +26,11 @@ test("each project only shows its own teams", async ({ page }) => {
   await expect(page.getByRole("banner")).toContainText("Imaging");
 });
 
-test("links and saves stay inside the project", async ({ page }) => {
+test("links stay inside the project", async ({ page }) => {
   await page.goto("/p/imaging/teams");
   await page.getByRole("row", { name: /T900/ }).getByRole("link", { name: "Manage" }).click();
   await expect(page).toHaveURL(/\/p\/imaging\/teams\/T900\/manage$/);
-  const form = page.getByRole("form", { name: "Value stream" });
-  await form.getByLabel("Value stream").selectOption("Radiology");
-  await form.getByRole("button", { name: "Change value stream" }).click();
-  await expect(page).toHaveURL(/\/p\/imaging\/teams\/T900\/manage$/);
-  await expect(page.getByText("T900 · Radiology")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Imaging Core" })).toBeVisible();
 });
 
 test("an unknown project is not found", async ({ page }) => {

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 /** A tab for each part of Reference data (sean, 15 Nov 2026). */
 const TABS = [
   { href: "/reference", label: "Value streams", match: (p: string) => p === "/reference" },
+  { href: "/reference/teams", label: "Teams", match: (p: string) => p.startsWith("/reference/teams") },
   { href: "/reference/locations", label: "Locations", match: (p: string) => p.startsWith("/reference/locations") },
   { href: "/reference/public-holidays", label: "Public holidays", match: (p: string) => p.startsWith("/reference/public-holidays") },
   { href: "/reference/sprint-calendar", label: "Sprint calendar", match: (p: string) => p.startsWith("/reference/sprint-calendar") },

@@ -50,22 +50,29 @@ export async function insertTeam(
       ...emptyTeamDetails(), ...definedOnly(pickDetails(team)),
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
-    if (team.valueStream) await linkToProject(tx, team.valueStream);
-    await tx.insert(t.allocationSettings).values(standard
-      // The project's standard allocation, in force from the team's start date (sean, 15 Nov 2026).
-      ? {
-        teamId: team.id, level: "Team default", status: "Active", effectiveFrom: team.effectiveFrom,
-        overhead: standard.overhead, contingency: standard.contingency, ...standard.split,
-        reason: "Project standard allocation", owner: actor,
-      }
-      // No standard: a Draft default, so the planner shows calendar capacity only (BR-17).
-      : {
-        teamId: team.id, level: "Team default", status: "Draft", effectiveFrom: null, overhead: null,
-        run: 0, fix: 0, sustain: 0, change: 0, reason: "Created with the team", owner: actor,
-      });
+    await tx.insert(t.allocationSettings).values(firstDefault(team.id, team.effectiveFrom, standard, actor));
   await tx.insert(t.auditLog).values({
     actor, entity: "teams", entityId: team.id, action: "add", reason: `Team starts ${team.effectiveFrom}`, before: null, after: row,
   });
+}
+
+/**
+ * A new team's first default: the standard allocation in force from its start date (sean, 15 Nov 2026),
+ * or with no standard (or no start date) a Draft default, so the planner shows calendar capacity only (BR-17).
+ */
+export function firstDefault(
+  teamId: string, effectiveFrom: string | null, standard: StandardAllocation | null, actor: string,
+): typeof t.allocationSettings.$inferInsert {
+  return standard && effectiveFrom
+    ? {
+      teamId, level: "Team default", status: "Active", effectiveFrom,
+      overhead: standard.overhead, contingency: standard.contingency, ...standard.split,
+      reason: "Standard allocation", owner: actor,
+    }
+    : {
+      teamId, level: "Team default", status: "Draft", effectiveFrom: null, overhead: null,
+      run: 0, fix: 0, sustain: 0, change: 0, reason: "Created with the team", owner: actor,
+    };
 }
 
 /** UC16: a new name from a date. The ID, members and settings don't change; old names are kept (BR-20). */
@@ -153,18 +160,12 @@ export async function changeValueStream(db: Db, actor: string, request: { teamId
 
   await db.transaction(async (tx) => {
     await tx.update(t.teams).set({ valueStream }).where(eq(t.teams.id, team.id));
-    if (valueStream) await linkToProject(tx, valueStream);
     await tx.insert(t.auditLog).values({
       actor, entity: "teams", entityId: team.id, action: "change value stream",
       before: { valueStream: team.valueStream }, after: { valueStream },
     });
   });
   return { ok: true, id: team.id, warnings: clash.warnings };
-}
-
-/** A team's value stream is always one of the project's (sean, 15 Nov 2026): using one adds it to the project. */
-async function linkToProject(tx: Pick<Db, "insert">, valueStream: string) {
-  await tx.insert(t.projectValueStreams).values({ name: valueStream }).onConflictDoNothing();
 }
 
 /** Where the team is based (sean, 15 Nov 2026). Blank = not set. Members keep their own location for public holidays. */

@@ -44,7 +44,7 @@ export default async function ProjectHome({ params }: { params: Promise<{ projec
           </tbody>
         </table>
       )}
-      <p className="muted">Open a value stream to see and change its teams. Removing a value stream takes its teams out of the project too: they show below as Excluded, and you can include them again.</p>
+      <p className="muted">Every team in these value streams is part of the project. Open one to see its teams. Removing a value stream takes its teams out of this project; they stay in the master team list. Which value stream a team is in is set by the Admin in Reference data → Teams.</p>
       {makeup.canAdd.length > 0
         ? <LinkValueStreamForm choices={makeup.canAdd} />
         : <p className="muted">Every value stream in the reference data is already in this project.</p>}

@@ -25,15 +25,14 @@ test("add a value stream and a location on the Reference data page, then use the
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /ES-MD/ })).toContainText("Madrid");
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /ES-MD/ })).toContainText("35");
 
-  // An Engineering manager can pick them straight away in any project.
-  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
-  await page.goto("/p/imaging/teams/new");
+  // They can be picked straight away for a team in the master team list.
+  await page.goto("/reference/teams/new");
   await page.getByLabel("Team ID").fill("T902");
   await page.getByLabel("Name").fill("Imaging Oncology");
   await page.getByLabel("Value stream").selectOption("Oncology");
   await page.getByLabel("Base location").selectOption("ES-MD");
   await page.getByRole("button", { name: "Add team" }).click();
-  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T902/ })).toContainText("ES-MD");
+  await expect(page.getByRole("table", { name: "Master team list" }).getByRole("row", { name: /T902/ })).toContainText("ES-MD");
 });
 
 test("a value stream that is already there is refused", async ({ page }) => {

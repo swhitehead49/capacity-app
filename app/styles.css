@@ -76,3 +76,6 @@ fieldset.checks legend { font-size: 13px; color: var(--muted); margin-bottom: 6p
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 16px 0 8px; flex-wrap: wrap; }
 .tabs a { padding: 8px 14px; color: var(--muted); text-decoration: none; border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; margin-bottom: -1px; }
 .tabs a[aria-current="page"] { color: var(--fg); background: #fff; border-color: var(--line); font-weight: 600; }
+dl.details { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 8px 0 16px; }
+dl.details dt { color: var(--muted, #666); }
+dl.details dd { margin: 0; }

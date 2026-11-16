@@ -1,14 +1,14 @@
 "use client";
 
+// The master team list's forms (sean, 15 Nov 2026): the Admin edits teams in Reference data → Teams.
+
 import { ActionForm } from "@/app/lib/ActionForm";
 import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
-import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, updateTeamDetailsAction, renameTeamAction, retireTeamAction } from "./actions";
+import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, updateTeamDetailsAction, renameTeamAction } from "./actions";
 
 export interface Option { value: string; label: string }
-/** The project's value streams first, then the rest of the system's list (sean, 15 Nov 2026). */
-export interface ValueStreamChoices { inProject: string[]; others: string[] }
 
-export function AddTeamForm({ today, valueStreams, locations }: { today: string; valueStreams: ValueStreamChoices; locations: Option[] }) {
+export function AddTeamForm({ today, valueStreams, locations }: { today: string; valueStreams: string[]; locations: Option[] }) {
   return (
     <ActionForm action={addTeamAction} hidden={{}} values={{ effectiveFrom: today }} submitLabel="Add team" label="Add team">
       {(v) => (
@@ -38,40 +38,19 @@ export function RenameForm({ teamId, today }: { teamId: string; today: string })
   );
 }
 
-export function RetireForm({ teamId, teams }: { teamId: string; teams: Option[] }) {
-  return (
-    <ActionForm action={retireTeamAction} hidden={{ teamId }} values={{}} submitLabel="Retire team" label="Retire">
-      {(v) => (
-        <div className="grid">
-          <label>Last day<input name="retiredOn" type="date" defaultValue={v.retiredOn} /></label>
-          <label>Replaced by (optional)
-            <select name="successors" multiple size={Math.min(6, Math.max(3, teams.length))}>
-              {teams.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </select>
-          </label>
-          <p className="muted hint">Pick the team(s) that take over its work. Ctrl/Cmd-click to pick several.</p>
-        </div>
-      )}
-    </ActionForm>
-  );
-}
-
 /** A value stream from the system's reference data (sean, 15 Nov 2026). */
-function ValueStreamSelect({ value, valueStreams }: { value: string | undefined; valueStreams: ValueStreamChoices }) {
+function ValueStreamSelect({ value, valueStreams }: { value: string | undefined; valueStreams: string[] }) {
   return (
     <label>Value stream
       <select name="valueStream" defaultValue={value ?? ""}>
         <option value="">(none)</option>
-        <optgroup label="In this project">{valueStreams.inProject.map((v) => <option key={v} value={v}>{v}</option>)}</optgroup>
-        {valueStreams.others.length > 0 && (
-          <optgroup label="Other value streams (adds it to the project)">{valueStreams.others.map((v) => <option key={v} value={v}>{v}</option>)}</optgroup>
-        )}
+        {valueStreams.map((v) => <option key={v} value={v}>{v}</option>)}
       </select>
     </label>
   );
 }
 
-export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: string; current: string; valueStreams: ValueStreamChoices }) {
+export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: string; current: string; valueStreams: string[] }) {
   return (
     <ActionForm action={changeValueStreamAction} hidden={{ teamId }} values={{ valueStream: current }} submitLabel="Change value stream" label="Value stream">
       {(v) => (

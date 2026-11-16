@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getDb, getProjectDb } from "@/src/infrastructure/db/appDb";
+import { getDb, getProjectDb, today } from "@/src/infrastructure/db/appDb";
+import { syncTeams } from "@/src/application/masterTeams";
 import { findProject, listProjects } from "@/src/infrastructure/db/projectDatabases";
 import { getReferenceData, syncLocations } from "@/src/application/referenceData";
 import { listLocations } from "@/src/application/lookups";
@@ -10,7 +11,10 @@ import type { Db } from "@/src/infrastructure/db/testDb";
 export async function projectDb(projectId: string) {
   const project = await findProject(await getDb(), projectId);
   if (!project) notFound();
-  return { project, db: await getProjectDb(projectId) };
+  const db = await getProjectDb(projectId);
+  // Master team list (sean, 15 Nov 2026): bring the project's copies of the teams up to date.
+  await syncTeams(db, await getDb(), today());
+  return { project, db };
 }
 
 /** Reads the project a form belongs to (every form sends it as a hidden field). */

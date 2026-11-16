@@ -3,9 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import {
-  addTeamsToValueStream, getProjectMakeup, getValueStreamTeams, linkValueStream, removeTeamFromValueStream, setTeamIncluded, unlinkValueStream,
+  getProjectMakeup, getValueStreamTeams, linkValueStream, listProjectTeams, setTeamIncluded, unlinkValueStream,
 } from "./projectValueStreams";
-import { addTeam } from "./teams";
 
 // sean, 15 Nov 2026: once teams are uploaded, map them to value streams. A project has its own list of value streams
 // (picked from the system's list); each value stream's teams can be seen and changed. Teams without a value stream
@@ -65,41 +64,34 @@ describe("linkValueStream / unlinkValueStream", () => {
 
   it("removing a value stream takes its teams out of the project (sean, 15 Nov 2026): unmapped and Excluded, never deleted", async () => {
     expect(await unlinkValueStream(db, actor, { name: "Radiology" })).toEqual({ ok: true });
-    expect(await team("T1")).toMatchObject({ valueStream: null, included: false });
-    expect((await getProjectMakeup(db, today)).unmapped.find((x) => x.id === "T1")?.included).toBe(false);
-    expect(await audit()).toMatchObject({ entity: "project_value_streams", entityId: "Radiology", action: "remove", before: { teams: ["T1"] } });
+    // Master team list (sean, 15 Nov 2026): the team keeps its value stream; it just isn't in this project any more.
+    expect(await team("T1")).toMatchObject({ valueStream: "Radiology" });
+    const makeup = await getProjectMakeup(db, today);
+    expect(makeup.unmapped.map((x) => x.id)).not.toContain("T1");
+    expect((await listProjectTeams(db, today)).map((x) => x.id)).not.toContain("T1");
+    expect(await audit()).toMatchObject({ entity: "project_value_streams", entityId: "Radiology", action: "remove" });
   });
 });
 
 describe("value stream teams", () => {
-  it("shows a value stream's teams and the teams that could join it", async () => {
+  it("shows a value stream's active teams (read-only: the Admin sets a team's value stream)", async () => {
     const view = await getValueStreamTeams(db, { name: "Radiology", today });
     expect(view.teams.map((x) => x.id)).toEqual(["T1"]);
-    expect(view.candidates.map((x) => x.id)).toEqual(["T2", "T3"]);
+  });
+});
+
+// Master team list (sean, 15 Nov 2026): a project's teams are those in its value streams, plus the teams
+// without a value stream that it includes. Teams in other value streams belong to other projects.
+describe("listProjectTeams", () => {
+  it("lists the teams in the project's value streams and the included teams without one", async () => {
+    await db.insert(t.teams).values({ id: "T5", name: "Elsewhere", valueStream: "Clinical" });
+    await setTeamIncluded(db, actor, { teamId: "T3", included: false });
+    expect((await listProjectTeams(db, today)).map((x) => x.id)).toEqual(["T1", "T2", "T4"]);
   });
 
-  it("adds several teams at once, logging each", async () => {
-    expect(await addTeamsToValueStream(db, actor, { valueStream: "Radiology", teamIds: ["T2", "T3"] })).toEqual({ ok: true });
-    expect((await team("T2"))?.valueStream).toBe("Radiology");
-    expect((await team("T3"))?.valueStream).toBe("Radiology");
-    expect((await db.select().from(t.auditLog)).filter((a) => a.action === "change value stream")).toHaveLength(2);
-  });
-
-  it("only into a value stream the project has, and refuses name clashes (BR-16)", async () => {
-    expect(await addTeamsToValueStream(db, actor, { valueStream: "Clinical", teamIds: ["T2"] }))
-      .toEqual({ ok: false, errors: ["Clinical is not in the project yet"] });
-    await db.update(t.teams).set({ name: "Viewer" }).where(eq(t.teams.id, "T2"));
-    expect(await addTeamsToValueStream(db, actor, { valueStream: "Radiology", teamIds: ["T2"] }))
-      .toEqual({ ok: false, errors: ['"Viewer" is already a team in Radiology'] });
-  });
-
-  it("needs at least one team", async () => {
-    expect(await addTeamsToValueStream(db, actor, { valueStream: "Radiology", teamIds: [] })).toEqual({ ok: false, errors: ["Tick at least one team"] });
-  });
-
-  it("removes a team from its value stream", async () => {
-    expect(await removeTeamFromValueStream(db, actor, { teamId: "T1" })).toEqual({ ok: true });
-    expect((await team("T1"))?.valueStream).toBeNull();
+  it("teams in a value stream outside the project are not offered as unmapped", async () => {
+    await db.insert(t.teams).values({ id: "T5", name: "Elsewhere", valueStream: "Clinical" });
+    expect((await getProjectMakeup(db, today)).unmapped.map((x) => x.id)).toEqual(["T2", "T3"]);
   });
 });
 
@@ -115,12 +107,5 @@ describe("setTeamIncluded (teams without a value stream)", () => {
   it("a team in a value stream is always included", async () => {
     expect(await setTeamIncluded(db, actor, { teamId: "T1", included: false }))
       .toEqual({ ok: false, errors: ["T1 is in Radiology, so it is part of the project"] });
-  });
-});
-
-describe("adding a team or importing links its value stream to the project", () => {
-  it("links the value stream when a team is added with one", async () => {
-    await addTeam(db, actor, { id: "T9", name: "New", valueStream: "Platform", leadEmail: null, effectiveFrom: today });
-    expect((await getProjectMakeup(db, today)).valueStreams.map((v) => v.name)).toEqual(["Platform", "Radiology"]);
   });
 });
