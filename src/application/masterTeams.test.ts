@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import { getTeamDefaults } from "./getTeamDefaults";
-import { syncTeams } from "./masterTeams";
+import { deleteMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
 import { saveStandardAllocation } from "./standardAllocation";
 import { addTeam, renameTeam, updateTeamDetails } from "./teams";
 
@@ -75,5 +75,55 @@ describe("syncTeams", () => {
   it("does nothing for the Default project, whose teams are the master list", async () => {
     await syncTeams(shared, shared, today);
     expect((await shared.select().from(t.teams)).map((x) => x.id)).toEqual(["T1", "T2"]);
+  });
+});
+
+// sean, 16 Nov 2026: while the team list is provisional, a team can be deleted, as long as nothing uses it yet.
+describe("deleteMasterTeam", () => {
+  it("deletes a Provisional team from the master list and every project, and logs it", async () => {
+    await syncTeams(project, shared, today);
+    expect(await deleteMasterTeam(shared, [project], actor, { teamId: "T2" })).toEqual({ ok: true });
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toBeUndefined();
+    expect(await copy("T2")).toBeUndefined();
+    await syncTeams(project, shared, today); // it doesn't come back
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toBeUndefined();
+    expect((await shared.select().from(t.auditLog)).at(-1)).toMatchObject({ entity: "teams", entityId: "T2", action: "delete" });
+  });
+
+  it("refuses a Confirmed team", async () => {
+    await shared.update(t.teams).set({ idStatus: "Confirmed" }).where(eq(t.teams.id, "T2"));
+    expect(await deleteMasterTeam(shared, [project], actor, { teamId: "T2" }))
+      .toEqual({ ok: false, errors: ["T2 is Confirmed, so it can't be deleted: retire it instead"] });
+  });
+
+  it("refuses a team that a project already uses (members or allocation changes)", async () => {
+    await syncTeams(project, shared, today);
+    await project.insert(t.allocationSettings).values({
+      teamId: "T2", level: "Team default", status: "Draft", effectiveFrom: null, overhead: null, run: 0, fix: 0, sustain: 0, change: 0, owner: actor,
+    });
+    expect(await deleteMasterTeam(shared, [project], actor, { teamId: "T2" }))
+      .toEqual({ ok: false, errors: ["T2 is already used in a project (members, leave or allocation changes): retire it instead"] });
+  });
+});
+
+// sean, 16 Nov 2026: edit the master list's core values in its table, saved together.
+describe("saveMasterTeamRows", () => {
+  it("saves only what changed on each row, and reports problems by team", async () => {
+    const result = await saveMasterTeamRows(shared, actor, today, [
+      { teamId: "T1", name: "Viewer", valueStream: "Clinical", baseLocation: "", leadEmail: "lead@example.com", idStatus: "Provisional" },
+      { teamId: "T2", name: "Billing", valueStream: "", baseLocation: "", leadEmail: "", idStatus: "Confirmed" },
+    ]);
+    expect(result).toEqual({ ok: true, changed: 2 });
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T1") }))
+      .toMatchObject({ valueStream: "Clinical", baseLocation: null, leadEmail: "lead@example.com" });
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toMatchObject({ name: "Billing", idStatus: "Confirmed" });
+  });
+
+  it("reports a problem with the team's ID, and saves the other rows", async () => {
+    const result = await saveMasterTeamRows(shared, actor, today, [
+      { teamId: "T1", name: "Viewer", valueStream: "Nowhere", baseLocation: "DE-BY", leadEmail: "", idStatus: "Provisional" },
+      { teamId: "T2", name: "Payments", valueStream: "Radiology", baseLocation: "", leadEmail: "", idStatus: "Provisional" },
+    ]);
+    expect(result).toEqual({ ok: false, changed: 1, errors: ["T1: Unknown value stream Nowhere: add it under Reference data first"] });
   });
 });
