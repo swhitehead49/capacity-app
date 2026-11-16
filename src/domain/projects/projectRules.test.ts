@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectIdFromName, projectInAddress, projectStorageName, validateProject } from "./projectRules";
+import { projectIdFromName, projectInAddress, projectStorageName, teamInAddress, validateProject } from "./projectRules";
 
 // Projects (decided 15 Nov 2026): project → value streams → teams. Each project's data is kept separate.
 
@@ -63,5 +63,19 @@ describe("projectIdFromName", () => {
 
   it("copes with a name that has no letters or digits", () => {
     expect(validateProject({ id: projectIdFromName("!!!", []), name: "!!!" })).toEqual([]);
+  });
+});
+
+// Team planning (sean, 16 Nov 2026): the app remembers the team you chose, per project.
+describe("teamInAddress", () => {
+  it("reads the team from a team page's web address", () => {
+    expect(teamInAddress("/p/imaging/teams/T900")).toBe("T900");
+    expect(teamInAddress("/p/imaging/teams/T900/members/12/leave")).toBe("T900");
+  });
+
+  it("is empty outside a team's pages", () => {
+    expect(teamInAddress("/p/imaging/teams")).toBeNull();
+    expect(teamInAddress("/p/imaging")).toBeNull();
+    expect(teamInAddress("/reference/teams/T900")).toBeNull();
   });
 });
