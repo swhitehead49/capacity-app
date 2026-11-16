@@ -23,7 +23,7 @@ test("the Admin adds a team; a project with its value stream gets it", async ({ 
   await page.getByLabel("Start date").fill("2026-11-09");
   await page.getByRole("button", { name: "Add team" }).click();
   await expect(page).toHaveURL(/\/reference\/teams$/);
-  await expect(page.getByRole("table", { name: "Master team list" }).getByRole("row", { name: /T100/ })).toContainText("Payments");
+  await expect(page.getByLabel("Name of T100")).toHaveValue("Payments");
 
   await asRole(page, "manager");
   await page.goto("/p/default/teams");
@@ -109,7 +109,7 @@ test("filter the Teams list to one value stream", async ({ page }) => {
 test("the master team list shows each team's value stream; the project only its own", async ({ page }) => {
   await asRole(page, "admin");
   await page.goto("/reference/teams");
-  await expect(page.getByRole("table", { name: "Master team list" }).getByRole("row", { name: /T001/ })).toContainText("Clinical");
+  await expect(page.getByLabel("Value stream of T001")).toHaveValue("Clinical");
   await asRole(page, "manager");
   await page.goto("/p/default/teams");
   await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T001/ })).toHaveCount(0); // Clinical isn't in Default

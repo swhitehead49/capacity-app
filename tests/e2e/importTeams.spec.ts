@@ -14,9 +14,8 @@ test("import teams from a CSV file on the Teams tab", async ({ page }) => {
   await form.getByRole("button", { name: "Import" }).click();
   await expect(page).toHaveURL(/\/reference\/teams\?/);
   await expect(page.getByRole("status")).toContainText("Imported 2 teams");
-  const teams = page.getByRole("table", { name: "Master team list" });
-  await expect(teams.getByRole("row", { name: /T950/ })).toContainText("Imaging Reports");
-  await expect(teams.getByRole("row", { name: /T951/ })).toContainText("Radiology");
+  await expect(page.getByLabel("Name of T950")).toHaveValue("Imaging Reports");
+  await expect(page.getByLabel("Value stream of T951")).toHaveValue("Radiology");
 });
 
 test("a file with problems lists them and imports nothing", async ({ page }) => {

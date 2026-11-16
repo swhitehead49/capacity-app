@@ -23,7 +23,7 @@ export async function addMasterTeam(page: Page, team: { id: string; name: string
   if (team.valueStream) await form.getByLabel("Value stream").selectOption(team.valueStream);
   if (team.baseLocation) await form.getByLabel("Base location").selectOption(team.baseLocation);
   await form.getByRole("button", { name: "Add team" }).click();
-  await expect(page.getByRole("table", { name: "Master team list" }).getByRole("row", { name: new RegExp(team.id) })).toBeVisible();
+  await expect(page.getByLabel(`Name of ${team.id}`)).toHaveValue(team.name);
   await asRole(page, "manager");
 }
 

@@ -79,3 +79,7 @@ fieldset.checks legend { font-size: 13px; color: var(--muted); margin-bottom: 6p
 dl.details { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 8px 0 16px; }
 dl.details dt { color: var(--muted, #666); }
 dl.details dd { margin: 0; }
+/* The master team list as an editable table (sean, 16 Nov 2026): full width, compact cells. */
+.edit-form:has(table.editable) { max-width: none; overflow-x: auto; }
+table.editable td { padding: 2px 4px; }
+table.editable input, table.editable select { padding: 4px 6px; min-width: 7em; }

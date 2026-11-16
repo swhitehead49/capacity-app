@@ -1,9 +1,9 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, count, eq, isNotNull, or, sql } from "drizzle-orm";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import { syncLocations } from "./referenceData";
 import { resolveStandard } from "./standardAllocation";
-import { firstDefault } from "./teams";
+import { changeBaseLocation, changeValueStream, firstDefault, renameTeam, updateTeamDetails } from "./teams";
 
 // Master team list (sean, 15 Nov 2026). The Admin keeps every team once, in the shared (Default) database.
 // Each project holds a copy of every team, kept up to date here, because its members, allocations and plans refer to it.
@@ -99,4 +99,76 @@ function plan(master: TeamRow[], local: TeamRow[], masterNames: Map<string, Name
 async function namesDiffer(project: Db, shared: Db): Promise<boolean> {
   const [mine, theirs] = [await namesByTeam(project), await namesByTeam(shared)];
   return [...theirs].some(([id, names]) => mine.has(id) && historyKey(names) !== historyKey(mine.get(id) ?? []));
+}
+
+export type MasterResult = { ok: true } | { ok: false; errors: string[] };
+
+/** Whether a project has done anything with the team beyond the copy it was given: members, retiring, successors, or allocation changes. */
+async function usedIn(db: Db, teamId: string): Promise<boolean> {
+  const [members] = await db.select({ n: count() }).from(t.assignments).where(eq(t.assignments.teamId, teamId));
+  const [settings] = await db.select({ n: count() }).from(t.allocationSettings).where(eq(t.allocationSettings.teamId, teamId));
+  const [links] = await db.select({ n: count() }).from(t.teamSuccessors)
+    .where(or(eq(t.teamSuccessors.teamId, teamId), eq(t.teamSuccessors.successorTeamId, teamId)));
+  const [retired] = await db.select({ n: count() }).from(t.teams).where(and(eq(t.teams.id, teamId), isNotNull(t.teams.retiredOn)));
+  const n = (row: { n: number } | undefined) => row?.n ?? 0;
+  return n(members) > 0 || n(settings) > 1 || n(links) > 0 || n(retired) > 0;
+}
+
+/**
+ * Delete a team while the list is provisional (sean, 16 Nov 2026): only a Provisional team that no project uses yet.
+ * It goes from every project (passed in `projects`, archived ones too) and then from the master list.
+ */
+export async function deleteMasterTeam(shared: Db, projects: Db[], actor: string, request: { teamId: string }): Promise<MasterResult> {
+  const team = await shared.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
+  if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
+  if (team.idStatus !== "Provisional") return { ok: false, errors: [`${team.id} is ${team.idStatus}, so it can't be deleted: retire it instead`] };
+  const all = [shared, ...projects.filter((p) => p !== shared)];
+  for (const db of all) {
+    if (await usedIn(db, team.id)) return { ok: false, errors: [`${team.id} is already used in a project (members, leave or allocation changes): retire it instead`] };
+  }
+  for (const db of all) {
+    await db.transaction(async (tx) => {
+      await lock(tx);
+      await tx.delete(t.allocationSettings).where(eq(t.allocationSettings.teamId, team.id));
+      await tx.delete(t.teamNameHistory).where(eq(t.teamNameHistory.teamId, team.id));
+      await tx.delete(t.teams).where(eq(t.teams.id, team.id));
+      if (db === shared) {
+        await tx.insert(t.auditLog).values({ actor, entity: "teams", entityId: team.id, action: "delete", before: team, after: null });
+      }
+    });
+  }
+  return { ok: true };
+}
+
+export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail: string; idStatus: string }
+
+/**
+ * The master list's table, saved in one go (sean, 16 Nov 2026). Each row only changes what differs, with the same
+ * checks and audit as the single-team forms. A new name applies from `today` and is kept in the name history.
+ */
+export async function saveMasterTeamRows(
+  shared: Db, actor: string, today: string, rows: MasterTeamRow[],
+): Promise<{ ok: true; changed: number } | { ok: false; changed: number; errors: string[] }> {
+  const errors: string[] = [];
+  let changed = 0;
+  for (const row of rows) {
+    const team = await shared.query.teams.findFirst({ where: eq(t.teams.id, row.teamId) });
+    if (!team) { errors.push(`${row.teamId}: Unknown team`); continue; }
+    const problems: string[] = [];
+    let touched = false;
+    const step = async (result: { ok: true } | { ok: false; errors: string[] }) => {
+      if (result.ok) touched = true; else problems.push(...result.errors);
+    };
+    const blank = (v: string) => v.trim() || null;
+    if (row.name.trim() && row.name.trim() !== team.name) await step(await renameTeam(shared, actor, { teamId: team.id, name: row.name, effectiveFrom: today }));
+    if (blank(row.valueStream) !== team.valueStream) await step(await changeValueStream(shared, actor, { teamId: team.id, valueStream: row.valueStream }, shared));
+    if (blank(row.baseLocation) !== team.baseLocation) await step(await changeBaseLocation(shared, actor, { teamId: team.id, baseLocation: row.baseLocation }, shared));
+    if (blank(row.leadEmail) !== team.leadEmail || row.idStatus !== team.idStatus) {
+      const current = (await shared.query.teams.findFirst({ where: eq(t.teams.id, team.id) }))!;
+      await step(await updateTeamDetails(shared, actor, { ...current, teamId: team.id, leadEmail: blank(row.leadEmail), idStatus: row.idStatus }));
+    }
+    if (touched) changed++;
+    errors.push(...problems.map((p) => `${team.id}: ${p}`));
+  }
+  return errors.length ? { ok: false, changed, errors } : { ok: true, changed };
 }

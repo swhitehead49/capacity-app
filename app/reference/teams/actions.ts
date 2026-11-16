@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { readHeadcount } from "@/src/domain/organisation/teamDetails";
 import { addTeam, changeBaseLocation, changeValueStream, renameTeam, updateTeamDetails } from "@/src/application/teams";
 import { importTeams } from "@/src/application/importTeams";
-import { today } from "@/src/infrastructure/db/appDb";
+import { deleteMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
+import { DEFAULT_PROJECT } from "@/src/domain/projects/projectRules";
+import { getProjectDb, today } from "@/src/infrastructure/db/appDb";
+import { listProjects } from "@/src/infrastructure/db/projectDatabases";
 import { sharedDb } from "@/app/lib/project";
 import { failed, type FormState } from "@/app/lib/formState";
 
@@ -80,4 +83,29 @@ export async function updateTeamDetailsAction(previous: FormState, form: FormDat
   });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(teamPage(teamId));
+}
+
+/** The master list's table, saved together (sean, 16 Nov 2026). Rows without problems are saved even if others have some. */
+export async function saveMasterTeamsAction(previous: FormState, form: FormData): Promise<FormState> {
+  const rows = form.getAll("teamId").map(String).map((teamId) => ({
+    teamId,
+    name: read(form, `name:${teamId}`), valueStream: read(form, `valueStream:${teamId}`), baseLocation: read(form, `baseLocation:${teamId}`),
+    leadEmail: read(form, `leadEmail:${teamId}`), idStatus: read(form, `idStatus:${teamId}`),
+  }));
+  const result = await saveMasterTeamRows(await sharedDb(), ACTOR, today(), rows);
+  if (!result.ok) {
+    const saved = result.changed ? [`Changes to ${result.changed} other team${result.changed === 1 ? " were" : "s were"} saved.`] : [];
+    return failed(previous, form, [...result.errors, ...saved]);
+  }
+  redirect(`/reference/teams?saved=${result.changed}`);
+}
+
+/** Delete a Provisional team that nothing uses yet, everywhere (sean, 16 Nov 2026). */
+export async function deleteTeamAction(previous: FormState, form: FormData): Promise<FormState> {
+  const teamId = read(form, "teamId");
+  const shared = await sharedDb();
+  const projects = await Promise.all((await listProjects(shared)).filter((p) => p.id !== DEFAULT_PROJECT).map((p) => getProjectDb(p.id)));
+  const result = await deleteMasterTeam(shared, projects, ACTOR, { teamId });
+  if (!result.ok) return failed(previous, form, result.errors);
+  redirect(`/reference/teams?deleted=${encodeURIComponent(teamId)}`);
 }

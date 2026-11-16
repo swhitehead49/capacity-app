@@ -32,7 +32,7 @@ test("add a value stream and a location on the Reference data page, then use the
   await page.getByLabel("Value stream").selectOption("Oncology");
   await page.getByLabel("Base location").selectOption("ES-MD");
   await page.getByRole("button", { name: "Add team" }).click();
-  await expect(page.getByRole("table", { name: "Master team list" }).getByRole("row", { name: /T902/ })).toContainText("ES-MD");
+  await expect(page.getByLabel("Base location of T902")).toHaveValue("ES-MD");
 });
 
 test("a value stream that is already there is refused", async ({ page }) => {
