@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
  * Reference data, Teams tab (sean, 15 Nov 2026): the master team list. Every team is kept here once; a project's
  * teams are the ones in its value streams. Members, allocations and plans are kept by each project.
  */
-export default async function MasterTeams({ searchParams }: { searchParams: Promise<{ warning?: string; imported?: string; saved?: string; deleted?: string; error?: string }> }) {
-  const { warning, imported, saved, deleted, error } = await searchParams;
+export default async function MasterTeams({ searchParams }: { searchParams: Promise<{ warning?: string; imported?: string; saved?: string; deleted?: string }> }) {
+  const { warning, imported, saved, deleted } = await searchParams;
   const shared = await sharedDb();
   const teams = await listTeamsOverview(shared, today());
   const { valueStreams } = await getReferenceData(shared);
@@ -23,7 +23,6 @@ export default async function MasterTeams({ searchParams }: { searchParams: Prom
       <h2>Teams</h2>
       <p className="muted">The master team list. Each project&apos;s teams are the ones in its value streams, so a team&apos;s value stream
         decides which projects it is in. Edit the table and press Save changes; Edit on a row has the other details, the name history and, for a Provisional team nothing uses yet, Delete. Engineering managers keep each team&apos;s members, allocations and plans in their project.</p>
-      {error && <div role="alert" aria-label="Problems deleting" className="errors"><p>{error}</p></div>}
       {(warning || imported || saved || deleted) && (
         <div role="status" className="notice">
           {imported && <p>Imported {imported} teams.</p>}

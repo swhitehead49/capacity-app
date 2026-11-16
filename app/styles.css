@@ -83,3 +83,4 @@ dl.details dd { margin: 0; }
 .edit-form:has(table.editable) { max-width: none; overflow-x: auto; }
 table.editable td { padding: 2px 4px; }
 table.editable input, table.editable select { padding: 4px 6px; min-width: 7em; }
+a.danger { color: #8a1f1f; }

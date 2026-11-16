@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ActionForm, type Values } from "@/app/lib/ActionForm";
 import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
-import { deleteFromTableAction, deleteTeamAction, saveMasterTeamsAction } from "./actions";
+import { deleteTeamAction, saveMasterTeamsAction } from "./actions";
 
 export interface Option { value: string; label: string }
 export interface MasterRow { id: string; parentTeamName: string | null; provisional: boolean }
@@ -50,8 +50,7 @@ export function MasterTable({ groups, values, valueStreams, locations }: {
                   <td><Link className="edit" href={`/reference/teams/${encodeURIComponent(x.id)}`}>Edit</Link></td>
                   <td>
                     {x.provisional && (
-                      <button type="submit" className="secondary danger" formAction={deleteFromTableAction.bind(null, x.id)}
-                        aria-label={`Delete ${x.id}`}>Delete</button>
+                      <Link className="edit danger" href={`/reference/teams/${encodeURIComponent(x.id)}/delete`} aria-label={`Delete ${x.id}`}>Delete</Link>
                     )}
                   </td>
                 </tr>
@@ -64,10 +63,11 @@ export function MasterTable({ groups, values, valueStreams, locations }: {
   );
 }
 
+/** The confirmation step before a team is deleted (sean, 16 Nov 2026). */
 export function DeleteTeamForm({ teamId }: { teamId: string }) {
   return (
-    <ActionForm action={deleteTeamAction} hidden={{ teamId }} values={{}} submitLabel="Delete team" label="Delete team">
-      {() => <p className="muted">This can&apos;t be undone. The ID becomes free again.</p>}
+    <ActionForm action={deleteTeamAction} hidden={{ teamId }} values={{}} submitLabel={`Yes, delete ${teamId}`} label="Delete team">
+      {() => <p>This can&apos;t be undone. The team goes from the master list and every project, and its ID becomes free again.</p>}
     </ActionForm>
   );
 }

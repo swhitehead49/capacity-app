@@ -7,7 +7,6 @@ import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
 import { BaseLocationForm, DetailsForm, RenameForm, ValueStreamForm } from "../TeamForms";
-import { DeleteTeamForm } from "../MasterTable";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +61,7 @@ export default async function EditMasterTeam({ params }: { params: Promise<{ tea
           <h3>Delete</h3>
           <p className="muted">While its ID is Provisional, a team can be deleted from the master list and every project, as long as no
             project has given it members, leave or allocation changes yet. Otherwise retire it in the project instead.</p>
-          <DeleteTeamForm teamId={team.id} />
+          <p><Link className="button secondary danger" href={`/reference/teams/${encodeURIComponent(team.id)}/delete`}>Delete team</Link></p>
         </>
       )}
     </>
