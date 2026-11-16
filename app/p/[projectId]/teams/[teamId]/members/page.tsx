@@ -16,9 +16,10 @@ export default async function TeamMembers({ params }: { params: Promise<{ projec
 
   return (
     <>
-      <p className="muted"><Link href={`/p/${projectId}/teams/${team.id}`}>← {team.name} planner</Link></p>
-      <h1>{team.name} members</h1>
-      <p className="muted">{team.id} · {current.length} current, as of {formatDate(today())}</p>
+      <h2>Team members</h2>
+      <p className="muted">{current.length} current, as of {formatDate(today())}. Edit a member to change their details or their
+        location (which decides their public holidays), end their membership or move them to another team. Nobody is deleted,
+        so past sprints still add up. People with missing inputs count as zero capacity until they are filled in.</p>
       <p><Link className="button" href={`/p/${projectId}/teams/${team.id}/members/new`}>Add member</Link></p>
       <MemberTable caption="Current members" rows={current} projectId={projectId} teamId={team.id} />
       {past.length > 0 && <MemberTable caption="Past members" rows={past} projectId={projectId} teamId={team.id} />}

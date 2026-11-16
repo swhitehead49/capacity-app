@@ -28,21 +28,21 @@ export default async function EditMember({ params }: { params: Promise<{ project
   return (
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams/${teamId}/members`}>← Team members</Link></p>
-      <h1>{member.email}</h1>
+      <h2>{member.email}</h2>
       <p className="muted">
         On {teamId} {member.startDate ? `from ${formatDate(member.startDate)}` : "(no start date)"}
         {member.endDate ? ` to ${formatDate(member.endDate)}` : ""} · inputs: {member.inputStatus} ·{" "}
         <Link href={`/p/${projectId}/teams/${teamId}/members/${assignmentId}/leave`}>Leave</Link>
       </p>
 
-      <h2>Details</h2>
+      <h3>Details</h3>
       <EditMemberForm teamId={teamId} assignmentId={assignmentId} values={values} locations={(await projectReference(db)).locations} />
 
-      <h2>End membership</h2>
+      <h3>End membership</h3>
       <p className="muted">They stop counting for this team after this day. Nothing is deleted.</p>
       <EndMemberForm teamId={teamId} assignmentId={assignmentId} />
 
-      <h2>Move to another team</h2>
+      <h3>Move to another team</h3>
       <p className="muted">They leave this team the day before and count for the new team from this day.</p>
       <MoveMemberForm teamId={teamId} assignmentId={assignmentId} teams={teams} />
     </>

@@ -28,8 +28,8 @@ test("each project only shows its own teams", async ({ page }) => {
 
 test("links stay inside the project", async ({ page }) => {
   await page.goto("/p/imaging/teams");
-  await page.getByRole("row", { name: /T900/ }).getByRole("link", { name: "Manage" }).click();
-  await expect(page).toHaveURL(/\/p\/imaging\/teams\/T900\/manage$/);
+  await page.getByRole("row", { name: /T900/ }).getByRole("link", { name: "Imaging Core" }).click();
+  await expect(page).toHaveURL(/\/p\/imaging\/teams\/T900\/members$/);
   await expect(page.getByRole("heading", { name: "Imaging Core" })).toBeVisible();
 });
 
@@ -108,10 +108,10 @@ test("every Engineering manager page has the same top menu", async ({ page }) =>
   for (const address of ["/p/imaging", "/p/imaging/teams", "/p/imaging/project-reference", "/projects"]) {
     await page.goto(address);
     const bar = page.getByRole("banner");
-    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Project home", "Teams", "Project reference data", "Switch project"]);
+    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Project home", "Team planning", "Project reference data", "Switch project"]);
     await expect(bar.getByRole("link", { name: "Project home" })).toHaveAttribute("href", "/p/imaging");
     await expect(bar).toContainText("Imaging");
-    await expect(bar.getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/p/imaging/teams");
+    await expect(bar.getByRole("link", { name: "Team planning" })).toHaveAttribute("href", "/p/imaging/teams");
   }
 });
 

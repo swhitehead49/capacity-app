@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 test("the planner links to the team's members", async ({ page }) => {
   await page.goto("/p/default/teams/T017");
   await page.getByRole("link", { name: "Team members" }).click();
-  await expect(page.getByRole("heading", { name: "DRGW members" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Team members" })).toBeVisible();
   const current = page.getByRole("table", { name: "Current members" });
   await expect(current.getByRole("row")).toHaveCount(11); // header + 10
   await expect(current.getByRole("row", { name: /b@example\.com/ })).toContainText("90");

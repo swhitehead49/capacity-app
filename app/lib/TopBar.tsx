@@ -6,7 +6,7 @@ import { PROJECT_COOKIE, ROLE_COOKIE } from "./rememberedProject";
 
 /**
  * The one top bar every page uses, so the menu is always the same (sean, 15 Nov 2026):
- * Engineering manager: Capacity App (home) · project · Project home, Teams, Project reference data · role · Switch project.
+ * Engineering manager: Capacity App (home) · project · Project home, Team planning, Project reference data · role · Switch project.
  * Admin: Capacity App (home) · Reference data · role. (Settings moved into Reference data.)
  * Outside a project (the project list, reference data) it uses the project you were in last.
  */
@@ -30,7 +30,7 @@ export async function TopBar({ projectId }: { projectId?: string }) {
       {open && <span className="project" aria-label="Project">{open.name}</span>}
       <nav>
         {base && <a href={base}>Project home</a>}
-        {base && <a href={`${base}/teams`}>Teams</a>}
+        {base && <a href={`${base}/teams`}>Team planning</a>}
         {base && role === "manager" && <a href={`${base}/project-reference`}>Project reference data</a>}
       </nav>
       {role && <span className="role muted">{ROLE_LABELS[role]}</span>}

@@ -75,7 +75,7 @@ export default async function ProjectHome({ params }: { params: Promise<{ projec
           ))}
         </tbody>
       </table>
-      <p><Link className="button" href={`/p/${project.id}/teams`}>All teams</Link></p>
+      <p><Link className="button" href={`/p/${project.id}/teams?choose=1`}>Team planning</Link></p>
     </>
   );
 }

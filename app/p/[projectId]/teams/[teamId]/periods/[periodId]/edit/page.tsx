@@ -22,7 +22,7 @@ export default async function EditOverride({ params }: { params: Promise<{ proje
 
   return (
     <>
-      <h1>{team.name} · {view.period.id}</h1>
+      <h2>{view.period.id}</h2>
       <p className="muted">{view.level} · {formatDate(view.period.start)} – {formatDate(view.period.end)}</p>
       <p>
         Currently applied: {applied.splitSource ?? "nothing (calendar capacity only)"}
@@ -30,7 +30,7 @@ export default async function EditOverride({ params }: { params: Promise<{ proje
         {applied.contingencySource && <span className="muted"> · contingency {pct(applied.contingency)}% from {applied.contingencySource}</span>}
       </p>
       <section aria-label="Team default (read only)" className="reference">
-        <h2>Team default <span className="muted">(read only)</span></h2>
+        <h3>Team default <span className="muted">(read only)</span></h3>
         {view.teamDefault ? (
           <p>
             Overhead {pct(view.teamDefault.overhead)}% · Contingency {pct(view.teamDefault.contingency ?? 0)}% · Run {pct(view.teamDefault.split.run)}% ·

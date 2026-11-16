@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 test("the Edit form shows what applies now", async ({ page }) => {
   await page.goto("/p/default/teams/T017");
   await page.getByRole("table", { name: "Sprints" }).getByRole("row", { name: /S002/ }).getByRole("link", { name: "Edit" }).click();
-  await expect(page.getByRole("heading", { name: "DRGW · S002" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "S002", exact: true })).toBeVisible();
   await expect(page.getByText("Currently applied: Team default")).toBeVisible();
   await expect(page.getByLabel("Run %")).toHaveValue("24");
 });

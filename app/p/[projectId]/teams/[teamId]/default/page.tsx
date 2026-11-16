@@ -27,18 +27,18 @@ export default async function TeamDefault({ params }: { params: Promise<{ projec
 
   return (
     <>
-      <p className="muted"><Link href={`/p/${projectId}/teams/${team.id}`}>← {team.name} planner</Link></p>
-      <h1>{team.name} default</h1>
+      <p className="muted"><Link href={`/p/${projectId}/teams/${team.id}`}>← Capacity</Link></p>
+      <h2>Team default</h2>
       <p className="muted">How the team&apos;s available days are shared when no quarter or sprint override applies: overhead, contingency, Run, Fix, Sustain, Change and Enabling/Training, adding up to 100%.</p>
 
       <section aria-label="In force today" className="reference">
-        <h2>In force today <span className="muted">({formatDate(today())})</span></h2>
+        <h3>In force today <span className="muted">({formatDate(today())})</span></h3>
         {current
           ? <p>{summary(current)} <span className="muted">· since {formatDate(current.effectiveFrom)}</span></p>
           : <p>No default yet. The planner shows calendar capacity only until one is Active.</p>}
       </section>
 
-      <h2>New default</h2>
+      <h3>New default</h3>
       <p className="muted">
         Saving adds a new version from its effective date; earlier versions stay in the history.
         An Active default on the same date as another replaces it. A Draft can be incomplete and is never used.

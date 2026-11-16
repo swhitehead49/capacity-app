@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 test("the planner links to the team default page, which shows the default in force", async ({ page }) => {
   await page.goto("/p/default/teams/T017");
   await page.getByRole("link", { name: "Team default" }).click();
-  await expect(page.getByRole("heading", { name: "DRGW default" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Team default", exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "In force today" }))
     .toContainText("Overhead 20% · Contingency 0% · Run 24% · Fix 16% · Sustain 16% · Change 24%");
 });

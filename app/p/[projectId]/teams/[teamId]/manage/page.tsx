@@ -20,13 +20,6 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
 
   return (
     <>
-      <p className="muted"><Link href={`/p/${projectId}/teams`}>← Teams</Link></p>
-      <h1>{team.name}</h1>
-      <p className="muted">
-        {team.id} · {team.valueStream ?? "no value stream"} · {team.baseLocation ? `Based in ${team.baseLocation}` : "no base location"} · {status} ·{" "}
-        <Link href={`/p/${projectId}/teams/${team.id}`}>Planner</Link> · <Link href={`/p/${projectId}/teams/${team.id}/members`}>Members</Link> ·{" "}
-        <Link href={`/p/${projectId}/teams/${team.id}/default`}>Default</Link>
-      </p>
       {successors.length > 0 && (
         <p>Replaced by: {successors.map((s, i) => (
           <span key={s.id}>{i > 0 && ", "}<Link href={`/p/${projectId}/teams/${s.id}/manage`}>{`${s.id} | ${s.name}`}</Link></span>

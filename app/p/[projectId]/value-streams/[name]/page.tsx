@@ -27,7 +27,7 @@ export default async function ValueStreamTeams({ params }: { params: Promise<{ p
           {view.teams.map((x) => (
             <tr key={x.id}>
               <td>{x.id}</td>
-              <td><Link href={`/p/${project.id}/teams/${x.id}`}>{x.name}</Link></td>
+              <td><Link href={`/p/${project.id}/teams/${x.id}/members`}>{x.name}</Link></td>
               <td>{x.members}</td>
             </tr>
           ))}

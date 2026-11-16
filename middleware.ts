@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isAllowed } from "./src/infrastructure/web/passwordGate";
-import { projectInAddress } from "./src/domain/projects/projectRules";
-import { PROJECT_COOKIE, ROLE_COOKIE } from "./app/lib/rememberedProject";
+import { projectInAddress, teamInAddress } from "./src/domain/projects/projectRules";
+import { PROJECT_COOKIE, ROLE_COOKIE, TEAM_COOKIE } from "./app/lib/rememberedProject";
 import { accessFor, parseRole } from "./src/domain/access/roles";
 
 /** Asks for the shared password (APP_PASSWORD) on every page when the app is hosted, sends you to the home screen
- *  until you have said who you are (keeping Engineering managers out of Reference data), and remembers your project. */
+ *  until you have said who you are (keeping Engineering managers out of Reference data), and remembers your project and team. */
 export function middleware(request: NextRequest) {
   if (isAllowed(request.headers.get("authorization"), process.env.APP_PASSWORD)) {
     const access = accessFor(parseRole(request.cookies.get(ROLE_COOKIE)?.value), request.nextUrl.pathname);
@@ -14,6 +14,10 @@ export function middleware(request: NextRequest) {
     const project = projectInAddress(request.nextUrl.pathname);
     if (project && request.cookies.get(PROJECT_COOKIE)?.value !== project) {
       response.cookies.set(PROJECT_COOKIE, project, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", httpOnly: true });
+    }
+    const team = teamInAddress(request.nextUrl.pathname);
+    if (project && team && request.cookies.get(TEAM_COOKIE)?.value !== `${project}/${team}`) {
+      response.cookies.set(TEAM_COOKIE, `${project}/${team}`, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", httpOnly: true });
     }
     return response;
   }

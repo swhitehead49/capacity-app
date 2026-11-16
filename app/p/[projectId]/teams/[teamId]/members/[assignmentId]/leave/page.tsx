@@ -20,7 +20,7 @@ export default async function MemberLeave({ params }: { params: Promise<{ projec
   return (
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams/${teamId}/members`}>← Team members</Link></p>
-      <h1>Leave · {member.email}</h1>
+      <h2>Leave · {member.email}</h2>
       <p className="muted">
         Their own leave, such as annual or sick leave. Public holidays are not entered here: they come from the country
         calendars. For each sprint the planner takes off whichever is larger, the booked leave or the usual availability

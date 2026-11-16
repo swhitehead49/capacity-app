@@ -30,6 +30,11 @@ export function projectInAddress(pathname: string): string | null {
   return id && PROJECT_ID.test(id) ? id : null;
 }
 
+/** The team in a team page's web address, e.g. "/p/imaging/teams/T900/members" → "T900" (sean, 16 Nov 2026). */
+export function teamInAddress(pathname: string): string | null {
+  return /^\/p\/[^/]+\/teams\/([^/?#]+)/.exec(pathname)?.[1] ?? null;
+}
+
 /**
  * A web-address ID made from a project's name (sean, 15 Nov 2026: people only type a name).
  * Lower-case letters, digits and dashes, starting with a letter, at most 30 long, and not already taken.

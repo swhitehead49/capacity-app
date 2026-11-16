@@ -16,8 +16,9 @@ export default async function TeamPlanner({ params }: { params: Promise<{ projec
 
   return (
     <>
-      <h1>{plan.team.name}</h1>
-      <p className="muted">{plan.team.id} · person-days, as of {formatDate(today())} · <a href={`/p/${projectId}/teams/${plan.team.id}/members`}>Team members</a> · <a href={`/p/${projectId}/teams/${plan.team.id}/default`}>Team default</a></p>
+      <h2>Capacity</h2>
+      <p className="muted">Person-days, as of {formatDate(today())}. Use Edit on a sprint or quarter to change its allocation;
+        every period starts from the <a href={`/p/${projectId}/teams/${plan.team.id}/default`}>Team default</a>.</p>
       <PlanTable caption="Sprints" rows={plan.sprints} projectId={projectId} teamId={plan.team.id} />
       <PlanTable caption="Quarters" rows={plan.quarters} projectId={projectId} teamId={plan.team.id} />
     </>

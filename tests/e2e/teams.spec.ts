@@ -7,8 +7,8 @@ import { asRole, linkValueStream } from "./helpers";
 
 test("the Teams page lists every team with its status", async ({ page }) => {
   await page.goto("/p/default");
-  await page.getByRole("navigation").getByRole("link", { name: "Teams" }).click();
-  await expect(page.getByRole("heading", { name: "Teams", exact: true })).toBeVisible();
+  await page.getByRole("navigation").getByRole("link", { name: "Team planning" }).click();
+  await expect(page.getByRole("heading", { name: "Team planning", exact: true })).toBeVisible();
   await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T017/ })).toContainText("DRGW");
 });
 
@@ -84,7 +84,7 @@ test("retire an empty team and name its successor", async ({ page }) => {
   await form.getByRole("button", { name: "Retire team" }).click();
   await expect(page.getByText("Retiring 31 Dec 2026")).toBeVisible();
   await expect(page.getByRole("link", { name: "T100 | Payments & Billing" })).toBeVisible();
-  await page.goto("/p/default/teams");
+  await page.goto("/p/default/teams?choose=1");
   await expect(page.getByRole("row", { name: /T002/ })).toContainText("Retiring 31 Dec 2026");
 });
 

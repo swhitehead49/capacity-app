@@ -36,7 +36,7 @@ test("an Engineering manager chooses a project, lands on its home page, and neve
 
   const bar = page.getByRole("banner");
   await expect(bar.getByRole("link", { name: "Reference data", exact: true })).toHaveCount(0);
-  await expect(bar.getByRole("link", { name: "Teams" })).toBeVisible();
+  await expect(bar.getByRole("link", { name: "Team planning" })).toBeVisible();
   await expect(bar.getByRole("link", { name: "Project reference data" })).toBeVisible();
 
   await page.goto("/reference");
