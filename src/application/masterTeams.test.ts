@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import { getTeamDefaults } from "./getTeamDefaults";
-import { deleteMasterTeam, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
+import { deleteMasterTeam, purgeTeam, purgePreview, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
 import { saveStandardAllocation } from "./standardAllocation";
 import { addTeam, renameTeam, updateTeamDetails } from "./teams";
 
@@ -153,5 +153,47 @@ describe("retireMasterTeam", () => {
     await retireMasterTeam(shared, [], actor, today, { teamId: "T2", retiredOn: "2026-12-31", successorTeamIds: [] });
     await syncTeams(project, shared, today);
     expect(await copy("T2")).toMatchObject({ retiredOn: "2026-12-31" });
+  });
+});
+
+// sean, 16 Nov 2026: "hard delete of team DRGW and all associated data". Any status, everywhere, after typing the ID.
+describe("purgeTeam", () => {
+  const projects = () => [{ name: "Imaging", db: project }];
+  beforeEach(async () => {
+    await syncTeams(project, shared, today);
+    await project.insert(t.people).values([{ email: "only@example.com" }, { email: "both@example.com" }]);
+    await project.insert(t.assignments).values([
+      { personEmail: "only@example.com", teamId: "T2", startDate: "2026-11-01" },
+      { personEmail: "both@example.com", teamId: "T2", startDate: "2026-11-01" },
+      { personEmail: "both@example.com", teamId: "T1", startDate: "2026-11-01" },
+    ]);
+    await project.insert(t.absences).values({ personEmail: "only@example.com", startDate: "2026-12-01", endDate: "2026-12-02", type: "Annual" });
+    await retireMasterTeam(shared, [], actor, today, { teamId: "T1", retiredOn: "2027-12-31", successorTeamIds: ["T2"] });
+  });
+
+  it("shows what will be deleted in each project", async () => {
+    expect(await purgePreview(shared, projects(), "T2")).toEqual([
+      { project: "Default", memberships: 0, people: 0, settings: 1 },
+      { project: "Imaging", memberships: 2, people: 1, settings: 1 },
+    ]);
+  });
+
+  it("needs the team ID typed to confirm", async () => {
+    expect(await purgeTeam(shared, projects(), actor, { teamId: "T2", confirm: "t3" }))
+      .toEqual({ ok: false, errors: ["Type T2 to confirm"] });
+  });
+
+  it("deletes the team and everything that belongs only to it, everywhere, and logs it", async () => {
+    expect(await purgeTeam(shared, projects(), actor, { teamId: "T2", confirm: "T2" })).toEqual({ ok: true });
+    for (const db of [shared, project]) {
+      expect(await db.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toBeUndefined();
+      expect(await db.select().from(t.teamSuccessors)).toEqual([]);
+    }
+    expect((await project.select().from(t.people)).map((p) => p.email)).toEqual(["both@example.com"]);
+    expect(await project.select().from(t.absences)).toEqual([]);
+    expect((await project.select().from(t.assignments)).map((a) => a.teamId)).toEqual(["T1"]);
+    expect((await shared.select().from(t.auditLog)).at(-1)).toMatchObject({ entity: "teams", entityId: "T2", action: "delete with all its data" });
+    await syncTeams(project, shared, today); // it doesn't come back
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toBeUndefined();
   });
 });

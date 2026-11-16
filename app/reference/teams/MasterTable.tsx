@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ActionForm, type Values } from "@/app/lib/ActionForm";
 import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
-import { deleteTeamAction, saveMasterTeamsAction } from "./actions";
+import { deleteTeamAction, purgeTeamAction, saveMasterTeamsAction } from "./actions";
 
 export interface Option { value: string; label: string }
 export interface MasterRow { id: string; parentTeamName: string | null; provisional: boolean }
@@ -68,6 +68,15 @@ export function DeleteTeamForm({ teamId }: { teamId: string }) {
   return (
     <ActionForm action={deleteTeamAction} hidden={{ teamId }} values={{}} submitLabel={`Yes, delete ${teamId}`} label="Delete team">
       {() => <p>This can&apos;t be undone. The team goes from the master list and every project, and its ID becomes free again.</p>}
+    </ActionForm>
+  );
+}
+
+/** Delete a team and all its data: the team ID must be typed (sean, 16 Nov 2026). */
+export function PurgeTeamForm({ teamId }: { teamId: string }) {
+  return (
+    <ActionForm action={purgeTeamAction} hidden={{ teamId }} values={{}} submitLabel="Delete team and all its data" label="Delete team and all its data">
+      {(v) => <label>Type {teamId} to confirm<input name="confirm" defaultValue={v.confirm} autoComplete="off" /></label>}
     </ActionForm>
   );
 }

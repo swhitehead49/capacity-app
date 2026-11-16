@@ -4,10 +4,9 @@ import { redirect } from "next/navigation";
 import { readHeadcount } from "@/src/domain/organisation/teamDetails";
 import { addTeam, changeBaseLocation, changeValueStream, renameTeam, updateTeamDetails } from "@/src/application/teams";
 import { importTeams } from "@/src/application/importTeams";
-import { deleteMasterTeam, retireMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
-import { DEFAULT_PROJECT } from "@/src/domain/projects/projectRules";
-import { getProjectDb, today } from "@/src/infrastructure/db/appDb";
-import { listProjects } from "@/src/infrastructure/db/projectDatabases";
+import { deleteMasterTeam, purgeTeam, retireMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
+import { allProjectDbs } from "./projectDbs";
+import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
 import { failed, type FormState } from "@/app/lib/formState";
 
@@ -104,8 +103,7 @@ export async function saveMasterTeamsAction(previous: FormState, form: FormData)
 export async function deleteTeamAction(previous: FormState, form: FormData): Promise<FormState> {
   const teamId = read(form, "teamId");
   const shared = await sharedDb();
-  const projects = await Promise.all((await listProjects(shared)).filter((p) => p.id !== DEFAULT_PROJECT).map((p) => getProjectDb(p.id)));
-  const result = await deleteMasterTeam(shared, projects, ACTOR, { teamId });
+  const result = await deleteMasterTeam(shared, (await allProjectDbs()).map((p) => p.db), ACTOR, { teamId });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(`/reference/teams?deleted=${encodeURIComponent(teamId)}`);
 }
@@ -114,11 +112,17 @@ export async function deleteTeamAction(previous: FormState, form: FormData): Pro
 export async function retireTeamAction(previous: FormState, form: FormData): Promise<FormState> {
   const teamId = read(form, "teamId");
   const shared = await sharedDb();
-  const projects = await Promise.all((await listProjects(shared)).filter((p) => p.id !== DEFAULT_PROJECT)
-    .map(async (p) => ({ name: p.name, db: await getProjectDb(p.id) })));
-  const result = await retireMasterTeam(shared, projects, ACTOR, today(), {
+  const result = await retireMasterTeam(shared, await allProjectDbs(), ACTOR, today(), {
     teamId, retiredOn: read(form, "retiredOn"), successorTeamIds: form.getAll("successors").map(String),
   });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(teamPage(teamId));
+}
+
+/** Delete a team and all its data, everywhere, once its ID is typed (sean, 16 Nov 2026). */
+export async function purgeTeamAction(previous: FormState, form: FormData): Promise<FormState> {
+  const teamId = read(form, "teamId");
+  const result = await purgeTeam(await sharedDb(), await allProjectDbs(), ACTOR, { teamId, confirm: read(form, "confirm") });
+  if (!result.ok) return failed(previous, form, result.errors);
+  redirect(`/reference/teams?deleted=${encodeURIComponent(teamId)}`);
 }

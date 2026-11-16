@@ -84,6 +84,11 @@ export default async function EditMasterTeam({ params, searchParams }: { params:
           <p><Link className="button secondary danger" href={`/reference/teams/${encodeURIComponent(team.id)}/delete`}>Delete team</Link></p>
         </>
       )}
+
+      <h3>Delete team and all its data</h3>
+      <p className="muted">For a team that should never have existed, whatever its status: removes it and everything that belongs
+        only to it, in every project. You will see what goes and be asked to type the team ID first.</p>
+      <p><Link className="button secondary danger" href={`/reference/teams/${encodeURIComponent(team.id)}/purge`}>Delete team and all its data</Link></p>
     </>
   );
 }

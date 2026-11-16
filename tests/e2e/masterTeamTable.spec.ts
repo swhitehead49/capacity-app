@@ -39,7 +39,24 @@ test("delete a Provisional team from its row, after confirming", async ({ page }
 test("a team with members can't be deleted", async ({ page }) => {
   await asRole(page, "admin");
   await page.goto("/reference/teams/T017");
-  await page.getByRole("link", { name: "Delete team" }).click();
+  await page.getByRole("link", { name: "Delete team", exact: true }).click();
   await page.getByRole("button", { name: "Yes, delete T017" }).click();
   await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText("retire it instead");
+});
+
+// sean, 16 Nov 2026: "hard delete of team DRGW and all associated data".
+test("delete a team and all its data, after typing its ID", async ({ page }) => {
+  await addMasterTeam(page, { id: "T704", name: "Grid Five" });
+  await asRole(page, "admin");
+  await page.goto("/reference/teams/T704");
+  await page.getByRole("link", { name: "Delete team and all its data" }).click();
+  await expect(page.getByRole("table", { name: "What will be deleted" }).getByRole("row", { name: /^Default/ })).toBeVisible();
+  const form = page.getByRole("form", { name: "Delete team and all its data" });
+  await form.getByLabel("Type T704 to confirm").fill("T7");
+  await form.getByRole("button", { name: "Delete team and all its data" }).click();
+  await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText("Type T704 to confirm");
+  await page.getByRole("form", { name: "Delete team and all its data" }).getByLabel("Type T704 to confirm").fill("T704");
+  await page.getByRole("form", { name: "Delete team and all its data" }).getByRole("button", { name: "Delete team and all its data" }).click();
+  await expect(page.getByRole("status")).toContainText("Deleted T704");
+  await expect(page.getByLabel("Name of T704")).toHaveCount(0);
 });

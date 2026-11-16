@@ -1,4 +1,4 @@
-import { and, asc, count, eq, isNotNull, or, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import { syncLocations } from "./referenceData";
@@ -201,6 +201,59 @@ export async function retireMasterTeam(
   for (const { db } of others) {
     const copy = await db.query.teams.findFirst({ where: eq(t.teams.id, team.id) });
     if (copy && !copy.retiredOn) await retireTeam(db, actor, request);
+  }
+  return { ok: true };
+}
+
+/** People whose only team is `teamId`: they go with the team in a full delete. */
+async function peopleOnlyOn(db: Pick<Db, "select">, teamId: string): Promise<string[]> {
+  const rows = await db.select({ email: t.assignments.personEmail, teamId: t.assignments.teamId }).from(t.assignments);
+  const on = new Set(rows.filter((r) => r.teamId === teamId).map((r) => r.email));
+  return [...on].filter((email) => rows.every((r) => r.email !== email || r.teamId === teamId)).sort();
+}
+
+/** What a full delete would remove in each project ("Default" first). */
+export async function purgePreview(shared: Db, projects: { name: string; db: Db }[], teamId: string) {
+  const all = [{ name: "Default", db: shared }, ...projects.filter((p) => p.db !== shared)];
+  return Promise.all(all.map(async ({ name, db }) => {
+    const [m] = await db.select({ n: count() }).from(t.assignments).where(eq(t.assignments.teamId, teamId));
+    const [s] = await db.select({ n: count() }).from(t.allocationSettings).where(eq(t.allocationSettings.teamId, teamId));
+    return { project: name, memberships: m?.n ?? 0, people: (await peopleOnlyOn(db, teamId)).length, settings: s?.n ?? 0 };
+  }));
+}
+
+/**
+ * Delete a team and all its data, everywhere (sean, 16 Nov 2026: "hard delete of team DRGW and all associated data").
+ * Any status. Removes its memberships, the people who are only on this team with their leave, its defaults and overrides,
+ * its names and successor links, in every project and the master list. Can't be undone, so the team ID must be typed.
+ */
+export async function purgeTeam(
+  shared: Db, projects: { name: string; db: Db }[], actor: string, request: { teamId: string; confirm: string },
+): Promise<MasterResult> {
+  const team = await shared.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
+  if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
+  if (request.confirm.trim() !== team.id) return { ok: false, errors: [`Type ${team.id} to confirm`] };
+  const preview = await purgePreview(shared, projects, team.id);
+  const all = [...projects.filter((p) => p.db !== shared).map((p) => p.db), shared]; // the master list last, so nothing re-adds it
+  for (const db of all) {
+    await db.transaction(async (tx) => {
+      await lock(tx);
+      const leaving = await peopleOnlyOn(tx, team.id);
+      await tx.delete(t.assignments).where(eq(t.assignments.teamId, team.id));
+      if (leaving.length) {
+        await tx.delete(t.absences).where(inArray(t.absences.personEmail, leaving));
+        await tx.delete(t.people).where(inArray(t.people.email, leaving));
+      }
+      await tx.delete(t.allocationSettings).where(eq(t.allocationSettings.teamId, team.id));
+      await tx.delete(t.teamSuccessors).where(or(eq(t.teamSuccessors.teamId, team.id), eq(t.teamSuccessors.successorTeamId, team.id)));
+      await tx.delete(t.teamNameHistory).where(eq(t.teamNameHistory.teamId, team.id));
+      await tx.delete(t.teams).where(eq(t.teams.id, team.id));
+      if (db === shared) {
+        await tx.insert(t.auditLog).values({
+          actor, entity: "teams", entityId: team.id, action: "delete with all its data", before: { team, removed: preview }, after: null,
+        });
+      }
+    });
   }
   return { ok: true };
 }
