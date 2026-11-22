@@ -31,6 +31,7 @@ export default async function Teams({ params, searchParams }: { params: Promise<
       <p className="muted">{teams.filter((x) => x.status === "Active").length} active of {teams.length}. Retired teams stay here so past periods can still be reported.</p>
       <p className="muted">The teams in this project&apos;s value streams, plus any included teams without one (see <Link href={`/p/${projectId}`}>Project home</Link>).
         Teams are added and edited by an Admin in the master team list.</p>
+      <p><Link className="button secondary" href={`/p/${projectId}/import-members`}>Import team members from spreadsheet</Link></p>
       <div className="toolbar">
         <form className="picker inline" method="get">
           <input type="hidden" name="choose" value="1" />

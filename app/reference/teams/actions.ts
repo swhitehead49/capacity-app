@@ -36,7 +36,7 @@ export async function importTeamsAction(form: FormData) {
   const result = await importTeams(shared, ACTOR, { csv, today: today() }, shared);
   if (result.ok) {
     const params = new URLSearchParams({ imported: String(result.count) });
-    if (result.warnings.length) params.set("kept", result.warnings.join("\n"));
+    if (result.warnings.length) params.set("warning", result.warnings.join("\n"));
     redirect(`/reference/teams?${params}`);
   }
   const shown = result.errors.slice(0, MAX_SHOWN);
@@ -118,7 +118,7 @@ export async function deleteProvisionalTeamsAction(previous: FormState, form: Fo
   if (read(form, "confirm").toUpperCase() !== "DELETE") return failed(previous, form, ["Type DELETE to confirm"]);
   const { deleted, kept } = await deleteProvisionalTeams(await sharedDb(), (await allProjectDbs()).map((p) => p.db), ACTOR);
   const params = new URLSearchParams({ bulkDeleted: String(deleted.length) });
-  if (kept.length) params.set("warning", kept.slice(0, MAX_SHOWN).join("\n"));
+  if (kept.length) params.set("kept", kept.slice(0, MAX_SHOWN).join("\n"));
   redirect(`/reference/teams?${params}`);
 }
 
