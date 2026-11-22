@@ -263,7 +263,7 @@ describe("updateTeamDetails (sean, 15 Nov 2026: the workbook's team attributes)"
   const details = {
     leadEmail: "lead@example.com", parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com",
     grandparentTeamName: "ORBIS Vienna", grandparentTeamLeadEmail: null, topLevelGroup: "ORBIS", topLevelLeadEmail: null,
-    sourceHeadcount: 7, idStatus: "Confirmed", dataQualityFlag: null,
+    sourceHeadcount: 7, idStatus: "Confirmed", dataQualityFlag: null, teamType: null,
   };
 
   it("saves the details and logs only what changed", async () => {

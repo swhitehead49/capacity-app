@@ -99,6 +99,13 @@
       "when": 1794783606963,
       "tag": "0013_sprint_calendar_extend",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795358996449,
+      "tag": "0014_team_type",
+      "breakpoints": true
     }
   ]
 }

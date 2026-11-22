@@ -24,6 +24,7 @@ export const teams = pgTable("teams", {
   sourceHeadcount: integer("source_headcount"),
   idStatus: text("id_status").notNull().default("Provisional"), // Provisional until confirmed with the group leads (Q5)
   dataQualityFlag: text("data_quality_flag"),
+  teamType: text("team_type"), // Mission Team, Domain Team or Enabling Team (FR-18o, sean, 22 Nov 2026)
   // A team without a value stream can be left out of the project (sean, 15 Nov 2026). Teams in a value stream are always in.
   included: boolean("included").notNull().default(true),
   retiredOn: date("retired_on"),

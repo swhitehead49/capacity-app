@@ -56,9 +56,9 @@ describe("syncTeams", () => {
     await syncTeams(project, shared, today);
     await project.update(t.teams).set({ included: true, retiredOn: "2026-12-31" }).where(eq(t.teams.id, "T2"));
     await renameTeam(shared, actor, { teamId: "T2", name: "Billing", effectiveFrom: "2026-12-01" });
-    await updateTeamDetails(shared, actor, { ...(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") }))!, teamId: "T2", topLevelGroup: "ORBIS" });
+    await updateTeamDetails(shared, actor, { ...(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") }))!, teamId: "T2", topLevelGroup: "ORBIS", teamType: "Domain Team" });
     await syncTeams(project, shared, today);
-    expect(await copy("T2")).toMatchObject({ name: "Billing", topLevelGroup: "ORBIS", included: true, retiredOn: "2026-12-31" });
+    expect(await copy("T2")).toMatchObject({ name: "Billing", topLevelGroup: "ORBIS", teamType: "Domain Team", included: true, retiredOn: "2026-12-31" });
     expect((await project.select().from(t.teamNameHistory).where(eq(t.teamNameHistory.teamId, "T2"))).map((n) => n.name).sort())
       .toEqual(["Billing", "Payments"]);
   });
@@ -110,19 +110,26 @@ describe("deleteMasterTeam", () => {
 describe("saveMasterTeamRows", () => {
   it("saves only what changed on each row, and reports problems by team", async () => {
     const result = await saveMasterTeamRows(shared, actor, today, [
-      { teamId: "T1", name: "Viewer", valueStream: "Clinical", baseLocation: "", leadEmail: "lead@example.com", idStatus: "Provisional" },
-      { teamId: "T2", name: "Billing", valueStream: "", baseLocation: "", leadEmail: "", idStatus: "Confirmed" },
+      { teamId: "T1", name: "Viewer", valueStream: "Clinical", baseLocation: "", leadEmail: "lead@example.com", idStatus: "Provisional", teamType: "Mission Team" },
+      { teamId: "T2", name: "Billing", valueStream: "", baseLocation: "", leadEmail: "", idStatus: "Confirmed", teamType: "" },
     ]);
     expect(result).toEqual({ ok: true, changed: 2 });
     expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T1") }))
-      .toMatchObject({ valueStream: "Clinical", baseLocation: null, leadEmail: "lead@example.com" });
+      .toMatchObject({ valueStream: "Clinical", baseLocation: null, leadEmail: "lead@example.com", teamType: "Mission Team" });
     expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toMatchObject({ name: "Billing", idStatus: "Confirmed" });
+  });
+
+  it("FR-18o: refuses an unknown team type", async () => {
+    const result = await saveMasterTeamRows(shared, actor, today, [
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY", leadEmail: "", idStatus: "Provisional", teamType: "Squad" },
+    ]);
+    expect(result).toEqual({ ok: false, changed: 0, errors: ["T1: Team type must be Mission Team, Domain Team or Enabling Team"] });
   });
 
   it("reports a problem with the team's ID, and saves the other rows", async () => {
     const result = await saveMasterTeamRows(shared, actor, today, [
-      { teamId: "T1", name: "Viewer", valueStream: "Nowhere", baseLocation: "DE-BY", leadEmail: "", idStatus: "Provisional" },
-      { teamId: "T2", name: "Payments", valueStream: "Radiology", baseLocation: "", leadEmail: "", idStatus: "Provisional" },
+      { teamId: "T1", name: "Viewer", valueStream: "Nowhere", baseLocation: "DE-BY", leadEmail: "", idStatus: "Provisional", teamType: "" },
+      { teamId: "T2", name: "Payments", valueStream: "Radiology", baseLocation: "", leadEmail: "", idStatus: "Provisional", teamType: "" },
     ]);
     expect(result).toEqual({ ok: false, changed: 1, errors: ["T1: Unknown value stream Nowhere: add it under Reference data first"] });
   });

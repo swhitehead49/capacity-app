@@ -4,6 +4,7 @@ import type { Db } from "../infrastructure/db/testDb";
 import { syncLocations } from "./referenceData";
 import { resolveStandard } from "./standardAllocation";
 import { changeBaseLocation, changeValueStream, firstDefault, membersStillOn, renameTeam, retireTeam, updateTeamDetails } from "./teams";
+import { readTeamType } from "../domain/organisation/teamDetails";
 
 // Master team list (sean, 15 Nov 2026). The Admin keeps every team once, in the shared (Default) database.
 // Each project holds a copy of every team, kept up to date here, because its members, allocations and plans refer to it.
@@ -14,6 +15,7 @@ import { changeBaseLocation, changeValueStream, firstDefault, membersStillOn, re
 const MASTER_FIELDS = [
   "name", "leadEmail", "valueStream", "baseLocation", "parentTeamName", "parentTeamLeadEmail", "grandparentTeamName",
   "grandparentTeamLeadEmail", "topLevelGroup", "topLevelLeadEmail", "sourceHeadcount", "idStatus", "dataQualityFlag",
+  "teamType",
 ] as const;
 
 type TeamRow = typeof t.teams.$inferSelect;
@@ -143,7 +145,7 @@ export async function deleteMasterTeam(shared: Db, projects: Db[], actor: string
   return { ok: true };
 }
 
-export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail: string; idStatus: string }
+export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail: string; idStatus: string; teamType: string }
 
 /**
  * The master list's table, saved in one go (sean, 16 Nov 2026). Each row only changes what differs, with the same
@@ -166,9 +168,10 @@ export async function saveMasterTeamRows(
     if (row.name.trim() && row.name.trim() !== team.name) await step(await renameTeam(shared, actor, { teamId: team.id, name: row.name, effectiveFrom: today }));
     if (blank(row.valueStream) !== team.valueStream) await step(await changeValueStream(shared, actor, { teamId: team.id, valueStream: row.valueStream }, shared));
     if (blank(row.baseLocation) !== team.baseLocation) await step(await changeBaseLocation(shared, actor, { teamId: team.id, baseLocation: row.baseLocation }, shared));
-    if (blank(row.leadEmail) !== team.leadEmail || row.idStatus !== team.idStatus) {
+    const teamType = readTeamType(row.teamType);
+    if (blank(row.leadEmail) !== team.leadEmail || row.idStatus !== team.idStatus || teamType !== team.teamType) {
       const current = (await shared.query.teams.findFirst({ where: eq(t.teams.id, team.id) }))!;
-      await step(await updateTeamDetails(shared, actor, { ...current, teamId: team.id, leadEmail: blank(row.leadEmail), idStatus: row.idStatus }));
+      await step(await updateTeamDetails(shared, actor, { ...current, teamId: team.id, leadEmail: blank(row.leadEmail), idStatus: row.idStatus, teamType }));
     }
     if (touched) changed++;
     errors.push(...problems.map((p) => `${team.id}: ${p}`));

@@ -1,5 +1,5 @@
 import { csvRows, toIsoDate } from "../shared/csv";
-import { readHeadcount, type TeamDetails } from "./teamDetails";
+import { readHeadcount, readTeamType, type TeamDetails } from "./teamDetails";
 import { sameName, validateTeam, type TeamDraft } from "./teamRules";
 
 // Import teams from a spreadsheet saved as CSV (sean, 15 Nov 2026). Pure: the file's text in, teams or problems out.
@@ -32,6 +32,7 @@ const COLUMNS = {
   sourceHeadcount: ["source_headcount"],
   idStatus: ["id_status"],
   dataQualityFlag: ["data_quality_flag"],
+  teamType: ["team_type"],
   valueStream: ["value_stream"],
   baseLocation: ["base_location"],
   start: ["start_date"],
@@ -68,6 +69,7 @@ export function readTeamCsv(text: string, { today }: { today: string }): TeamCsv
       sourceHeadcount: readHeadcount(cell("sourceHeadcount")),
       idStatus: cell("idStatus") || "Provisional",
       dataQualityFlag: optional("dataQualityFlag"),
+      teamType: readTeamType(cell("teamType")),
     };
     const team: TeamCsvRow = {
       line: number,

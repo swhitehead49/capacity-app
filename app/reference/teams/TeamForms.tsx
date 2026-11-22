@@ -3,7 +3,7 @@
 // The master team list's forms (sean, 15 Nov 2026): the Admin edits teams in Reference data → Teams.
 
 import { ActionForm } from "@/app/lib/ActionForm";
-import { ID_STATUSES } from "@/src/domain/organisation/teamDetails";
+import { ID_STATUSES, TEAM_TYPES } from "@/src/domain/organisation/teamDetails";
 import { addTeamAction, changeBaseLocationAction, changeValueStreamAction, updateTeamDetailsAction, renameTeamAction, retireTeamAction } from "./actions";
 
 export interface Option { value: string; label: string }
@@ -119,6 +119,12 @@ export function DetailsForm({ teamId, values }: { teamId: string; values: Record
             <select name="idStatus" defaultValue={v.idStatus}>{ID_STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
           </label>
           <label>Data quality flag<input name="dataQualityFlag" defaultValue={v.dataQualityFlag} /></label>
+          <label>Team type
+            <select name="teamType" defaultValue={v.teamType}>
+              <option value="">(not set)</option>
+              {TEAM_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </label>
         </div>
       )}
     </ActionForm>

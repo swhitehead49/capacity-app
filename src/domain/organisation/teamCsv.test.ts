@@ -19,7 +19,7 @@ describe("parseTeamCsv", () => {
         parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com",
         grandparentTeamName: "ORBIS Vienna", grandparentTeamLeadEmail: "g@example.com",
         topLevelGroup: "ORBIS", topLevelLeadEmail: "t@example.com",
-        sourceHeadcount: 5, idStatus: "Confirmed", dataQualityFlag: "Multiple team leads",
+        sourceHeadcount: 5, idStatus: "Confirmed", dataQualityFlag: "Multiple team leads", teamType: null,
       }],
       errors: [],
     });
@@ -30,6 +30,13 @@ describe("parseTeamCsv", () => {
     expect(parseTeamCsv(csv, { today }).teams[0]).toMatchObject({
       leadEmail: null, parentTeamName: null, sourceHeadcount: null, idStatus: "Provisional", dataQualityFlag: null, valueStream: null, baseLocation: null,
     });
+  });
+
+  it("FR-18o: reads Team_Type in any case, and rejects an unknown type", () => {
+    const csv = "Team_ID,Team_Name,Team_Type\nT074,Payments Core,mission team\nT075,Billing,\nT076,Viewer,domain\n";
+    expect(parseTeamCsv(csv, { today }).teams.map((x) => x.teamType)).toEqual(["Mission Team", null, "Domain Team"]);
+    expect(parseTeamCsv(`${csv}T077,Archive,Squad\n`, { today }).errors)
+      .toEqual(["Line 5: Team type must be Mission Team, Domain Team or Enabling Team"]);
   });
 
   it("only needs Team_ID and Team_Name; headings can be in any order, any case, with spaces; DD/MM/YYYY works", () => {

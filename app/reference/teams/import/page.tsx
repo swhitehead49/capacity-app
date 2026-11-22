@@ -15,7 +15,8 @@ export default async function ImportTeams({ searchParams }: { searchParams: Prom
         sheet: <code>Team_ID</code> and <code>Team_Name</code> are needed; <code>Team_Lead_Email</code>, <code>Parent_Team_Name</code>,
         {" "}<code>Parent_Team_Lead_Email</code>, <code>Grandparent_Team_Name</code>, <code>Grandparent_Team_Lead_Email</code>,
         {" "}<code>Top_Level_Group</code>, <code>Top_Level_Lead_Email</code>, <code>Source_Headcount</code>, <code>ID_Status</code>
-        {" "}(Provisional or Confirmed; blank means Provisional), <code>Data_Quality_Flag</code>, <code>Value_Stream</code>,
+        {" "}(Provisional or Confirmed; blank means Provisional), <code>Data_Quality_Flag</code>, <code>Team_Type</code>
+        {" "}(Mission Team, Domain Team or Enabling Team), <code>Value_Stream</code>,
         {" "}<code>Base_Location</code> and <code>Start_Date</code> (2026-11-16 or 16/11/2026; blank means today) are optional.
         Value streams and base locations must already be in the reference data.
         Each team gets the same checks as Add team.

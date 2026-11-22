@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ID_STATUSES, emptyTeamDetails, validateTeamDetails } from "./teamDetails";
+import { ID_STATUSES, TEAM_TYPES, emptyTeamDetails, readTeamType, validateTeamDetails } from "./teamDetails";
 
 // Team attributes from the original workbook's Teams sheet (sean, 15 Nov 2026): the parent, grandparent and
 // top-level groups with their leads, the source headcount, the ID status and a data quality flag.
@@ -27,5 +27,22 @@ describe("validateTeamDetails", () => {
 
   it("only knows Provisional and Confirmed as ID statuses", () => {
     expect(validateTeamDetails({ ...emptyTeamDetails(), idStatus: "Maybe" })).toEqual(["ID status must be Provisional or Confirmed"]);
+  });
+
+  it("FR-18o: team type is blank or Mission Team, Domain Team or Enabling Team", () => {
+    expect(TEAM_TYPES).toEqual(["Mission Team", "Domain Team", "Enabling Team"]);
+    expect(emptyTeamDetails().teamType).toBeNull();
+    expect(validateTeamDetails({ ...emptyTeamDetails(), teamType: "Domain Team" })).toEqual([]);
+    expect(validateTeamDetails({ ...emptyTeamDetails(), teamType: "Squad" })).toEqual(["Team type must be Mission Team, Domain Team or Enabling Team"]);
+  });
+});
+
+describe("readTeamType", () => {
+  it("FR-18o: reads a team type typed in any case, with or without the word Team; blank is none", () => {
+    expect(readTeamType("mission team")).toBe("Mission Team");
+    expect(readTeamType(" Domain ")).toBe("Domain Team");
+    expect(readTeamType("ENABLING")).toBe("Enabling Team");
+    expect(readTeamType("")).toBeNull();
+    expect(readTeamType("Squad")).toBe("Squad"); // left as typed so the check can name it
   });
 });

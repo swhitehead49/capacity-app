@@ -33,6 +33,7 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
         <dt>Top-level group</dt><dd>{team.topLevelGroup ?? ""}</dd>
         <dt>Source headcount</dt><dd>{team.sourceHeadcount ?? ""}</dd>
         <dt>ID status</dt><dd>{team.idStatus}</dd>
+        <dt>Team type</dt><dd>{team.teamType ?? "Not set"}</dd>
       </dl>
 
       <table className="members narrow">

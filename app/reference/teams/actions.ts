@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { readHeadcount } from "@/src/domain/organisation/teamDetails";
+import { readHeadcount, readTeamType } from "@/src/domain/organisation/teamDetails";
 import { addTeam, changeBaseLocation, changeValueStream, renameTeam, updateTeamDetails } from "@/src/application/teams";
 import { importTeams } from "@/src/application/importTeams";
 import { deleteMasterTeam, purgeTeam, retireMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
@@ -79,6 +79,7 @@ export async function updateTeamDetailsAction(previous: FormState, form: FormDat
     grandparentTeamName: optional("grandparentTeamName"), grandparentTeamLeadEmail: optional("grandparentTeamLeadEmail"),
     topLevelGroup: optional("topLevelGroup"), topLevelLeadEmail: optional("topLevelLeadEmail"),
     sourceHeadcount: readHeadcount(read(form, "sourceHeadcount")), idStatus: read(form, "idStatus"), dataQualityFlag: optional("dataQualityFlag"),
+    teamType: readTeamType(read(form, "teamType")),
   });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(teamPage(teamId));
@@ -89,7 +90,7 @@ export async function saveMasterTeamsAction(previous: FormState, form: FormData)
   const rows = form.getAll("teamId").map(String).map((teamId) => ({
     teamId,
     name: read(form, `name:${teamId}`), valueStream: read(form, `valueStream:${teamId}`), baseLocation: read(form, `baseLocation:${teamId}`),
-    leadEmail: read(form, `leadEmail:${teamId}`), idStatus: read(form, `idStatus:${teamId}`),
+    leadEmail: read(form, `leadEmail:${teamId}`), idStatus: read(form, `idStatus:${teamId}`), teamType: read(form, `teamType:${teamId}`),
   }));
   const result = await saveMasterTeamRows(await sharedDb(), ACTOR, today(), rows);
   if (!result.ok) {

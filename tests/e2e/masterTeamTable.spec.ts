@@ -20,6 +20,20 @@ test("edit teams in the master list's table and save them together", async ({ pa
   await expect(page.getByLabel("Base location of T701")).toHaveValue("DE-BY");
 });
 
+// FR-18o (sean, 22 Nov 2026): each team can have a team type, set in the table or on the team's Edit page.
+test("set a team's type in the master list's table", async ({ page }) => {
+  await addMasterTeam(page, { id: "T790", name: "Grid Typed" });
+  await asRole(page, "admin");
+  await page.goto("/reference/teams");
+  const form = page.getByRole("form", { name: "Edit teams" });
+  await form.getByLabel("Team type of T790").selectOption("Mission Team");
+  await form.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved changes to 1 team");
+  await expect(page.getByLabel("Team type of T790")).toHaveValue("Mission Team");
+  await page.goto("/reference/teams/T790");
+  await expect(page.getByLabel("Team type")).toHaveValue("Mission Team");
+});
+
 // sean, 16 Nov 2026: deleting asks for confirmation first.
 test("delete a Provisional team from its row, after confirming", async ({ page }) => {
   await addMasterTeam(page, { id: "T702", name: "Grid Three" });

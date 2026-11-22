@@ -38,7 +38,7 @@ export default async function MasterTeams({ searchParams }: { searchParams: Prom
       <MasterTable groups={groupByValueStream(teams).map(([stream, rows]) => [stream, rows.map((x) => ({ id: x.id, parentTeamName: x.parentTeamName, provisional: x.idStatus === "Provisional" }))])}
         values={Object.fromEntries(teams.flatMap((x) => [
           [`name:${x.id}`, x.name], [`valueStream:${x.id}`, x.valueStream ?? ""], [`baseLocation:${x.id}`, x.baseLocation ?? ""],
-          [`leadEmail:${x.id}`, x.leadEmail ?? ""], [`idStatus:${x.id}`, x.idStatus],
+          [`leadEmail:${x.id}`, x.leadEmail ?? ""], [`idStatus:${x.id}`, x.idStatus], [`teamType:${x.id}`, x.teamType ?? ""],
         ]))}
         valueStreams={valueStreams} locations={await listLocations(shared)} />
     </>
