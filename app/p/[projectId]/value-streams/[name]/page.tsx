@@ -17,18 +17,19 @@ export default async function ValueStreamTeams({ params }: { params: Promise<{ p
     <>
       <p className="muted"><Link href={`/p/${project.id}`}>← {project.name}</Link></p>
       <h1>{name}</h1>
-      <p className="muted">A value stream in {project.name}. Every team in it is part of the project. A team&apos;s value stream is set by the Admin in the master team list (Reference data → Teams).</p>
+      <p className="muted">A value stream in {project.name}. Ticking a value stream puts its teams in the project; the Admin can then leave single teams out (Reference data → Projects). A team&apos;s value stream is set by the Admin in the master team list (Reference data → Teams).</p>
 
       <table className="members narrow">
         <caption>Teams in {name}</caption>
-        <thead><tr><th>ID</th><th>Name</th><th>Members now</th></tr></thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Members now</th><th>In the project</th></tr></thead>
         <tbody>
-          {view.teams.length === 0 && <tr><td colSpan={3} className="empty">No teams in this value stream yet.</td></tr>}
+          {view.teams.length === 0 && <tr><td colSpan={4} className="empty">No teams in this value stream yet.</td></tr>}
           {view.teams.map((x) => (
-            <tr key={x.id}>
+            <tr key={x.id} className={x.included ? "" : "muted"}>
               <td>{x.id}</td>
               <td><Link href={`/p/${project.id}/teams/${x.id}/members`}>{x.name}</Link></td>
               <td>{x.members}</td>
+              <td>{x.included ? "Yes" : "No"}</td>
             </tr>
           ))}
         </tbody>

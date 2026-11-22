@@ -27,11 +27,13 @@ export async function addMasterTeam(page: Page, team: { id: string; name: string
   await asRole(page, "manager");
 }
 
-/** An Engineering manager adds a value stream (and so its teams) to a project. */
+/** FR-18s: the Admin ticks a value stream (and so its teams) into a project on Reference data → Projects. Leaves you as a manager. */
 export async function linkValueStream(page: Page, projectId: string, valueStream: string) {
-  await page.goto(`/p/${projectId}`);
-  const add = page.getByRole("form", { name: "Add value stream" });
-  await add.getByLabel("Value stream").selectOption(valueStream);
-  await add.getByRole("button", { name: "Add value stream" }).click();
-  await expect(page.getByRole("table", { name: "Value streams in this project" }).getByRole("link", { name: valueStream })).toBeVisible();
+  await asRole(page, "admin");
+  await page.goto(`/reference/projects/${projectId}`);
+  const form = page.getByRole("form", { name: "Value streams in the project" });
+  await form.getByLabel(`Include ${valueStream}`, { exact: true }).check();
+  await form.getByRole("button", { name: "Update value streams" }).click();
+  await expect(page.getByRole("status")).toContainText(`Added ${valueStream}`);
+  await asRole(page, "manager");
 }

@@ -5,7 +5,7 @@ import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import { getTeamDefaults } from "./getTeamDefaults";
 import { deleteMasterTeam, deleteProvisionalTeams, purgeTeam, purgePreview, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
 import { saveStandardAllocation } from "./standardAllocation";
-import { addTeam, renameTeam, updateTeamDetails } from "./teams";
+import { addTeam, changeValueStream, renameTeam, updateTeamDetails } from "./teams";
 
 // Master team list (sean, 15 Nov 2026): the Admin keeps every team once, in Reference data → Teams (the shared database).
 // Each project gets a copy of every team, kept up to date, so its members, allocations and plans can refer to it.
@@ -39,6 +39,22 @@ describe("syncTeams", () => {
   it("a team without a value stream starts excluded, so it doesn't join every project", async () => {
     await syncTeams(project, shared, today);
     expect(await copy("T2")).toMatchObject({ included: false });
+  });
+
+  it("FR-18s: a new copy is ticked only if the project has its value stream", async () => {
+    await project.insert(t.projectValueStreams).values({ name: "Radiology" });
+    await addTeam(shared, actor, { id: "T3", name: "Orders", valueStream: "Clinical", leadEmail: null, effectiveFrom: "2026-11-02" });
+    await syncTeams(project, shared, today);
+    expect([(await copy("T1"))?.included, (await copy("T3"))?.included]).toEqual([true, false]);
+  });
+
+  it("FR-18s: when the Admin moves a team to another value stream, each project re-applies its value stream ticks", async () => {
+    await project.insert(t.projectValueStreams).values({ name: "Clinical" });
+    await syncTeams(project, shared, today);
+    expect((await copy("T1"))?.included).toBe(false); // Radiology isn't in the project
+    await changeValueStream(shared, actor, { teamId: "T1", valueStream: "Clinical" }, shared);
+    await syncTeams(project, shared, today);
+    expect((await copy("T1"))?.included).toBe(true);
   });
 
   it("a new copy starts with the project's standard allocation, or a Draft default", async () => {

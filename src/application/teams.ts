@@ -42,11 +42,12 @@ export async function addTeam(db: Db, actor: string, draft: TeamDraft, shared: D
 
 /** Saves one new team (already checked): the team, its first name, its first default and the audit log. */
 export async function insertTeam(
-  tx: Pick<Db, "insert">, actor: string, team: TeamDraft & { valueStream: string | null; leadEmail: string | null },
+  tx: Pick<Db, "insert" | "select">, actor: string, team: TeamDraft & { valueStream: string | null; leadEmail: string | null },
   standard: StandardAllocation | null,
 ): Promise<void> {
+    const included = await inProjectStream(tx, team.valueStream);
     const [row] = await tx.insert(t.teams).values({
-      id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail, baseLocation: team.baseLocation ?? null,
+      id: team.id, name: team.name, valueStream: team.valueStream, leadEmail: team.leadEmail, baseLocation: team.baseLocation ?? null, included,
       ...emptyTeamDetails(), ...definedOnly(pickDetails(team)),
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
@@ -151,6 +152,12 @@ export async function retireTeam(
   return { ok: true, id: team.id, warnings: [] };
 }
 
+/** FR-18s: a team is ticked into a project when the project has its value stream. */
+async function inProjectStream(tx: Pick<Db, "select">, valueStream: string | null): Promise<boolean> {
+  if (!valueStream) return false;
+  return (await tx.select().from(t.projectValueStreams)).some((v) => v.name === valueStream);
+}
+
 /** FR-01: move a team to another value stream (the level just above it). Blank = none. */
 export async function changeValueStream(db: Db, actor: string, request: { teamId: string; valueStream: string }, shared: Db = db): Promise<TeamResult> {
   const team = await db.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
@@ -165,7 +172,8 @@ export async function changeValueStream(db: Db, actor: string, request: { teamId
   if (clash.errors.length) return { ok: false, errors: clash.errors };
 
   await db.transaction(async (tx) => {
-    await tx.update(t.teams).set({ valueStream }).where(eq(t.teams.id, team.id));
+    // FR-18s: the project's value stream ticks apply again (this is the master list, i.e. the Default project).
+    await tx.update(t.teams).set({ valueStream, included: await inProjectStream(tx, valueStream) }).where(eq(t.teams.id, team.id));
     await tx.insert(t.auditLog).values({
       actor, entity: "teams", entityId: team.id, action: "change value stream",
       before: { valueStream: team.valueStream }, after: { valueStream },

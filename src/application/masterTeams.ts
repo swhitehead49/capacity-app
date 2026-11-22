@@ -8,7 +8,7 @@ import { LEAD_NAME_FIELDS, readTeamType } from "../domain/organisation/teamDetai
 
 // Master team list (sean, 15 Nov 2026). The Admin keeps every team once, in the shared (Default) database.
 // Each project holds a copy of every team, kept up to date here, because its members, allocations and plans refer to it.
-// Which teams are in a project is the project's own choice (its value streams, and included teams without one), and is never
+// Which teams are in a project is the project's own choice (each team's tick, FR-18s), and is never
 // overwritten. Retiring is done in the master list for every project (sean, 16 Nov 2026), so a retirement is passed on.
 
 /** The team attributes that come from the master list. */
@@ -67,16 +67,25 @@ export async function syncTeams(project: Db, shared: Db, today: string, actor = 
   const masterNames = await namesByTeam(shared);
   await project.transaction(async (tx) => {
     await lock(tx);
-    const { missing, changed, renamed } = plan(master, await tx.select().from(t.teams), masterNames, await namesByTeam(tx), false);
+    const copies = await tx.select().from(t.teams);
+    const { missing, changed, renamed } = plan(master, copies, masterNames, await namesByTeam(tx), false);
+    // FR-18s: a team is in the project when ticked; a new copy, or a team moved to another value stream, is ticked
+    // only if the project has that value stream. A team without a value stream starts unticked.
+    const linked = (await tx.select().from(t.projectValueStreams)).map((v) => v.name);
+    const ticked = (valueStream: string | null) => valueStream !== null && linked.includes(valueStream);
     for (const team of missing) {
-      // A team without a value stream starts excluded, so it doesn't turn up in every project.
-      const [row] = await tx.insert(t.teams).values({ ...team, included: team.valueStream !== null }).onConflictDoNothing().returning();
+      const [row] = await tx.insert(t.teams).values({ ...team, included: ticked(team.valueStream) }).onConflictDoNothing().returning();
       if (!row) continue;
       const names = masterNames.get(team.id) ?? [];
       if (names.length) await tx.insert(t.teamNameHistory).values(names.map(({ teamId, name, effectiveFrom }) => ({ teamId, name, effectiveFrom })));
       await tx.insert(t.allocationSettings).values(firstDefault(team.id, startOf(names) ?? today, standard, actor));
     }
-    for (const team of changed) await tx.update(t.teams).set({ ...pick(team), ...(team.retiredOn ? { retiredOn: team.retiredOn } : {}) }).where(eq(t.teams.id, team.id));
+    for (const team of changed) {
+      const moved = copies.find((x) => x.id === team.id)?.valueStream !== team.valueStream;
+      await tx.update(t.teams).set({
+        ...pick(team), ...(team.retiredOn ? { retiredOn: team.retiredOn } : {}), ...(moved ? { included: ticked(team.valueStream) } : {}),
+      }).where(eq(t.teams.id, team.id));
+    }
     for (const team of renamed) {
       await tx.delete(t.teamNameHistory).where(eq(t.teamNameHistory.teamId, team.id));
       const names = masterNames.get(team.id) ?? [];

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { addMasterTeam, createProject, linkValueStream } from "./helpers";
+import { addMasterTeam, asRole, createProject, linkValueStream } from "./helpers";
 
 // sean, 15 Nov 2026: the app opens on a home screen with no menu that asks who you are.
 // These tests start with no role chosen (the other specs run as an Admin).
@@ -69,28 +69,46 @@ test("the project home page shows the value streams in the project, or an error 
   await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T500/ })).toContainText("Viewer");
 });
 
-// sean, 15 Nov 2026: a project's value streams decide its teams; teams without one can be included or excluded.
-test("add a value stream to a project, see its teams, and exclude a team without a value stream", async ({ page }) => {
-  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
+// FR-18s (sean, 22 Nov 2026): the Admin sets up a project in Reference data → Projects: tick value streams (and so their
+// teams), then tick or untick single teams. The manager's Project home shows the result, read-only.
+test("the Admin ticks a value stream into a project, and leaves out a single team", async ({ page }) => {
   await linkValueStream(page, "imaging", "Clinical");
+  await page.goto("/p/imaging");
+  await expect(page.getByRole("button", { name: /Remove|Exclude|Include|Add value stream/ })).toHaveCount(0); // read-only for managers
   await page.getByRole("table", { name: "Value streams in this project" }).getByRole("link", { name: "Clinical" }).click();
   await expect(page.getByRole("heading", { name: "Clinical" })).toBeVisible();
   await expect(page.getByRole("table", { name: "Teams in Clinical" })).toBeVisible();
-  await expect(page.getByRole("form", { name: "Add teams" })).toHaveCount(0); // the Admin sets a team's value stream
 
   await page.goto("/p/imaging");
-  const unmapped = page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T900/ });
-  await expect(unmapped).toContainText("Included");
-  await unmapped.getByRole("button", { name: "Exclude" }).click();
-  await expect(page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T900/ })).toContainText("Excluded");
-  await unmapped.getByRole("button", { name: "Include" }).click();
-  await expect(page.getByRole("table", { name: "Teams without a value stream" }).getByRole("row", { name: /T900/ })).toContainText("Included");
+  await expect(page.getByRole("table", { name: "Other teams in this project" }).getByRole("row", { name: /T900/ })).toBeVisible();
+  await asRole(page, "admin");
+  await page.goto("/reference/projects");
+  await page.getByRole("link", { name: "Set up Imaging" }).click();
+  const teams = page.getByRole("form", { name: "Teams in the project" });
+  await teams.getByLabel("Include T900", { exact: true }).uncheck();
+  await teams.getByRole("button", { name: "Update teams" }).click();
+  await expect(page.getByRole("status")).toContainText("Updated 1 team");
+  await expect(page.getByRole("form", { name: "Teams in the project" }).getByLabel("Include T900", { exact: true })).not.toBeChecked();
+  await asRole(page, "manager");
+  await page.goto("/p/imaging");
+  await expect(page.getByRole("table", { name: "Other teams in this project" }).getByRole("row", { name: /T900/ })).toHaveCount(0);
+
+  await asRole(page, "admin");
+  await page.goto("/reference/projects/imaging");
+  await page.getByRole("form", { name: "Teams in the project" }).getByLabel("Include T900", { exact: true }).check();
+  await page.getByRole("form", { name: "Teams in the project" }).getByRole("button", { name: "Update teams" }).click();
+  await expect(page.getByRole("status")).toContainText("Updated 1 team");
 });
 
-test("removing a value stream takes its teams out of the project", async ({ page }) => {
-  await page.context().addCookies([{ name: "capacity-role", value: "manager", domain: "localhost", path: "/" }]);
+test("unticking a value stream takes its teams out of the project", async ({ page }) => {
+  await asRole(page, "admin");
+  await page.goto("/reference/projects/makeup-test");
+  const streams = page.getByRole("form", { name: "Value streams in the project" });
+  await streams.getByLabel("Include Radiology", { exact: true }).uncheck();
+  await streams.getByRole("button", { name: "Update value streams" }).click();
+  await expect(page.getByRole("status")).toContainText("Removed Radiology");
+  await asRole(page, "manager");
   await page.goto("/p/makeup-test");
-  await page.getByRole("table", { name: "Value streams in this project" }).getByRole("row", { name: /Radiology/ }).getByRole("button", { name: "Remove" }).click();
   await expect(page.getByRole("table", { name: "Value streams in this project" })).toHaveCount(0);
   await page.goto("/p/makeup-test/teams");
   await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T500/ })).toHaveCount(0);

@@ -58,6 +58,11 @@ test("an Admin adds a project on the Projects tab; managers then find it, empty"
   await form.getByLabel("Project name").fill("Cardiology");
   await form.getByRole("button", { name: "Create project" }).click();
   await expect(page.getByRole("status")).toContainText("Created Cardiology");
+  // FR-18s: straight on to its setup, where nothing is ticked yet.
+  await expect(page.getByRole("heading", { name: "Set up Cardiology" })).toBeVisible();
+  await expect(page.getByRole("form", { name: "Value streams in the project" }).getByRole("checkbox", { checked: true })).toHaveCount(0);
+  await expect(page.getByRole("form", { name: "Teams in the project" }).getByRole("checkbox", { checked: true })).toHaveCount(0);
+  await page.getByRole("link", { name: "← Projects" }).click();
   await expect(page.getByRole("table", { name: "Projects" }).getByRole("row", { name: /Cardiology/ })).toBeVisible();
 
   await asRole(page, "manager");
