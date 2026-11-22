@@ -41,6 +41,7 @@ test("Engineering managers see a team's details but can't edit them", async ({ p
   await expect(page.getByRole("form", { name: "Details" })).toHaveCount(0);
   await expect(page.getByRole("form", { name: "Rename" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Add team" })).toHaveCount(0);
+  await expect(page.getByRole("table", { name: "Team hierarchy" }).getByRole("rowheader")).toHaveText(["Team", "Parent team", "Grandparent team"]);
 });
 
 test("a team ID can't be used twice", async ({ page }) => {
@@ -163,6 +164,10 @@ test("the Admin edits a team's details", async ({ page }) => {
   await asRole(page, "admin");
   await page.goto("/reference/teams/T100");
   const form = page.getByRole("form", { name: "Details" });
+  // FR-18v (sean, 22 Nov 2026): one row each for the team, its parent and its grandparent; everything else above.
+  const levels = form.getByRole("table", { name: "Team hierarchy" });
+  await expect(levels.getByRole("rowheader")).toHaveText(["Team", "Parent team", "Grandparent team"]);
+  await expect(levels.getByRole("row", { name: /^Parent team/ }).getByLabel("Parent team lead email")).toBeVisible();
   await form.getByLabel("Parent team name", { exact: true }).fill("Clinical Services");
   await form.getByLabel("Top-level group", { exact: true }).fill("ORBIS");
   await form.getByLabel("Source headcount").fill("5");

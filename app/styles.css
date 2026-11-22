@@ -94,3 +94,13 @@ table.editable td.team-name input { min-width: 13em; }
 table.editable select[name^="idStatus:"] { min-width: 7.5em; }
 a.danger { color: #8a1f1f; }
 .edit-form textarea { width: 100%; font: inherit; padding: 6px 10px; }
+/* FR-18v: team details: other details on top, then a row each for team, parent and grandparent. */
+.details-meta { grid-template-columns: repeat(4, minmax(140px, 1fr)) !important; margin-bottom: 16px; }
+table.hierarchy-form { border-collapse: collapse; width: 100%; }
+table.hierarchy-form caption { text-align: left; font-weight: 600; padding-bottom: 6px; }
+table.hierarchy-form th, table.hierarchy-form td { text-align: left; padding: 4px 8px 4px 0; vertical-align: middle; }
+table.hierarchy-form thead th { font-weight: normal; color: var(--muted, #666); font-size: 0.9em; }
+table.hierarchy-form tbody th { white-space: nowrap; font-weight: 600; }
+table.hierarchy-form input { width: 100%; box-sizing: border-box; }
+table.hierarchy-form .fixed-name { display: inline-block; padding: 6px 0; }
+@media (max-width: 720px) { .details-meta { grid-template-columns: repeat(2, 1fr) !important; } }

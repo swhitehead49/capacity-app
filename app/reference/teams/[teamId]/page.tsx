@@ -38,7 +38,7 @@ export default async function EditMasterTeam({ params, searchParams }: { params:
 
       <h3>Details</h3>
       <p className="muted">The team&apos;s attributes from the original Teams spreadsheet. The ID stays Provisional until it is confirmed with the group leads.</p>
-      <DetailsForm teamId={team.id} values={{
+      <DetailsForm teamId={team.id} teamName={team.name} values={{
         leadEmail: team.leadEmail ?? "", parentTeamName: team.parentTeamName ?? "", parentTeamLeadEmail: team.parentTeamLeadEmail ?? "",
         grandparentTeamName: team.grandparentTeamName ?? "", grandparentTeamLeadEmail: team.grandparentTeamLeadEmail ?? "",
         topLevelGroup: team.topLevelGroup ?? "", topLevelLeadEmail: team.topLevelLeadEmail ?? "",

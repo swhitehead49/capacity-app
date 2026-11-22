@@ -101,39 +101,56 @@ export function BaseLocationForm({ teamId, current, locations }: { teamId: strin
   );
 }
 
-/** The workbook's team attributes (sean, 15 Nov 2026). */
-export function DetailsForm({ teamId, values }: { teamId: string; values: Record<string, string> }) {
+/** One level of the team hierarchy: the team, its parent or its grandparent (FR-18v). */
+const LEVELS = [
+  { label: "Team", prefix: "Team", name: null, first: "teamLeadFirstName", last: "teamLeadLastName", email: "leadEmail" },
+  { label: "Parent team", prefix: "Parent team", name: "parentTeamName", first: "parentTeamLeadFirstName", last: "parentTeamLeadLastName", email: "parentTeamLeadEmail" },
+  { label: "Grandparent team", prefix: "Grandparent team", name: "grandparentTeamName", first: "grandparentTeamLeadFirstName", last: "grandparentTeamLeadLastName", email: "grandparentTeamLeadEmail" },
+] as const;
+
+/**
+ * The workbook's team attributes (sean, 15 Nov 2026). Laid out as sean asked on 22 Nov 2026 (FR-18v):
+ * the other details on top, then one row each for the team, its parent and its grandparent.
+ */
+export function DetailsForm({ teamId, teamName, values }: { teamId: string; teamName: string; values: Record<string, string> }) {
   return (
     <ActionForm action={updateTeamDetailsAction} hidden={{ teamId }} values={values} submitLabel="Save details" label="Details">
       {(v) => (
-        <div className="grid">
-          <label>Team lead first name<input name="teamLeadFirstName" defaultValue={v.teamLeadFirstName} autoComplete="off" /></label>
-          <label>Team lead last name<input name="teamLeadLastName" defaultValue={v.teamLeadLastName} autoComplete="off" /></label>
-          <label>Team lead email<input name="leadEmail" defaultValue={v.leadEmail} /></label>
-          <label>Parent team name<input name="parentTeamName" defaultValue={v.parentTeamName} /></label>
-          <label>Parent team lead first name<input name="parentTeamLeadFirstName" defaultValue={v.parentTeamLeadFirstName} autoComplete="off" /></label>
-          <label>Parent team lead last name<input name="parentTeamLeadLastName" defaultValue={v.parentTeamLeadLastName} autoComplete="off" /></label>
-          <label>Parent team lead email<input name="parentTeamLeadEmail" defaultValue={v.parentTeamLeadEmail} /></label>
-          <label>Grandparent team name<input name="grandparentTeamName" defaultValue={v.grandparentTeamName} /></label>
-          <label>Grandparent team lead first name<input name="grandparentTeamLeadFirstName" defaultValue={v.grandparentTeamLeadFirstName} autoComplete="off" /></label>
-          <label>Grandparent team lead last name<input name="grandparentTeamLeadLastName" defaultValue={v.grandparentTeamLeadLastName} autoComplete="off" /></label>
-          <label>Grandparent team lead email<input name="grandparentTeamLeadEmail" defaultValue={v.grandparentTeamLeadEmail} /></label>
-          <label>Top-level group<input name="topLevelGroup" defaultValue={v.topLevelGroup} /></label>
-          <label>Top-level lead first name<input name="topLevelLeadFirstName" defaultValue={v.topLevelLeadFirstName} autoComplete="off" /></label>
-          <label>Top-level lead last name<input name="topLevelLeadLastName" defaultValue={v.topLevelLeadLastName} autoComplete="off" /></label>
-          <label>Top-level lead email<input name="topLevelLeadEmail" defaultValue={v.topLevelLeadEmail} /></label>
-          <label>Source headcount<input name="sourceHeadcount" type="number" step="1" min="0" defaultValue={v.sourceHeadcount} /></label>
-          <label>ID status
-            <select name="idStatus" defaultValue={v.idStatus}>{ID_STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
-          </label>
-          <label>Data quality flag<input name="dataQualityFlag" defaultValue={v.dataQualityFlag} /></label>
-          <label>Team type
-            <select name="teamType" defaultValue={v.teamType}>
-              <option value="">(not set)</option>
-              {TEAM_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </label>
-        </div>
+        <>
+          <div className="grid details-meta">
+            <label>Team type
+              <select name="teamType" defaultValue={v.teamType}>
+                <option value="">(not set)</option>
+                {TEAM_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+            <label>ID status
+              <select name="idStatus" defaultValue={v.idStatus}>{ID_STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
+            </label>
+            <label>Source headcount<input name="sourceHeadcount" type="number" step="1" min="0" defaultValue={v.sourceHeadcount} /></label>
+            <label>Data quality flag<input name="dataQualityFlag" defaultValue={v.dataQualityFlag} /></label>
+            <label>Top-level group<input name="topLevelGroup" defaultValue={v.topLevelGroup} /></label>
+            <label>Top-level lead first name<input name="topLevelLeadFirstName" defaultValue={v.topLevelLeadFirstName} autoComplete="off" /></label>
+            <label>Top-level lead last name<input name="topLevelLeadLastName" defaultValue={v.topLevelLeadLastName} autoComplete="off" /></label>
+            <label>Top-level lead email<input name="topLevelLeadEmail" defaultValue={v.topLevelLeadEmail} /></label>
+          </div>
+          <table className="hierarchy-form">
+            <caption>Team hierarchy</caption>
+            <thead><tr><td /><th scope="col">Team name</th><th scope="col">Lead first name</th><th scope="col">Lead last name</th><th scope="col">Lead email</th></tr></thead>
+            <tbody>
+              {LEVELS.map((l) => (
+                <tr key={l.label}>
+                  <th scope="row">{l.label}</th>
+                  <td>{l.name ? <input name={l.name} defaultValue={v[l.name]} aria-label={`${l.prefix} name`} /> : <span className="fixed-name">{teamName}</span>}</td>
+                  <td><input name={l.first} defaultValue={v[l.first]} aria-label={`${l.prefix} lead first name`} autoComplete="off" /></td>
+                  <td><input name={l.last} defaultValue={v[l.last]} aria-label={`${l.prefix} lead last name`} autoComplete="off" /></td>
+                  <td><input name={l.email} defaultValue={v[l.email]} aria-label={`${l.prefix} lead email`} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="muted hint">The team&apos;s own name is changed under Rename below.</p>
+        </>
       )}
     </ActionForm>
   );
