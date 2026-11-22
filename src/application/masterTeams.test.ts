@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import { getTeamDefaults } from "./getTeamDefaults";
-import { deleteMasterTeam, deleteProvisionalTeams, purgeTeam, purgePreview, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
+import { deleteMasterTeam, masterHeadcount, deleteProvisionalTeams, purgeTeam, purgePreview, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
 import { saveStandardAllocation } from "./standardAllocation";
 import { addTeam, changeValueStream, renameTeam, updateTeamDetails } from "./teams";
 
@@ -260,5 +260,24 @@ describe("purgeTeam", () => {
     expect((await shared.select().from(t.auditLog)).at(-1)).toMatchObject({ entity: "teams", entityId: "T2", action: "delete with all its data" });
     await syncTeams(project, shared, today); // it doesn't come back
     expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toBeUndefined();
+  });
+});
+
+// FR-18w (sean, 22 Nov 2026): the master list shows each team's headcount: the people on it today in every project.
+describe("masterHeadcount", () => {
+  it("adds up the team's current members in each project, and says which projects they are in", async () => {
+    await syncTeams(project, shared, today);
+    await shared.insert(t.people).values([{ email: "a@example.com" }, { email: "b@example.com" }]);
+    await shared.insert(t.assignments).values([
+      { personEmail: "a@example.com", teamId: "T1" }, { personEmail: "b@example.com", teamId: "T1", endDate: "2026-11-01" },
+    ]);
+    await project.insert(t.people).values([{ email: "c@example.com" }, { email: "d@example.com" }]);
+    await project.insert(t.assignments).values([{ personEmail: "c@example.com", teamId: "T1" }, { personEmail: "d@example.com", teamId: "T1" }]);
+    expect(await masterHeadcount(shared, [{ name: "Imaging", db: project }], "T1", today))
+      .toEqual({ total: 3, byProject: [{ project: "Default", n: 1 }, { project: "Imaging", n: 2 }] });
+  });
+
+  it("is 0 for a team nobody is on", async () => {
+    expect(await masterHeadcount(shared, [{ name: "Imaging", db: project }], "T2", today)).toEqual({ total: 0, byProject: [] });
   });
 });

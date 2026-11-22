@@ -170,7 +170,7 @@ test("the Admin edits a team's details", async ({ page }) => {
   await expect(levels.getByRole("row", { name: /^Parent team/ }).getByLabel("Parent team lead email")).toBeVisible();
   await form.getByLabel("Parent team name", { exact: true }).fill("Clinical Services");
   await form.getByLabel("Top-level group", { exact: true }).fill("ORBIS");
-  await form.getByLabel("Source headcount").fill("5");
+  await expect(form.getByLabel("Headcount", { exact: true })).toHaveValue("0"); // FR-18w: counted, not typed
   await form.getByLabel("ID status").selectOption("Confirmed");
   await form.getByRole("button", { name: "Save details" }).click();
   await expect(page.getByRole("status")).toContainText("Saved");

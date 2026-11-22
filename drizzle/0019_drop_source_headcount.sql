@@ -1,0 +1,1 @@
+ALTER TABLE "teams" DROP COLUMN "source_headcount";

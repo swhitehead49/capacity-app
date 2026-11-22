@@ -19,7 +19,7 @@ describe("parseTeamCsv", () => {
         parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com",
         grandparentTeamName: "ORBIS Vienna", grandparentTeamLeadEmail: "g@example.com",
         topLevelGroup: "ORBIS", topLevelLeadEmail: "t@example.com",
-        sourceHeadcount: 5, idStatus: "Confirmed", dataQualityFlag: "Multiple team leads", teamType: null,
+        idStatus: "Confirmed", dataQualityFlag: "Multiple team leads", teamType: null,
         teamLeadFirstName: null, teamLeadLastName: null, parentTeamLeadFirstName: null, parentTeamLeadLastName: null, grandparentTeamLeadFirstName: null, grandparentTeamLeadLastName: null, topLevelLeadFirstName: null, topLevelLeadLastName: null,
       }],
       errors: [],
@@ -29,7 +29,7 @@ describe("parseTeamCsv", () => {
   it("blank optional cells are empty, and a blank ID status means Provisional", () => {
     const csv = `${workbook}\nT074,Payments Core,,,,,,,,,,,,\n`;
     expect(parseTeamCsv(csv, { today }).teams[0]).toMatchObject({
-      leadEmail: null, parentTeamName: null, sourceHeadcount: null, idStatus: "Provisional", dataQualityFlag: null, valueStream: null, baseLocation: null,
+      leadEmail: null, parentTeamName: null, idStatus: "Provisional", dataQualityFlag: null, valueStream: null, baseLocation: null,
     });
   });
 
@@ -79,9 +79,14 @@ describe("parseTeamCsv", () => {
     expect(result.errors).toEqual([
       "Line 2: Name is needed",
       "Line 3: Lead email must look like name@company.com",
-      'Line 4: Source headcount must be a whole number, 0 or more',
       "Line 5: ID status must be Provisional or Confirmed",
     ]);
+  });
+
+  it("FR-18w: ignores a Source_Headcount column; the headcount comes from the team's members", () => {
+    const team = parseTeamCsv(`${workbook}\nT074,Core,,,,,,,,lots,,,,\n`, { today }).teams[0];
+    expect(team).toBeDefined();
+    expect(team).not.toHaveProperty("sourceHeadcount");
   });
 
   it("says when a start date is not a real date", () => {

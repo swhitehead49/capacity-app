@@ -263,10 +263,22 @@ export async function listValueStreams(db: Db): Promise<string[]> {
   return rows.flatMap((r) => (r.v ? [r.v] : []));
 }
 
+/** Memberships that are running on `today`. */
+const currentOn = (today: string) => {
+  const a = t.assignments;
+  return and(or(isNull(a.startDate), lte(a.startDate, today)), or(isNull(a.endDate), sql`${a.endDate} >= ${today}`));
+};
+
+/** FR-18w (sean, 22 Nov 2026): a team's headcount = the people on it today in this project. */
+export async function teamHeadcount(db: Pick<Db, "select">, teamId: string, today: string): Promise<number> {
+  const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(t.assignments).where(and(eq(t.assignments.teamId, teamId), currentOn(today)));
+  return row?.n ?? 0;
+}
+
 /** FR-19: every team, its status today and how many people are on it now. Optionally one value stream only. */
 export async function listTeamsOverview(db: Db, today: string, filter: { valueStream?: string; country?: string } = {}) {
   const a = t.assignments;
-  const current = and(or(isNull(a.startDate), lte(a.startDate, today)), or(isNull(a.endDate), sql`${a.endDate} >= ${today}`));
+  const current = currentOn(today);
   const counts = await db.select({ teamId: a.teamId, n: sql<number>`count(*)::int` }).from(a).where(current).groupBy(a.teamId);
   const teams = await db.select().from(t.teams)
     .where(filter.valueStream ? eq(t.teams.valueStream, filter.valueStream) : undefined)

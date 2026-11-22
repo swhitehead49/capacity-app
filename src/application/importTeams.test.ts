@@ -59,7 +59,7 @@ describe("importTeams", () => {
     const csv = "Team_ID,Team_Name,Parent_Team_Name,Source_Headcount,ID_Status,Value_Stream\nT074,Payments Core,Clinical Services,5,Confirmed,radiology\n";
     expect(await importTeams(db, actor, { today, csv })).toMatchObject({ ok: true, count: 1 });
     expect((await db.select().from(t.teams)).find((x) => x.id === "T074"))
-      .toMatchObject({ parentTeamName: "Clinical Services", sourceHeadcount: 5, idStatus: "Confirmed", valueStream: "Radiology" });
+      .toMatchObject({ parentTeamName: "Clinical Services", idStatus: "Confirmed", valueStream: "Radiology" });
   });
 
   it("refuses value streams that aren't in the reference data, and adds nothing", async () => {

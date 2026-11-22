@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTeamDetails } from "@/src/application/teams";
+import { getTeamDetails, teamHeadcount } from "@/src/application/teams";
 import { describeLead } from "@/src/domain/organisation/teamDetails";
 import { today } from "@/src/infrastructure/db/appDb";
 import { projectDb } from "@/app/lib/project";
@@ -15,6 +15,7 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
   const details = await getTeamDetails(db, { teamId, today: today() }).catch(() => null);
   if (!details) notFound();
   const { team, status, names, successors } = details;
+  const headcount = await teamHeadcount(db, team.id, today()); // FR-18w
 
   return (
     <>
@@ -31,7 +32,7 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
         <dt>Base location</dt><dd>{team.baseLocation ?? "Not set"}</dd>
         <dt>Team type</dt><dd>{team.teamType ?? "Not set"}</dd>
         <dt>ID status</dt><dd>{team.idStatus}</dd>
-        <dt>Source headcount</dt><dd>{team.sourceHeadcount ?? ""}</dd>
+        <dt>Headcount</dt><dd>{headcount} {headcount === 1 ? "person" : "people"} on the team today</dd>
         <dt>Top-level group</dt><dd>{team.topLevelGroup ?? ""}</dd>
         <dt>Top-level lead</dt><dd>{describeLead(team.topLevelLeadFirstName, team.topLevelLeadLastName, team.topLevelLeadEmail)}</dd>
       </dl>

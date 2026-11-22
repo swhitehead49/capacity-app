@@ -3,7 +3,7 @@ import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import { syncLocations } from "./referenceData";
 import { resolveStandard } from "./standardAllocation";
-import { changeBaseLocation, changeValueStream, firstDefault, membersStillOn, renameTeam, retireTeam, updateTeamDetails } from "./teams";
+import { changeBaseLocation, changeValueStream, firstDefault, membersStillOn, renameTeam, teamHeadcount, retireTeam, updateTeamDetails } from "./teams";
 import { LEAD_NAME_FIELDS, readTeamType } from "../domain/organisation/teamDetails";
 
 // Master team list (sean, 15 Nov 2026). The Admin keeps every team once, in the shared (Default) database.
@@ -14,7 +14,7 @@ import { LEAD_NAME_FIELDS, readTeamType } from "../domain/organisation/teamDetai
 /** The team attributes that come from the master list. */
 const MASTER_FIELDS = [
   "name", "leadEmail", "valueStream", "baseLocation", "parentTeamName", "parentTeamLeadEmail", "grandparentTeamName",
-  "grandparentTeamLeadEmail", "topLevelGroup", "topLevelLeadEmail", "sourceHeadcount", "idStatus", "dataQualityFlag",
+  "grandparentTeamLeadEmail", "topLevelGroup", "topLevelLeadEmail", "idStatus", "dataQualityFlag",
   "teamType", ...LEAD_NAME_FIELDS,
 ] as const;
 
@@ -288,4 +288,18 @@ export async function purgeTeam(
     });
   }
   return { ok: true };
+}
+
+/**
+ * FR-18w (sean, 22 Nov 2026): a team's headcount is the number of people on it today, not a number typed in.
+ * Members belong to projects, so the master list adds up every project ("Default" first) and says where they are.
+ */
+export async function masterHeadcount(shared: Db, projects: { name: string; db: Db }[], teamId: string, today: string) {
+  const all = [{ name: "Default", db: shared }, ...projects.filter((p) => p.db !== shared)];
+  const byProject: { project: string; n: number }[] = [];
+  for (const { name, db } of all) {
+    const n = await teamHeadcount(db, teamId, today);
+    if (n > 0) byProject.push({ project: name, n });
+  }
+  return { total: byProject.reduce((sum, p) => sum + p.n, 0), byProject };
 }

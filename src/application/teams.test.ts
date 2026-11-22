@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { seedDrgw } from "../infrastructure/db/fixtures";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { addTeam, changeBaseLocation, changeValueStream, updateTeamDetails, listTeamCountries, listTeamsOverview, listValueStreams, renameTeam, retireTeam, getTeamDetails } from "./teams";
+import { addTeam, changeBaseLocation, changeValueStream, updateTeamDetails, listTeamCountries, listTeamsOverview, listValueStreams, teamHeadcount, renameTeam, retireTeam, getTeamDetails } from "./teams";
 import { endMember } from "./teamMembers";
 
 // UC15 add, UC16 rename, UC17 retire a team (FR-18, BR-15 to BR-20, BR-23). Nothing is ever deleted.
@@ -71,14 +71,14 @@ describe("addTeam (UC15)", () => {
   });
 
   it("saves the workbook attributes, and a new team's ID is Provisional", async () => {
-    await addTeam(db, actor, { ...newTeam, parentTeamName: "Clinical Services", topLevelGroup: "ORBIS", sourceHeadcount: 5, dataQualityFlag: "Encoding review" });
+    await addTeam(db, actor, { ...newTeam, parentTeamName: "Clinical Services", topLevelGroup: "ORBIS", dataQualityFlag: "Encoding review" });
     expect(await team("T100")).toMatchObject({
-      parentTeamName: "Clinical Services", topLevelGroup: "ORBIS", sourceHeadcount: 5, dataQualityFlag: "Encoding review", idStatus: "Provisional",
+      parentTeamName: "Clinical Services", topLevelGroup: "ORBIS", dataQualityFlag: "Encoding review", idStatus: "Provisional",
     });
   });
 
   it("refuses details that don't look right", async () => {
-    expect(await addTeam(db, actor, { ...newTeam, sourceHeadcount: -2 })).toEqual({ ok: false, errors: ["Source headcount must be a whole number, 0 or more"] });
+    expect(await addTeam(db, actor, { ...newTeam, parentTeamLeadEmail: "nope" })).toEqual({ ok: false, errors: ["Parent team lead email must look like name@company.com"] });
   });
 
   it("takes the base location from the system's list and copies it into the project", async () => {
@@ -263,7 +263,7 @@ describe("updateTeamDetails (sean, 15 Nov 2026: the workbook's team attributes)"
   const details = {
     leadEmail: "lead@example.com", parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com",
     grandparentTeamName: "ORBIS Vienna", grandparentTeamLeadEmail: null, topLevelGroup: "ORBIS", topLevelLeadEmail: null,
-    sourceHeadcount: 7, idStatus: "Confirmed", dataQualityFlag: null, teamType: null,
+    idStatus: "Confirmed", dataQualityFlag: null, teamType: null,
     teamLeadFirstName: null, teamLeadLastName: null, parentTeamLeadFirstName: null, parentTeamLeadLastName: null, grandparentTeamLeadFirstName: null, grandparentTeamLeadLastName: null, topLevelLeadFirstName: null, topLevelLeadLastName: null,
   };
 
@@ -272,8 +272,8 @@ describe("updateTeamDetails (sean, 15 Nov 2026: the workbook's team attributes)"
     expect(await team("T001")).toMatchObject(details);
     const [entry] = await audit();
     expect(entry).toMatchObject({ entity: "teams", entityId: "T001", action: "change details" });
-    expect(entry?.before).toEqual({ leadEmail: null, parentTeamName: null, parentTeamLeadEmail: null, grandparentTeamName: null, topLevelGroup: null, sourceHeadcount: null, idStatus: "Provisional" });
-    expect(entry?.after).toEqual({ leadEmail: "lead@example.com", parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com", grandparentTeamName: "ORBIS Vienna", topLevelGroup: "ORBIS", sourceHeadcount: 7, idStatus: "Confirmed" });
+    expect(entry?.before).toEqual({ leadEmail: null, parentTeamName: null, parentTeamLeadEmail: null, grandparentTeamName: null, topLevelGroup: null, idStatus: "Provisional" });
+    expect(entry?.after).toEqual({ leadEmail: "lead@example.com", parentTeamName: "Clinical Services", parentTeamLeadEmail: "p@example.com", grandparentTeamName: "ORBIS Vienna", topLevelGroup: "ORBIS", idStatus: "Confirmed" });
   });
 
   it("says when nothing changed", async () => {
@@ -291,5 +291,19 @@ describe("updateTeamDetails (sean, 15 Nov 2026: the workbook's team attributes)"
 describe("listTeamCountries", () => {
   it("lists the countries of the project's locations, for the country filter", async () => {
     expect(await listTeamCountries(db)).toEqual(["DE"]);
+  });
+});
+
+// FR-18w (sean, 22 Nov 2026): the headcount is not typed in; it is the number of people on the team today.
+describe("teamHeadcount", () => {
+  it("counts the people on the team today", async () => {
+    expect(await teamHeadcount(db, "T017", "2026-11-08")).toBe(10);
+    expect(await teamHeadcount(db, "T001", "2026-11-08")).toBe(0);
+  });
+
+  it("leaves out people who have left or not started yet", async () => {
+    await db.update(t.assignments).set({ endDate: "2026-11-01" }).where(eq(t.assignments.personEmail, "a@example.com"));
+    await db.update(t.assignments).set({ startDate: "2026-12-01" }).where(eq(t.assignments.personEmail, "b@example.com"));
+    expect(await teamHeadcount(db, "T017", "2026-11-08")).toBe(8);
   });
 });

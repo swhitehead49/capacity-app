@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getReferenceData } from "@/src/application/referenceData";
 import { getTeamDetails } from "@/src/application/teams";
+import { masterHeadcount } from "@/src/application/masterTeams";
+import { allProjectDbs } from "../projectDbs";
 import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
@@ -20,6 +22,9 @@ export default async function EditMasterTeam({ params, searchParams }: { params:
   const { team, names, status, successors } = details;
   const otherTeams = (await listTeams(shared)).filter((x) => x.value !== team.id);
   const { valueStreams } = await getReferenceData(shared);
+  // FR-18w: the people on the team today, added up over every project.
+  const count = await masterHeadcount(shared, await allProjectDbs(), team.id, today());
+  const headcount = count.byProject.length > 1 ? `${count.total} (${count.byProject.map((p) => `${p.project} ${p.n}`).join(", ")})` : String(count.total);
 
   return (
     <>
@@ -38,11 +43,11 @@ export default async function EditMasterTeam({ params, searchParams }: { params:
 
       <h3>Details</h3>
       <p className="muted">The team&apos;s attributes from the original Teams spreadsheet. The ID stays Provisional until it is confirmed with the group leads.</p>
-      <DetailsForm teamId={team.id} teamName={team.name} values={{
+      <DetailsForm teamId={team.id} teamName={team.name} headcount={headcount} values={{
         leadEmail: team.leadEmail ?? "", parentTeamName: team.parentTeamName ?? "", parentTeamLeadEmail: team.parentTeamLeadEmail ?? "",
         grandparentTeamName: team.grandparentTeamName ?? "", grandparentTeamLeadEmail: team.grandparentTeamLeadEmail ?? "",
         topLevelGroup: team.topLevelGroup ?? "", topLevelLeadEmail: team.topLevelLeadEmail ?? "",
-        sourceHeadcount: team.sourceHeadcount === null ? "" : String(team.sourceHeadcount), idStatus: team.idStatus, dataQualityFlag: team.dataQualityFlag ?? "",
+        idStatus: team.idStatus, dataQualityFlag: team.dataQualityFlag ?? "",
         teamType: team.teamType ?? "",
         teamLeadFirstName: team.teamLeadFirstName ?? "", teamLeadLastName: team.teamLeadLastName ?? "",
         parentTeamLeadFirstName: team.parentTeamLeadFirstName ?? "", parentTeamLeadLastName: team.parentTeamLeadLastName ?? "",

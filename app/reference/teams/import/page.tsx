@@ -14,7 +14,7 @@ export default async function ImportTeams({ searchParams }: { searchParams: Prom
         In Excel, save the sheet as CSV (File → Save As → CSV UTF-8). The first line holds the headings of the original Teams
         sheet: <code>Team_ID</code> and <code>Team_Name</code> are needed; <code>Team_Lead_Email</code>, <code>Parent_Team_Name</code>,
         {" "}<code>Parent_Team_Lead_Email</code>, <code>Grandparent_Team_Name</code>, <code>Grandparent_Team_Lead_Email</code>,
-        {" "}<code>Top_Level_Group</code>, <code>Top_Level_Lead_Email</code>, <code>Source_Headcount</code>, <code>ID_Status</code>
+        {" "}<code>Top_Level_Group</code>, <code>Top_Level_Lead_Email</code>, <code>ID_Status</code>
         {" "}(Provisional or Confirmed; blank means Provisional), <code>Data_Quality_Flag</code>, <code>Team_Type</code>
         {" "}(Mission Team, Domain Team or Enabling Team), a <code>_First_Name</code> and <code>_Last_Name</code> column for each lead
         {" "}(e.g. <code>Team_Lead_First_Name</code>, <code>Parent_Team_Lead_Last_Name</code>, <code>Top_Level_Lead_First_Name</code>),

@@ -12,7 +12,6 @@ export interface TeamDetails {
   grandparentTeamLeadEmail: string | null;
   topLevelGroup: string | null;
   topLevelLeadEmail: string | null;
-  sourceHeadcount: number | null;
   idStatus: string;
   dataQualityFlag: string | null;
   teamType: string | null;
@@ -41,7 +40,7 @@ const LEAD_NAME_LABELS: Record<(typeof LEAD_NAME_FIELDS)[number], string> = {
 
 export const TEAM_DETAIL_FIELDS = [
   "parentTeamName", "parentTeamLeadEmail", "grandparentTeamName", "grandparentTeamLeadEmail",
-  "topLevelGroup", "topLevelLeadEmail", "sourceHeadcount", "idStatus", "dataQualityFlag", "teamType",
+  "topLevelGroup", "topLevelLeadEmail", "idStatus", "dataQualityFlag", "teamType",
   "teamLeadFirstName", "teamLeadLastName", "parentTeamLeadFirstName", "parentTeamLeadLastName",
   "grandparentTeamLeadFirstName", "grandparentTeamLeadLastName", "topLevelLeadFirstName", "topLevelLeadLastName",
 ] as const satisfies readonly (keyof TeamDetails)[];
@@ -49,7 +48,7 @@ export const TEAM_DETAIL_FIELDS = [
 export function emptyTeamDetails(): TeamDetails {
   return {
     parentTeamName: null, parentTeamLeadEmail: null, grandparentTeamName: null, grandparentTeamLeadEmail: null,
-    topLevelGroup: null, topLevelLeadEmail: null, sourceHeadcount: null, idStatus: "Provisional", dataQualityFlag: null, teamType: null,
+    topLevelGroup: null, topLevelLeadEmail: null, idStatus: "Provisional", dataQualityFlag: null, teamType: null,
     ...(Object.fromEntries(LEAD_NAME_FIELDS.map((k) => [k, null])) as Record<(typeof LEAD_NAME_FIELDS)[number], null>),
   };
 }
@@ -64,8 +63,6 @@ export function validateTeamDetails(details: TeamDetails): string[] {
     [details.topLevelLeadEmail, "Top-level lead email"],
   ];
   for (const [email, label] of emails) if (email && !looksLikeEmail(email)) errors.push(`${label} must look like name@company.com`);
-  const n = details.sourceHeadcount;
-  if (n !== null && !(Number.isInteger(n) && n >= 0)) errors.push("Source headcount must be a whole number, 0 or more");
   if (!(ID_STATUSES as readonly string[]).includes(details.idStatus)) errors.push("ID status must be Provisional or Confirmed");
   if (details.teamType !== null && !(TEAM_TYPES as readonly string[]).includes(details.teamType)) {
     errors.push("Team type must be Mission Team, Domain Team or Enabling Team");
@@ -82,11 +79,6 @@ export function describeLead(firstName: string | null, lastName: string | null, 
   return name && email ? `${name} (${email})` : name || email || "";
 }
 
-/** A headcount typed in a form or a spreadsheet: blank = none; anything else that isn't a number stays NaN so it fails the check. */
-export function readHeadcount(raw: string): number | null {
-  const text = raw.trim();
-  return text === "" ? null : Number(text);
-}
 
 /** A team type typed in a form or a spreadsheet: any case, "Team" optional; blank = none; anything else stays as typed so the check names it. */
 export function readTeamType(raw: string): string | null {

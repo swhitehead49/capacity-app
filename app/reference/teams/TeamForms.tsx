@@ -112,12 +112,14 @@ const LEVELS = [
  * The workbook's team attributes (sean, 15 Nov 2026). Laid out as sean asked on 22 Nov 2026 (FR-18v):
  * the other details on top, then one row each for the team, its parent and its grandparent.
  */
-export function DetailsForm({ teamId, teamName, values }: { teamId: string; teamName: string; values: Record<string, string> }) {
+export function DetailsForm({ teamId, teamName, headcount, values }: { teamId: string; teamName: string; headcount: string; values: Record<string, string> }) {
   return (
     <ActionForm action={updateTeamDetailsAction} hidden={{ teamId }} values={values} submitLabel="Save details" label="Details">
       {(v) => (
         <>
           <div className="grid details-meta">
+            {/* FR-18w: counted from the team's members, so it can't be typed in. */}
+            <label>Headcount<input value={headcount} readOnly className="readonly-value" title="The people on the team today, in every project" /></label>
             <label>Team type
               <select name="teamType" defaultValue={v.teamType}>
                 <option value="">(not set)</option>
@@ -127,7 +129,6 @@ export function DetailsForm({ teamId, teamName, values }: { teamId: string; team
             <label>ID status
               <select name="idStatus" defaultValue={v.idStatus}>{ID_STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
             </label>
-            <label>Source headcount<input name="sourceHeadcount" type="number" step="1" min="0" defaultValue={v.sourceHeadcount} /></label>
             <label>Data quality flag<input name="dataQualityFlag" defaultValue={v.dataQualityFlag} /></label>
             <label>Top-level group<input name="topLevelGroup" defaultValue={v.topLevelGroup} /></label>
             <label>Top-level lead first name<input name="topLevelLeadFirstName" defaultValue={v.topLevelLeadFirstName} autoComplete="off" /></label>

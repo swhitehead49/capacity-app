@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { readHeadcount, readTeamType } from "@/src/domain/organisation/teamDetails";
+import { readTeamType } from "@/src/domain/organisation/teamDetails";
 import { addTeam, changeBaseLocation, changeValueStream, renameTeam, updateTeamDetails } from "@/src/application/teams";
 import { importTeams } from "@/src/application/importTeams";
 import { deleteMasterTeam, deleteProvisionalTeams, purgeTeam, retireMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
@@ -78,7 +78,7 @@ export async function updateTeamDetailsAction(previous: FormState, form: FormDat
     parentTeamName: optional("parentTeamName"), parentTeamLeadEmail: optional("parentTeamLeadEmail"),
     grandparentTeamName: optional("grandparentTeamName"), grandparentTeamLeadEmail: optional("grandparentTeamLeadEmail"),
     topLevelGroup: optional("topLevelGroup"), topLevelLeadEmail: optional("topLevelLeadEmail"),
-    sourceHeadcount: readHeadcount(read(form, "sourceHeadcount")), idStatus: read(form, "idStatus"), dataQualityFlag: optional("dataQualityFlag"),
+    idStatus: read(form, "idStatus"), dataQualityFlag: optional("dataQualityFlag"),
     teamType: readTeamType(read(form, "teamType")),
     teamLeadFirstName: optional("teamLeadFirstName"), teamLeadLastName: optional("teamLeadLastName"),
     parentTeamLeadFirstName: optional("parentTeamLeadFirstName"), parentTeamLeadLastName: optional("parentTeamLeadLastName"),
