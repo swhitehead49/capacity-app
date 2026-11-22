@@ -1,4 +1,4 @@
-import { DEFAULT_PROJECT, projectIdFromName, validateProject } from "../domain/projects/projectRules";
+import { projectIdFromName, validateProject } from "../domain/projects/projectRules";
 import { sameName } from "../domain/organisation/teamRules";
 import { findProject, insertProject, listProjects, updateProject } from "../infrastructure/db/projectDatabases";
 import * as t from "../infrastructure/db/schema";
@@ -44,9 +44,11 @@ export async function renameProject(db: Db, actor: string, request: { id: string
   return { ok: true, id: project.id };
 }
 
-/** Hides the project from the picker. Its data is kept, and it can be restored. */
+/**
+ * Hides the project from the picker. Its data is kept, and it can be restored.
+ * Default too (FR-18y, sean 22 Nov 2026): what all projects share lives in its database and keeps working.
+ */
 export async function archiveProject(db: Db, actor: string, request: { id: string }): Promise<ProjectResult> {
-  if (request.id === DEFAULT_PROJECT) return { ok: false, errors: ["The Default project can't be archived"] };
   const project = await findProject(db, request.id);
   if (!project) return { ok: false, errors: ["This project no longer exists"] };
   await updateProject(db, project.id, { archived: true });

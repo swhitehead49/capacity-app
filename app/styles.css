@@ -105,3 +105,6 @@ table.hierarchy-form input { width: 100%; box-sizing: border-box; }
 table.hierarchy-form .fixed-name { display: inline-block; padding: 6px 0; }
 @media (max-width: 720px) { .details-meta { grid-template-columns: repeat(2, 1fr) !important; } }
 .readonly-value { background: transparent; border-style: dashed; font-weight: 600; }
+/* FR-18y: Set up and Archive/Restore side by side on the Projects tab */
+td.row-actions { display: flex; gap: 8px; align-items: center; }
+form.inline { display: inline; margin: 0; }

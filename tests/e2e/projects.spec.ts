@@ -140,3 +140,16 @@ test("an old Settings link opens the project's Project reference data", async ({
   await expect(page.getByRole("heading", { name: "Standard allocation for new teams" })).toBeVisible();
 });
 
+
+// FR-18y (sean, 22 Nov 2026): the Admin archives and restores any project, Default included, on the Projects tab.
+test("the Admin archives and restores a project on Reference data → Projects", async ({ page }) => {
+  await createProject(page, "Archive Me");
+  await asRole(page, "admin");
+  await page.goto("/reference/projects");
+  await page.getByRole("button", { name: "Archive Archive Me" }).click();
+  await expect(page.getByRole("status")).toContainText("Archived archive-me");
+  await expect(page.getByRole("row", { name: /Archive Me/ })).toContainText("Archived");
+  await page.getByRole("button", { name: "Restore Archive Me" }).click();
+  await expect(page.getByRole("status")).toContainText("Restored archive-me");
+  await expect(page.getByRole("button", { name: "Archive Default" })).toBeVisible(); // Default can be archived too
+});

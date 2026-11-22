@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { updateProjectTeams, updateProjectValueStreams } from "@/src/application/projectValueStreams";
+import { archiveProject, restoreProject } from "@/src/application/projects";
+import { getDb } from "@/src/infrastructure/db/appDb";
 import { projectDb, sharedDb } from "@/app/lib/project";
 
 // FR-18s (sean, 22 Nov 2026): the Admin sets up each project's value streams and teams. v1 has one actor.
@@ -25,4 +27,17 @@ export async function updateTeamsAction(form: FormData) {
   });
   if (!result.ok) redirect(setupPage(projectId, { error: result.errors.join("\n") }));
   redirect(setupPage(projectId, { teams: String(result.changed) }));
+}
+
+/** FR-18y (sean, 22 Nov 2026): the Admin archives or restores any project, Default included, from the Projects tab. */
+export async function archiveFromListAction(form: FormData) {
+  const projectId = String(form.get("projectId") ?? "");
+  const result = await archiveProject(await getDb(), ACTOR, { id: projectId });
+  redirect(`/reference/projects?${new URLSearchParams(result.ok ? { archived: projectId } : { error: result.errors.join("\n") })}`);
+}
+
+export async function restoreFromListAction(form: FormData) {
+  const projectId = String(form.get("projectId") ?? "");
+  const result = await restoreProject(await getDb(), ACTOR, { id: projectId });
+  redirect(`/reference/projects?${new URLSearchParams(result.ok ? { restored: projectId } : { error: result.errors.join("\n") })}`);
 }

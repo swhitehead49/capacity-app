@@ -52,7 +52,11 @@ describe("archiveProject and restoreProject", () => {
     expect((await findProject(db, "imaging"))?.archivedAt).toBeNull();
   });
 
-  it("the Default project can't be archived", async () => {
-    expect(await archiveProject(db, actor, { id: "default" })).toEqual({ ok: false, errors: ["The Default project can't be archived"] });
+  // FR-18y (sean, 22 Nov 2026): "I want to retire default as a project". Its database still holds what all projects share
+  // (master team list, sprint calendar, reference data); archiving only hides it from managers' project list.
+  it("the Default project can be archived and restored too", async () => {
+    expect(await archiveProject(db, actor, { id: "default" })).toEqual({ ok: true, id: "default" });
+    expect((await findProject(db, "default"))?.archivedAt).toBeInstanceOf(Date);
+    expect(await restoreProject(db, actor, { id: "default" })).toEqual({ ok: true, id: "default" });
   });
 });

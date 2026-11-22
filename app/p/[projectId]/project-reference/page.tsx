@@ -1,5 +1,4 @@
 import { getStandardAllocation, getSystemStandard } from "@/src/application/standardAllocation";
-import { DEFAULT_PROJECT } from "@/src/domain/projects/projectRules";
 import { projectDb, sharedDb } from "@/app/lib/project";
 import { describeStandard, standardFormValues } from "@/app/lib/standardValues";
 import { archiveProjectAction } from "@/app/projects/actions";
@@ -52,13 +51,11 @@ export default async function ProjectReferenceData({ params, searchParams }: {
       <h2 id="project">Project</h2>
       <p className="muted">Its web address stays /p/{project.id} after a rename, so links keep working.</p>
       <RenameProjectForm projectId={project.id} name={project.name} />
-      {project.id !== DEFAULT_PROJECT && (
-        <form action={archiveProjectAction} className="archive">
-          <input type="hidden" name="projectId" value={project.id} />
-          <p className="muted">Archiving hides the project from the project list. Nothing is deleted, and you can restore it there.</p>
-          <button type="submit" className="secondary danger">Archive project</button>
-        </form>
-      )}
+      <form action={archiveProjectAction} className="archive">
+        <input type="hidden" name="projectId" value={project.id} />
+        <p className="muted">Archiving hides the project from the project list. Nothing is deleted, and you can restore it there.</p>
+        <button type="submit" className="secondary danger">Archive project</button>
+      </form>
     </>
   );
 }
