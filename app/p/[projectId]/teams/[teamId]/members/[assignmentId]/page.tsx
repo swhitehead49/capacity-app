@@ -16,6 +16,8 @@ export default async function EditMember({ params }: { params: Promise<{ project
   if (!member || member.teamId !== teamId) notFound();
   const teams = (await listTeams(db)).filter((team) => team.value !== teamId);
   const values = {
+    firstName: member.firstName ?? "",
+    lastName: member.lastName ?? "",
     teamAllocation: percent(member.teamAllocation),
     sharedResource: member.sharedResource ? "on" : "",
     locationCode: member.locationCode ?? "",

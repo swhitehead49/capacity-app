@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateMembership, validatePerson, validateEndDate, dayBefore } from "./memberRules";
+import { cleanName, fullName, validateMembership, validatePerson, validateEndDate, dayBefore } from "./memberRules";
 
 // FR-03, FR-05, BR-21, BR-22: what a team member record needs before it is saved.
 
@@ -68,5 +68,18 @@ describe("dayBefore", () => {
   it("a move on 1 Dec ends the old membership on 30 Nov, so no day counts twice (BR-22)", () => {
     expect(dayBefore("2026-12-01")).toBe("2026-11-30");
     expect(dayBefore("2027-01-01")).toBe("2026-12-31");
+  });
+});
+
+describe("names (FR-05a, sean 22 Nov 2026)", () => {
+  it("cleans a typed name: trimmed, single spaces, blank = none", () => {
+    expect(cleanName("  Mary   Ann ")).toBe("Mary Ann");
+    expect(cleanName("   ")).toBeNull();
+  });
+
+  it("shows whichever parts of the name are known", () => {
+    expect(fullName({ firstName: "Ada", lastName: "Lovelace" })).toBe("Ada Lovelace");
+    expect(fullName({ firstName: null, lastName: "Lovelace" })).toBe("Lovelace");
+    expect(fullName({ firstName: null, lastName: null })).toBeNull();
   });
 });

@@ -20,6 +20,7 @@ describe("parseTeamCsv", () => {
         grandparentTeamName: "ORBIS Vienna", grandparentTeamLeadEmail: "g@example.com",
         topLevelGroup: "ORBIS", topLevelLeadEmail: "t@example.com",
         sourceHeadcount: 5, idStatus: "Confirmed", dataQualityFlag: "Multiple team leads", teamType: null,
+        teamLeadFirstName: null, teamLeadLastName: null, parentTeamLeadFirstName: null, parentTeamLeadLastName: null, grandparentTeamLeadFirstName: null, grandparentTeamLeadLastName: null, topLevelLeadFirstName: null, topLevelLeadLastName: null,
       }],
       errors: [],
     });
@@ -29,6 +30,16 @@ describe("parseTeamCsv", () => {
     const csv = `${workbook}\nT074,Payments Core,,,,,,,,,,,,\n`;
     expect(parseTeamCsv(csv, { today }).teams[0]).toMatchObject({
       leadEmail: null, parentTeamName: null, sourceHeadcount: null, idStatus: "Provisional", dataQualityFlag: null, valueStream: null, baseLocation: null,
+    });
+  });
+
+  it("FR-18p: reads each lead's first and last name", () => {
+    const csv = "Team_ID,Team_Name,Team_Lead_First_Name,Team_Lead_Last_Name,Parent_Team_Lead_First_Name,Parent_Team_Lead_Last_Name,"
+      + "Grandparent_Team_Lead_First_Name,Grandparent_Team_Lead_Last_Name,Top_Level_Lead_First_Name,Top_Level_Lead_Last_Name\n"
+      + "T074,Payments Core, Ada ,Lovelace,Grace,Hopper,Alan,Turing,Edsger,\n";
+    expect(parseTeamCsv(csv, { today }).teams[0]).toMatchObject({
+      teamLeadFirstName: "Ada", teamLeadLastName: "Lovelace", parentTeamLeadFirstName: "Grace", parentTeamLeadLastName: "Hopper",
+      grandparentTeamLeadFirstName: "Alan", grandparentTeamLeadLastName: "Turing", topLevelLeadFirstName: "Edsger", topLevelLeadLastName: null,
     });
   });
 

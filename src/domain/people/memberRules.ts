@@ -4,6 +4,8 @@ import type { IsoDate } from "../capacity/workingWindow";
 
 export interface PersonFields {
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   contractedHours: number | null;
   employmentStart: IsoDate | null;
   employmentEnd: IsoDate | null;
@@ -14,10 +16,26 @@ export interface MembershipFields {
   startDate: IsoDate;
 }
 
+/** FR-05a (sean, 22 Nov 2026): first and last names are optional. */
+export const NAME_LIMIT = 100;
+
+/** A name as typed: trimmed, blank = none. */
+export function cleanName(name: string | null | undefined): string | null {
+  const text = (name ?? "").trim().replace(/\s+/g, " ");
+  return text === "" ? null : text;
+}
+
+/** "Ada Lovelace", or whichever part is known; null when neither is. */
+export function fullName(person: { firstName: string | null; lastName: string | null }): string | null {
+  return [person.firstName, person.lastName].filter(Boolean).join(" ") || null;
+}
+
 /** Blanks are allowed: an incomplete person is saved and flagged (FR-04). Wrong values are not. */
 export function validatePerson(person: PersonFields): string[] {
   const errors: string[] = [];
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email)) errors.push("Email must look like name@company.com");
+  if ((person.firstName ?? "").length > NAME_LIMIT) errors.push(`First name must be at most ${NAME_LIMIT} characters`);
+  if ((person.lastName ?? "").length > NAME_LIMIT) errors.push(`Last name must be at most ${NAME_LIMIT} characters`);
   const hours = person.contractedHours;
   if (hours !== null && (!Number.isFinite(hours) || hours < 1 || hours > 60)) errors.push("Contracted hours must be between 1 and 60");
   if (person.employmentStart && person.employmentEnd && person.employmentEnd < person.employmentStart) {

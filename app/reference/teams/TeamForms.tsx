@@ -107,12 +107,20 @@ export function DetailsForm({ teamId, values }: { teamId: string; values: Record
     <ActionForm action={updateTeamDetailsAction} hidden={{ teamId }} values={values} submitLabel="Save details" label="Details">
       {(v) => (
         <div className="grid">
+          <label>Team lead first name<input name="teamLeadFirstName" defaultValue={v.teamLeadFirstName} autoComplete="off" /></label>
+          <label>Team lead last name<input name="teamLeadLastName" defaultValue={v.teamLeadLastName} autoComplete="off" /></label>
           <label>Team lead email<input name="leadEmail" defaultValue={v.leadEmail} /></label>
           <label>Parent team name<input name="parentTeamName" defaultValue={v.parentTeamName} /></label>
+          <label>Parent team lead first name<input name="parentTeamLeadFirstName" defaultValue={v.parentTeamLeadFirstName} autoComplete="off" /></label>
+          <label>Parent team lead last name<input name="parentTeamLeadLastName" defaultValue={v.parentTeamLeadLastName} autoComplete="off" /></label>
           <label>Parent team lead email<input name="parentTeamLeadEmail" defaultValue={v.parentTeamLeadEmail} /></label>
           <label>Grandparent team name<input name="grandparentTeamName" defaultValue={v.grandparentTeamName} /></label>
+          <label>Grandparent team lead first name<input name="grandparentTeamLeadFirstName" defaultValue={v.grandparentTeamLeadFirstName} autoComplete="off" /></label>
+          <label>Grandparent team lead last name<input name="grandparentTeamLeadLastName" defaultValue={v.grandparentTeamLeadLastName} autoComplete="off" /></label>
           <label>Grandparent team lead email<input name="grandparentTeamLeadEmail" defaultValue={v.grandparentTeamLeadEmail} /></label>
           <label>Top-level group<input name="topLevelGroup" defaultValue={v.topLevelGroup} /></label>
+          <label>Top-level lead first name<input name="topLevelLeadFirstName" defaultValue={v.topLevelLeadFirstName} autoComplete="off" /></label>
+          <label>Top-level lead last name<input name="topLevelLeadLastName" defaultValue={v.topLevelLeadLastName} autoComplete="off" /></label>
           <label>Top-level lead email<input name="topLevelLeadEmail" defaultValue={v.topLevelLeadEmail} /></label>
           <label>Source headcount<input name="sourceHeadcount" type="number" step="1" min="0" defaultValue={v.sourceHeadcount} /></label>
           <label>ID status

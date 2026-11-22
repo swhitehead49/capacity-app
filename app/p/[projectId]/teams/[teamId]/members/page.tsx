@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTeamMembers, type MemberRow } from "@/src/application/teamMembers";
+import { fullName } from "@/src/domain/people/memberRules";
 import { today } from "@/src/infrastructure/db/appDb";
 import { projectDb } from "@/app/lib/project";
 import { formatDate, percent } from "@/app/lib/format";
@@ -33,14 +34,15 @@ function MemberTable({ caption, rows, projectId, teamId }: { caption: string; ro
       <caption>{caption}</caption>
       <thead>
         <tr>
-          <th>Email</th><th>Role</th><th>Location</th><th>Hours</th><th>Team %</th><th>Shared</th>
+          <th>Name</th><th>Email</th><th>Role</th><th>Location</th><th>Hours</th><th>Team %</th><th>Shared</th>
           <th>From</th><th>To</th><th>Inputs</th><th></th><th></th>
         </tr>
       </thead>
       <tbody>
-        {rows.length === 0 && <tr><td colSpan={11} className="empty">Nobody yet.</td></tr>}
+        {rows.length === 0 && <tr><td colSpan={12} className="empty">Nobody yet.</td></tr>}
         {rows.map((m) => (
           <tr key={m.assignmentId}>
+            <td>{fullName(m)}</td>
             <td>{m.email}</td>
             <td>{m.role}</td>
             <td>{m.locationCode}</td>

@@ -4,7 +4,7 @@ import type { Db } from "../infrastructure/db/testDb";
 import { syncLocations } from "./referenceData";
 import { resolveStandard } from "./standardAllocation";
 import { changeBaseLocation, changeValueStream, firstDefault, membersStillOn, renameTeam, retireTeam, updateTeamDetails } from "./teams";
-import { readTeamType } from "../domain/organisation/teamDetails";
+import { LEAD_NAME_FIELDS, readTeamType } from "../domain/organisation/teamDetails";
 
 // Master team list (sean, 15 Nov 2026). The Admin keeps every team once, in the shared (Default) database.
 // Each project holds a copy of every team, kept up to date here, because its members, allocations and plans refer to it.
@@ -15,7 +15,7 @@ import { readTeamType } from "../domain/organisation/teamDetails";
 const MASTER_FIELDS = [
   "name", "leadEmail", "valueStream", "baseLocation", "parentTeamName", "parentTeamLeadEmail", "grandparentTeamName",
   "grandparentTeamLeadEmail", "topLevelGroup", "topLevelLeadEmail", "sourceHeadcount", "idStatus", "dataQualityFlag",
-  "teamType",
+  "teamType", ...LEAD_NAME_FIELDS,
 ] as const;
 
 type TeamRow = typeof t.teams.$inferSelect;

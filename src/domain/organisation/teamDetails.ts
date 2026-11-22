@@ -16,17 +16,41 @@ export interface TeamDetails {
   idStatus: string;
   dataQualityFlag: string | null;
   teamType: string | null;
+  teamLeadFirstName: string | null;
+  teamLeadLastName: string | null;
+  parentTeamLeadFirstName: string | null;
+  parentTeamLeadLastName: string | null;
+  grandparentTeamLeadFirstName: string | null;
+  grandparentTeamLeadLastName: string | null;
+  topLevelLeadFirstName: string | null;
+  topLevelLeadLastName: string | null;
 }
+
+/** FR-18p (sean, 22 Nov 2026): every lead in the hierarchy has an optional first and last name beside their email. */
+export const LEAD_NAME_FIELDS = [
+  "teamLeadFirstName", "teamLeadLastName", "parentTeamLeadFirstName", "parentTeamLeadLastName",
+  "grandparentTeamLeadFirstName", "grandparentTeamLeadLastName", "topLevelLeadFirstName", "topLevelLeadLastName",
+] as const;
+
+const LEAD_NAME_LABELS: Record<(typeof LEAD_NAME_FIELDS)[number], string> = {
+  teamLeadFirstName: "Team lead first name", teamLeadLastName: "Team lead last name",
+  parentTeamLeadFirstName: "Parent team lead first name", parentTeamLeadLastName: "Parent team lead last name",
+  grandparentTeamLeadFirstName: "Grandparent team lead first name", grandparentTeamLeadLastName: "Grandparent team lead last name",
+  topLevelLeadFirstName: "Top-level lead first name", topLevelLeadLastName: "Top-level lead last name",
+};
 
 export const TEAM_DETAIL_FIELDS = [
   "parentTeamName", "parentTeamLeadEmail", "grandparentTeamName", "grandparentTeamLeadEmail",
   "topLevelGroup", "topLevelLeadEmail", "sourceHeadcount", "idStatus", "dataQualityFlag", "teamType",
+  "teamLeadFirstName", "teamLeadLastName", "parentTeamLeadFirstName", "parentTeamLeadLastName",
+  "grandparentTeamLeadFirstName", "grandparentTeamLeadLastName", "topLevelLeadFirstName", "topLevelLeadLastName",
 ] as const satisfies readonly (keyof TeamDetails)[];
 
 export function emptyTeamDetails(): TeamDetails {
   return {
     parentTeamName: null, parentTeamLeadEmail: null, grandparentTeamName: null, grandparentTeamLeadEmail: null,
     topLevelGroup: null, topLevelLeadEmail: null, sourceHeadcount: null, idStatus: "Provisional", dataQualityFlag: null, teamType: null,
+    ...(Object.fromEntries(LEAD_NAME_FIELDS.map((k) => [k, null])) as Record<(typeof LEAD_NAME_FIELDS)[number], null>),
   };
 }
 
@@ -46,7 +70,16 @@ export function validateTeamDetails(details: TeamDetails): string[] {
   if (details.teamType !== null && !(TEAM_TYPES as readonly string[]).includes(details.teamType)) {
     errors.push("Team type must be Mission Team, Domain Team or Enabling Team");
   }
+  for (const field of LEAD_NAME_FIELDS) {
+    if ((details[field] ?? "").length > 100) errors.push(`${LEAD_NAME_LABELS[field]} must be at most 100 characters`);
+  }
   return errors;
+}
+
+/** A lead as shown: "Ada Lovelace (ada@example.com)", or whichever parts are known; "" when none are. */
+export function describeLead(firstName: string | null, lastName: string | null, email: string | null): string {
+  const name = [firstName, lastName].filter(Boolean).join(" ");
+  return name && email ? `${name} (${email})` : name || email || "";
 }
 
 /** A headcount typed in a form or a spreadsheet: blank = none; anything else that isn't a number stays NaN so it fails the check. */

@@ -18,7 +18,7 @@ beforeEach(async () => {
 });
 
 const newPerson = {
-  role: "Engineer", locationCode: "DE-BY", contractedHours: 40, employmentStart: "2026-11-01", employmentEnd: null,
+  firstName: "Ada", lastName: "Lovelace", role: "Engineer", locationCode: "DE-BY", contractedHours: 40, employmentStart: "2026-11-01", employmentEnd: null,
 };
 const audit = () => db.select().from(t.auditLog);
 const assignmentsOf = (email: string) => db.select().from(t.assignments).where(eq(t.assignments.personEmail, email));
@@ -55,7 +55,7 @@ describe("addMember (BR-21)", () => {
     });
     expect(result.ok).toBe(true);
     const [person] = await db.select().from(t.people).where(eq(t.people.email, "new@example.com"));
-    expect(person).toMatchObject({ locationCode: "DE-BY", contractedHours: 40, role: "Engineer" });
+    expect(person).toMatchObject({ firstName: "Ada", lastName: "Lovelace", locationCode: "DE-BY", contractedHours: 40, role: "Engineer" });
     expect(await assignmentsOf("new@example.com")).toEqual([
       expect.objectContaining({ teamId: "T017", teamAllocation: 0.5, sharedResource: true, startDate: "2026-11-09", endDate: null }),
     ]);
@@ -104,17 +104,36 @@ describe("addMember (BR-21)", () => {
   });
 });
 
+describe("FR-05a: first and last names (sean, 22 Nov 2026)", () => {
+  it("trims names and keeps blank ones empty", async () => {
+    await addMember(db, actor, {
+      teamId: "T017", email: "n@example.com", teamAllocation: 1, sharedResource: false, startDate: "2026-11-09",
+      person: { ...newPerson, firstName: "  Grace ", lastName: "" },
+    });
+    const [person] = await db.select().from(t.people).where(eq(t.people.email, "n@example.com"));
+    expect(person).toMatchObject({ firstName: "Grace", lastName: null });
+  });
+
+  it("refuses a name longer than 100 characters", async () => {
+    const result = await addMember(db, actor, {
+      teamId: "T017", email: "n@example.com", teamAllocation: 1, sharedResource: false, startDate: "2026-11-09",
+      person: { ...newPerson, lastName: "x".repeat(101) },
+    });
+    expect(result).toEqual({ ok: false, errors: ["Last name must be at most 100 characters"] });
+  });
+});
+
 describe("updateMember (UC07 edit)", () => {
   it("changes the person and their membership together, logging before and after", async () => {
     const [f] = await assignmentsOf("f@example.com");
     const result = await updateMember(db, actor, {
       assignmentId: f!.id, teamAllocation: 0.8, sharedResource: true,
-      person: { role: "Tester", locationCode: "DE-BY", contractedHours: 32, employmentStart: null, employmentEnd: "2027-06-30" },
+      person: { firstName: "Fay", lastName: "Fischer", role: "Tester", locationCode: "DE-BY", contractedHours: 32, employmentStart: null, employmentEnd: "2027-06-30" },
     });
     expect(result.ok).toBe(true);
     const member = await getMember(db, f!.id);
     expect(member).toMatchObject({
-      email: "f@example.com", role: "Tester", locationCode: "DE-BY", contractedHours: 32, employmentEnd: "2027-06-30",
+      email: "f@example.com", firstName: "Fay", lastName: "Fischer", role: "Tester", locationCode: "DE-BY", contractedHours: 32, employmentEnd: "2027-06-30",
       teamAllocation: 0.8, sharedResource: true, inputStatus: "Complete",
     });
     const [entry] = await audit();

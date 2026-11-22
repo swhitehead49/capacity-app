@@ -9,6 +9,8 @@ export interface Option { value: string; label: string }
 function PersonFields({ v, locations }: { v: Values; locations: Option[] }) {
   return (
     <div className="grid">
+      <label>First name<input name="firstName" defaultValue={v.firstName} autoComplete="off" /></label>
+      <label>Last name<input name="lastName" defaultValue={v.lastName} autoComplete="off" /></label>
       <label>Location
         <select name="locationCode" defaultValue={v.locationCode ?? ""}>
           <option value="">(not set)</option>

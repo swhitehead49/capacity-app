@@ -80,6 +80,10 @@ export async function updateTeamDetailsAction(previous: FormState, form: FormDat
     topLevelGroup: optional("topLevelGroup"), topLevelLeadEmail: optional("topLevelLeadEmail"),
     sourceHeadcount: readHeadcount(read(form, "sourceHeadcount")), idStatus: read(form, "idStatus"), dataQualityFlag: optional("dataQualityFlag"),
     teamType: readTeamType(read(form, "teamType")),
+    teamLeadFirstName: optional("teamLeadFirstName"), teamLeadLastName: optional("teamLeadLastName"),
+    parentTeamLeadFirstName: optional("parentTeamLeadFirstName"), parentTeamLeadLastName: optional("parentTeamLeadLastName"),
+    grandparentTeamLeadFirstName: optional("grandparentTeamLeadFirstName"), grandparentTeamLeadLastName: optional("grandparentTeamLeadLastName"),
+    topLevelLeadFirstName: optional("topLevelLeadFirstName"), topLevelLeadLastName: optional("topLevelLeadLastName"),
   });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(teamPage(teamId));

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTeamDetails } from "@/src/application/teams";
+import { describeLead } from "@/src/domain/organisation/teamDetails";
 import { today } from "@/src/infrastructure/db/appDb";
 import { projectDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
@@ -28,9 +29,13 @@ export default async function ManageTeam({ params }: { params: Promise<{ project
       <dl className="details">
         <dt>Value stream</dt><dd>{team.valueStream ?? "None"}</dd>
         <dt>Base location</dt><dd>{team.baseLocation ?? "Not set"}</dd>
-        <dt>Lead</dt><dd>{team.leadEmail ?? ""}</dd>
+        <dt>Lead</dt><dd>{describeLead(team.teamLeadFirstName, team.teamLeadLastName, team.leadEmail)}</dd>
         <dt>Parent team</dt><dd>{team.parentTeamName ?? ""}</dd>
+        <dt>Parent team lead</dt><dd>{describeLead(team.parentTeamLeadFirstName, team.parentTeamLeadLastName, team.parentTeamLeadEmail)}</dd>
+        <dt>Grandparent team</dt><dd>{team.grandparentTeamName ?? ""}</dd>
+        <dt>Grandparent team lead</dt><dd>{describeLead(team.grandparentTeamLeadFirstName, team.grandparentTeamLeadLastName, team.grandparentTeamLeadEmail)}</dd>
         <dt>Top-level group</dt><dd>{team.topLevelGroup ?? ""}</dd>
+        <dt>Top-level lead</dt><dd>{describeLead(team.topLevelLeadFirstName, team.topLevelLeadLastName, team.topLevelLeadEmail)}</dd>
         <dt>Source headcount</dt><dd>{team.sourceHeadcount ?? ""}</dd>
         <dt>ID status</dt><dd>{team.idStatus}</dd>
         <dt>Team type</dt><dd>{team.teamType ?? "Not set"}</dd>

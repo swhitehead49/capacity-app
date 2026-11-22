@@ -44,6 +44,10 @@ export default async function EditMasterTeam({ params, searchParams }: { params:
         topLevelGroup: team.topLevelGroup ?? "", topLevelLeadEmail: team.topLevelLeadEmail ?? "",
         sourceHeadcount: team.sourceHeadcount === null ? "" : String(team.sourceHeadcount), idStatus: team.idStatus, dataQualityFlag: team.dataQualityFlag ?? "",
         teamType: team.teamType ?? "",
+        teamLeadFirstName: team.teamLeadFirstName ?? "", teamLeadLastName: team.teamLeadLastName ?? "",
+        parentTeamLeadFirstName: team.parentTeamLeadFirstName ?? "", parentTeamLeadLastName: team.parentTeamLeadLastName ?? "",
+        grandparentTeamLeadFirstName: team.grandparentTeamLeadFirstName ?? "", grandparentTeamLeadLastName: team.grandparentTeamLeadLastName ?? "",
+        topLevelLeadFirstName: team.topLevelLeadFirstName ?? "", topLevelLeadLastName: team.topLevelLeadLastName ?? "",
       }} />
 
       <h3>Rename</h3>

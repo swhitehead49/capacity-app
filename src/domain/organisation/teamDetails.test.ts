@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ID_STATUSES, TEAM_TYPES, emptyTeamDetails, readTeamType, validateTeamDetails } from "./teamDetails";
+import { ID_STATUSES, LEAD_NAME_FIELDS, describeLead, TEAM_TYPES, emptyTeamDetails, readTeamType, validateTeamDetails } from "./teamDetails";
 
 // Team attributes from the original workbook's Teams sheet (sean, 15 Nov 2026): the parent, grandparent and
 // top-level groups with their leads, the source headcount, the ID status and a data quality flag.
@@ -34,6 +34,28 @@ describe("validateTeamDetails", () => {
     expect(emptyTeamDetails().teamType).toBeNull();
     expect(validateTeamDetails({ ...emptyTeamDetails(), teamType: "Domain Team" })).toEqual([]);
     expect(validateTeamDetails({ ...emptyTeamDetails(), teamType: "Squad" })).toEqual(["Team type must be Mission Team, Domain Team or Enabling Team"]);
+  });
+});
+
+describe("lead names (FR-18p, sean 22 Nov 2026)", () => {
+  it("each lead (team, parent, grandparent, top-level) has an optional first and last name", () => {
+    expect(LEAD_NAME_FIELDS).toEqual([
+      "teamLeadFirstName", "teamLeadLastName", "parentTeamLeadFirstName", "parentTeamLeadLastName",
+      "grandparentTeamLeadFirstName", "grandparentTeamLeadLastName", "topLevelLeadFirstName", "topLevelLeadLastName",
+    ]);
+    for (const field of LEAD_NAME_FIELDS) expect(emptyTeamDetails()[field]).toBeNull();
+  });
+
+  it("shows a lead by name and email, or whichever is known", () => {
+    expect(describeLead("Ada", "Lovelace", "ada@example.com")).toBe("Ada Lovelace (ada@example.com)");
+    expect(describeLead(null, "Lovelace", null)).toBe("Lovelace");
+    expect(describeLead(null, null, "ada@example.com")).toBe("ada@example.com");
+    expect(describeLead(null, null, null)).toBe("");
+  });
+
+  it("refuses a lead name longer than 100 characters", () => {
+    expect(validateTeamDetails({ ...emptyTeamDetails(), parentTeamLeadLastName: "x".repeat(101) }))
+      .toEqual(["Parent team lead last name must be at most 100 characters"]);
   });
 });
 

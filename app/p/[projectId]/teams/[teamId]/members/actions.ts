@@ -22,6 +22,8 @@ const share = (form: FormData, name: string) => {
   return value === null ? null : value / 100;
 };
 const personDetails = (form: FormData): PersonDetails => ({
+  firstName: text(form, "firstName"),
+  lastName: text(form, "lastName"),
   role: text(form, "role"),
   locationCode: text(form, "locationCode"),
   contractedHours: number(form, "contractedHours"),

@@ -25,6 +25,15 @@ export const teams = pgTable("teams", {
   idStatus: text("id_status").notNull().default("Provisional"), // Provisional until confirmed with the group leads (Q5)
   dataQualityFlag: text("data_quality_flag"),
   teamType: text("team_type"), // Mission Team, Domain Team or Enabling Team (FR-18o, sean, 22 Nov 2026)
+  // FR-18p (sean, 22 Nov 2026): each lead's name beside their email.
+  teamLeadFirstName: text("team_lead_first_name"),
+  teamLeadLastName: text("team_lead_last_name"),
+  parentTeamLeadFirstName: text("parent_team_lead_first_name"),
+  parentTeamLeadLastName: text("parent_team_lead_last_name"),
+  grandparentTeamLeadFirstName: text("grandparent_team_lead_first_name"),
+  grandparentTeamLeadLastName: text("grandparent_team_lead_last_name"),
+  topLevelLeadFirstName: text("top_level_lead_first_name"),
+  topLevelLeadLastName: text("top_level_lead_last_name"),
   // A team without a value stream can be left out of the project (sean, 15 Nov 2026). Teams in a value stream are always in.
   included: boolean("included").notNull().default(true),
   retiredOn: date("retired_on"),
@@ -68,6 +77,8 @@ export const projectValueStreams = pgTable("project_value_streams", {
 /** FR-03: a person and their contract. */
 export const people = pgTable("people", {
   email: text("email").primaryKey(),
+  firstName: text("first_name"), // FR-05a (sean, 22 Nov 2026)
+  lastName: text("last_name"),
   role: text("role"),
   locationCode: text("location_code").references(() => locations.code),
   contractedHours: numeric("contracted_hours", { mode: "number" }),

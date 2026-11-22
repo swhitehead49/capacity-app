@@ -1,7 +1,7 @@
 import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 import type { IsoDate } from "../domain/capacity/workingWindow";
 import { checkInputs, type InputStatus } from "../domain/capacity/teamCapacity";
-import { dayBefore, validateEndDate, validateMembership, validatePerson } from "../domain/people/memberRules";
+import { cleanName, dayBefore, validateEndDate, validateMembership, validatePerson } from "../domain/people/memberRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import type { SaveResult } from "./saveTeamDefault";
@@ -9,6 +9,8 @@ import type { SaveResult } from "./saveTeamDefault";
 // UC06 / UC07, FR-05, BR-14, BR-21, BR-22: team membership changes apply at once and are logged.
 
 export interface PersonDetails {
+  firstName: string | null;
+  lastName: string | null;
   role: string | null;
   locationCode: string | null;
   contractedHours: number | null;
@@ -59,7 +61,8 @@ export interface AddMemberRequest {
 }
 
 /** BR-21: add someone to a team from a start date. Creates the person if they are new. */
-export async function addMember(db: Db, actor: string, request: AddMemberRequest): Promise<SaveResult> {
+export async function addMember(db: Db, actor: string, raw: AddMemberRequest): Promise<SaveResult> {
+  const request = { ...raw, person: cleanPerson(raw.person) };
   const email = normalise(request.email);
   const errors = [
     ...validatePerson({ email, ...request.person }),
@@ -99,8 +102,9 @@ export async function addMember(db: Db, actor: string, request: AddMemberRequest
 export async function updateMember(
   db: Db,
   actor: string,
-  request: { assignmentId: number; teamAllocation: number | null; sharedResource: boolean; person: PersonDetails },
+  raw: { assignmentId: number; teamAllocation: number | null; sharedResource: boolean; person: PersonDetails },
 ): Promise<SaveResult> {
+  const request = { ...raw, person: cleanPerson(raw.person) };
   const before = await getMember(db, request.assignmentId);
   if (!before) return { ok: false, errors: ["This membership no longer exists"] };
   const errors = [
@@ -182,6 +186,8 @@ export async function moveMember(
   return { ok: true, id };
 }
 
+const cleanPerson = (person: PersonDetails): PersonDetails => ({ ...person, firstName: cleanName(person.firstName), lastName: cleanName(person.lastName) });
+
 async function checkLocation(db: Db, code: string | null): Promise<string | null> {
   if (!code) return null;
   const location = await db.query.locations.findFirst({ where: eq(t.locations.code, code) });
@@ -199,7 +205,7 @@ type JoinedRow = Awaited<ReturnType<ReturnType<typeof selectMembers>["execute"]>
 
 function toMemberRow({ assignments: a, people: p, locations: loc }: JoinedRow): MemberRow {
   return {
-    assignmentId: a.id, teamId: a.teamId, email: p.email, role: p.role, locationCode: p.locationCode,
+    assignmentId: a.id, teamId: a.teamId, email: p.email, firstName: p.firstName, lastName: p.lastName, role: p.role, locationCode: p.locationCode,
     contractedHours: p.contractedHours, employmentStart: p.employmentStart, employmentEnd: p.employmentEnd,
     teamAllocation: a.teamAllocation, sharedResource: a.sharedResource, startDate: a.startDate, endDate: a.endDate,
     inputStatus: checkInputs({
