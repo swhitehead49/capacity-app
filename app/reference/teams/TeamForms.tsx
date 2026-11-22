@@ -81,10 +81,10 @@ export function ValueStreamForm({ teamId, current, valueStreams }: { teamId: str
   );
 }
 
-/** Where the team is based (sean, 15 Nov 2026). Members keep their own location for public holidays. */
+/** Where the team is based: a country (sean, 15 Nov 2026; FR-18t). Members have their own location for public holidays. */
 function BaseLocationSelect({ value, locations }: { value: string | undefined; locations: Option[] }) {
   return (
-    <label>Base location
+    <label>Base location (country)
       <select name="baseLocation" defaultValue={value ?? ""}>
         <option value="">(not set)</option>
         {locations.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}

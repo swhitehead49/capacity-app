@@ -45,13 +45,13 @@ describe("importTeams", () => {
     const csv = "team_id,name,base_location\nT074,Payments Core,DE-BY\nT075,Imaging Viewer,\n";
     expect(await importTeams(db, actor, { today, csv })).toMatchObject({ ok: true, count: 2 });
     const teams = await db.select().from(t.teams);
-    expect(teams.find((x) => x.id === "T074")?.baseLocation).toBe("DE-BY");
+    expect(teams.find((x) => x.id === "T074")?.baseLocation).toBe("DE"); // FR-18t: a team is based in a country
     expect(teams.find((x) => x.id === "T075")?.baseLocation).toBeNull();
   });
 
   it("refuses a base location the project doesn't have, and adds nothing", async () => {
     const result = await importTeams(db, actor, { today, csv: "team_id,name,base_location\nT074,Payments Core,XX-YY\n" });
-    expect(result).toEqual({ ok: false, errors: ["Line 2: Unknown base location XX-YY"] });
+    expect(result).toEqual({ ok: false, errors: [expect.stringMatching(/^Line 2: Unknown base location XX-YY: use a country code/)] });
     expect(await db.select().from(t.teams)).toHaveLength(1);
   });
 

@@ -6,7 +6,7 @@ export async function seedDrgw(db: Db) {
   await db.insert(t.locations).values(
     ["DE-BY", "DE-NI", "DE-RP", "DE-SL"].map((code) => ({ code, country: "DE", name: code, standardHours: 40 })),
   );
-  await db.insert(t.teams).values({ id: "T017", name: "DRGW", baseLocation: "DE-RP" });
+  await db.insert(t.teams).values({ id: "T017", name: "DRGW", baseLocation: "DE" }); // FR-18t: a team is based in a country
   const people: [string, string, number | null, number][] = [
     ["a@example.com", "DE-BY", 40, 1],
     ["b@example.com", "DE-NI", 36, 0.9],

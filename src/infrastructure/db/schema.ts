@@ -13,7 +13,7 @@ export const teams = pgTable("teams", {
   leadEmail: text("lead_email"),
   valueStream: text("value_stream"), // the level just above a team (decision 8 Nov 2026; was "parent group")
   // Where the team is based (sean, 15 Nov 2026). Members keep their own location for public holidays.
-  baseLocation: text("base_location").references(() => locations.code),
+  baseLocation: text("base_location"), // a country code (FR-18t, sean 22 Nov 2026); people have region location codes
   // The original workbook's Teams sheet (sean, 15 Nov 2026).
   parentTeamName: text("parent_team_name"),
   parentTeamLeadEmail: text("parent_team_lead_email"),

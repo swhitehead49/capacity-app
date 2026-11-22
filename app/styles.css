@@ -89,6 +89,8 @@ table.editable th { white-space: normal; vertical-align: bottom; line-height: 1.
 table.editable input, table.editable select { font-size: 0.82rem; padding: 3px 4px; min-width: 5em; }
 table.editable td.team-name input { min-width: 16em; width: 100%; }
 table.editable th.team-name { min-width: 16em; }
+table.editable td.hierarchy input { min-width: 9em; width: 100%; }
+table.editable td.team-name input { min-width: 13em; }
 table.editable select[name^="idStatus:"] { min-width: 7.5em; }
 a.danger { color: #8a1f1f; }
 .edit-form textarea { width: 100%; font: inherit; padding: 6px 10px; }

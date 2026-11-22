@@ -53,14 +53,14 @@ describe("addTeam (UC15)", () => {
     expect(result).toEqual({ ok: true, id: "T100", warnings: ['"Example Team A" is also a team in Platform'] });
   });
 
-  it("saves the team's base location (sean, 15 Nov 2026)", async () => {
+  it("FR-18t: saves the team's base location as a country; a region location code becomes its country", async () => {
     await addTeam(db, actor, { ...newTeam, baseLocation: "DE-BY" });
-    expect((await team("T100"))?.baseLocation).toBe("DE-BY");
+    expect((await team("T100"))?.baseLocation).toBe("DE");
   });
 
   it("refuses a base location the project doesn't have", async () => {
     expect(await addTeam(db, actor, { ...newTeam, baseLocation: "XX-YY" }))
-      .toEqual({ ok: false, errors: ["Unknown base location XX-YY"] });
+      .toEqual({ ok: false, errors: [expect.stringMatching(/^Unknown base location XX-YY: use a country code such as /)] });
   });
 
   it("only takes a value stream from the system's reference data (sean, 15 Nov 2026)", async () => {
@@ -85,8 +85,8 @@ describe("addTeam (UC15)", () => {
     const shared = await createTestDb();
     await shared.insert(t.valueStreams).values({ name: "Platform" });
     await shared.insert(t.locations).values({ code: "AT-9", country: "AT", name: "Vienna" });
-    expect(await addTeam(db, actor, { ...newTeam, baseLocation: "AT-9" }, shared)).toMatchObject({ ok: true });
-    expect((await team("T100"))?.baseLocation).toBe("AT-9");
+    expect(await addTeam(db, actor, { ...newTeam, baseLocation: "AT" }, shared)).toMatchObject({ ok: true });
+    expect((await team("T100"))?.baseLocation).toBe("AT");
     expect(await db.query.locations.findFirst({ where: eq(t.locations.code, "AT-9") })).toMatchObject({ name: "Vienna" });
   });
 
@@ -167,9 +167,9 @@ describe("listTeamsOverview", () => {
   });
 
   it("shows each team's base location and its country (sean, 15 Nov 2026)", async () => {
-    await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "DE-BY" });
+    await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "DE" });
     const teams = await listTeamsOverview(db, today);
-    expect(teams.find((x) => x.id === "T001")).toMatchObject({ baseLocation: "DE-BY", baseCountry: "DE" });
+    expect(teams.find((x) => x.id === "T001")).toMatchObject({ baseLocation: "DE", baseCountry: "DE" });
     expect(teams.find((x) => x.id === "T002")).toMatchObject({ baseLocation: null, baseCountry: null });
   });
 
@@ -235,10 +235,10 @@ describe("value streams (FR-01, decision 8 Nov 2026: the value stream is the lev
 
 describe("base location (sean, 15 Nov 2026: a team has its own base location; members keep their own for holidays)", () => {
   it("changes a team's base location and logs it", async () => {
-    expect(await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "DE-NI" })).toEqual({ ok: true, id: "T001", warnings: [] });
-    expect((await team("T001"))?.baseLocation).toBe("DE-NI");
+    expect(await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "de" })).toEqual({ ok: true, id: "T001", warnings: [] });
+    expect((await team("T001"))?.baseLocation).toBe("DE");
     expect((await audit())[0]).toMatchObject({
-      entity: "teams", action: "change base location", before: { baseLocation: null }, after: { baseLocation: "DE-NI" },
+      entity: "teams", action: "change base location", before: { baseLocation: null }, after: { baseLocation: "DE" },
     });
   });
 
@@ -248,9 +248,9 @@ describe("base location (sean, 15 Nov 2026: a team has its own base location; me
   });
 
   it("refuses an unknown location or team, and the location it already has", async () => {
-    expect(await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "XX-YY" })).toEqual({ ok: false, errors: ["Unknown base location XX-YY"] });
+    expect(await changeBaseLocation(db, actor, { teamId: "T001", baseLocation: "XX-YY" })).toEqual({ ok: false, errors: [expect.stringMatching(/^Unknown base location XX-YY: use a country code such as /)] });
     expect(await changeBaseLocation(db, actor, { teamId: "T999", baseLocation: "DE-BY" })).toEqual({ ok: false, errors: ["Unknown team T999"] });
-    expect(await changeBaseLocation(db, actor, { teamId: "T017", baseLocation: "DE-RP" })).toEqual({ ok: false, errors: ["T017 is already based in DE-RP"] });
+    expect(await changeBaseLocation(db, actor, { teamId: "T017", baseLocation: "DE-RP" })).toEqual({ ok: false, errors: ["T017 is already based in DE"] });
   });
 
   it("members keep their own location, whatever the team's base", async () => {

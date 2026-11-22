@@ -6,7 +6,7 @@ export interface TeamDraft extends Partial<TeamDetails> {
   name: string;
   valueStream: string | null;
   leadEmail: string | null;
-  baseLocation?: string | null; // a location code, e.g. "DE-BY" (sean, 15 Nov 2026)
+  baseLocation?: string | null; // a country code, e.g. "DE" (FR-18t, sean 22 Nov 2026)
   effectiveFrom: string;
 }
 

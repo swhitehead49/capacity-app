@@ -19,8 +19,8 @@ export default async function ImportTeams({ searchParams }: { searchParams: Prom
         {" "}(Mission Team, Domain Team or Enabling Team), a <code>_First_Name</code> and <code>_Last_Name</code> column for each lead
         {" "}(e.g. <code>Team_Lead_First_Name</code>, <code>Parent_Team_Lead_Last_Name</code>, <code>Top_Level_Lead_First_Name</code>),
         {" "}<code>Value_Stream</code>,
-        {" "}<code>Base_Location</code> and <code>Start_Date</code> (2026-11-16 or 16/11/2026; blank means today) are optional.
-        Value streams and base locations must already be in the reference data.
+        {" "}<code>Base_Location</code> (a country code such as DE; a location code such as DE-BY is read as its country) and <code>Start_Date</code> (2026-11-16 or 16/11/2026; blank means today) are optional.
+        Value streams must already be in the reference data, and the base country must be the country of one of its locations.
         Each team gets the same checks as Add team.
         If any line has a problem, nothing is imported and every problem is listed.
         Each team joins every project that has its value stream, starting with that project&apos;s standard allocation.

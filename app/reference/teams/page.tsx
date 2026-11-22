@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listLocations } from "@/src/application/lookups";
+import { listBaseCountries } from "@/src/application/lookups";
 import { getReferenceData } from "@/src/application/referenceData";
 import { MasterTable } from "./MasterTable";
 import { listTeamsOverview } from "@/src/application/teams";
@@ -64,9 +64,9 @@ export default async function MasterTeams({ searchParams }: { searchParams: Prom
       <MasterTable groups={groupByValueStream(teams).map(([stream, rows]) => [stream, rows.map((x) => ({ id: x.id, parentTeamName: x.parentTeamName, grandparentTeamName: x.grandparentTeamName, provisional: x.idStatus === "Provisional" }))])}
         values={Object.fromEntries(teams.flatMap((x) => [
           [`name:${x.id}`, x.name], [`valueStream:${x.id}`, x.valueStream ?? ""], [`baseLocation:${x.id}`, x.baseLocation ?? ""],
-          [`idStatus:${x.id}`, x.idStatus], [`teamType:${x.id}`, x.teamType ?? ""],
+          [`idStatus:${x.id}`, x.idStatus], [`parentTeamName:${x.id}`, x.parentTeamName ?? ""], [`grandparentTeamName:${x.id}`, x.grandparentTeamName ?? ""], [`teamType:${x.id}`, x.teamType ?? ""],
         ]))}
-        valueStreams={valueStreams} locations={await listLocations(shared)} />
+        valueStreams={valueStreams} locations={await listBaseCountries(shared)} />
     </>
   );
 }

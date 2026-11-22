@@ -170,7 +170,7 @@ export async function deleteProvisionalTeams(shared: Db, projects: Db[], actor: 
   return { deleted, kept };
 }
 
-export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail?: string; idStatus: string; teamType: string } // leadEmail left out = keep it
+export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail?: string; idStatus: string; teamType: string; parentTeamName?: string; grandparentTeamName?: string } // left out = keep it
 
 /**
  * The master list's table, saved in one go (sean, 16 Nov 2026). Each row only changes what differs, with the same
@@ -195,9 +195,12 @@ export async function saveMasterTeamRows(
     if (blank(row.baseLocation) !== team.baseLocation) await step(await changeBaseLocation(shared, actor, { teamId: team.id, baseLocation: row.baseLocation }, shared));
     const teamType = readTeamType(row.teamType);
     const leadEmail = row.leadEmail === undefined ? team.leadEmail : blank(row.leadEmail);
-    if (leadEmail !== team.leadEmail || row.idStatus !== team.idStatus || teamType !== team.teamType) {
+    const parentTeamName = row.parentTeamName === undefined ? team.parentTeamName : blank(row.parentTeamName);
+    const grandparentTeamName = row.grandparentTeamName === undefined ? team.grandparentTeamName : blank(row.grandparentTeamName);
+    if (parentTeamName !== team.parentTeamName || grandparentTeamName !== team.grandparentTeamName ||
+      leadEmail !== team.leadEmail || row.idStatus !== team.idStatus || teamType !== team.teamType) {
       const current = (await shared.query.teams.findFirst({ where: eq(t.teams.id, team.id) }))!;
-      await step(await updateTeamDetails(shared, actor, { ...current, teamId: team.id, leadEmail, idStatus: row.idStatus, teamType }));
+      await step(await updateTeamDetails(shared, actor, { ...current, teamId: team.id, leadEmail, parentTeamName, grandparentTeamName, idStatus: row.idStatus, teamType }));
     }
     if (touched) changed++;
     errors.push(...problems.map((p) => `${team.id}: ${p}`));

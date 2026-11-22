@@ -27,6 +27,7 @@ export async function importTeams(db: Db, actor: string, request: { csv: string;
     const checked = reference.check(row);
     problems.push(...checked.errors.map((e) => `Line ${row.line}: ${e}`));
     row.valueStream = checked.valueStream;
+    row.baseLocation = checked.baseLocation;
     const clash = nameClashes(row.name, row.valueStream, live);
     problems.push(...clash.errors.map((e) => `Line ${row.line}: ${e}`));
     warnings.push(...clash.warnings.map((w) => `Line ${row.line}: ${w}`));

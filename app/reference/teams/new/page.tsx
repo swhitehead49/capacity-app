@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getReferenceData } from "@/src/application/referenceData";
-import { listLocations } from "@/src/application/lookups";
+import { listBaseCountries } from "@/src/application/lookups";
 import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
 import { AddTeamForm } from "../TeamForms";
@@ -17,7 +17,7 @@ export default async function NewTeam() {
       <h2>Add a team</h2>
       <p className="muted">The ID is permanent and can never be reused. The team joins every project that has its value stream.
         In each project it starts with that project&apos;s standard allocation (or the system one) from its start date.</p>
-      <AddTeamForm today={today()} valueStreams={valueStreams} locations={await listLocations(shared)} />
+      <AddTeamForm today={today()} valueStreams={valueStreams} locations={await listBaseCountries(shared)} />
     </>
   );
 }

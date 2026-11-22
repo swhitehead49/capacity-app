@@ -14,15 +14,24 @@ let db: Db;
 
 beforeEach(async () => {
   db = await createTestDb();
-  await seedDrgw(db); // T017 DRGW (base DE-RP, unmapped, included): a–j@example.com
+  await seedDrgw(db); // T017 DRGW (based in DE, which has 4 locations; unmapped, included): a–j@example.com
   await db.insert(t.teams).values([{ id: "T001", name: "Example Team A" }, { id: "T002", name: "Left Out", included: false }]);
 });
 
 const membersOf = (teamId: string) => db.select().from(t.assignments).where(eq(t.assignments.teamId, teamId));
 
 describe("importMembers", () => {
-  it("adds new people and memberships; a blank location means the team's base location", async () => {
-    const csv = "Team_ID,Email,First_Name,Last_Name,Location,Team_Pct\nT017,ada@example.com,Ada,Lovelace,,50\nT001,grace@example.com,Grace,Hopper,DE-BY,\n";
+  it("FR-18t: a blank location means the only location in the team's country; if it has several, it is left to pick", async () => {
+    await db.insert(t.locations).values({ code: "AT-9", country: "AT", name: "Vienna", standardHours: 40 });
+    await db.update(t.teams).set({ baseLocation: "AT" }).where(eq(t.teams.id, "T001"));
+    const csv = "Team_ID,Email\nT001,vienna@example.com\nT017,somewhere@example.com\n";
+    expect(await importMembers(db, actor, { csv, today })).toEqual({ ok: true, count: 2 });
+    expect((await db.query.people.findFirst({ where: eq(t.people.email, "vienna@example.com") }))?.locationCode).toBe("AT-9");
+    expect((await db.query.people.findFirst({ where: eq(t.people.email, "somewhere@example.com") }))?.locationCode).toBeNull();
+  });
+
+  it("adds new people and memberships", async () => {
+    const csv = "Team_ID,Email,First_Name,Last_Name,Location,Team_Pct\nT017,ada@example.com,Ada,Lovelace,DE-RP,50\nT001,grace@example.com,Grace,Hopper,DE-BY,\n";
     expect(await importMembers(db, actor, { csv, today })).toEqual({ ok: true, count: 2 });
     expect(await db.query.people.findFirst({ where: eq(t.people.email, "ada@example.com") }))
       .toMatchObject({ firstName: "Ada", lastName: "Lovelace", locationCode: "DE-RP" });

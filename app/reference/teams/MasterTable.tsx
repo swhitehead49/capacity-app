@@ -20,7 +20,7 @@ export function MasterTable({ groups, values, valueStreams, locations }: {
       {(v) => (
         <table className="members editable">
           <caption>Master team list</caption>
-          <thead><tr><th>ID</th><th className="team-name">Team Name</th><th>Parent Team Name</th><th>Grandparent Team Name</th><th>Value stream</th><th>Base location</th><th>Team type</th><th>ID status</th><th></th><th></th></tr></thead>
+          <thead><tr><th>ID</th><th className="team-name">Team Name</th><th>Parent Team Name</th><th>Grandparent Team Name</th><th>Value stream</th><th>Base country</th><th>Team type</th><th>ID status</th><th></th><th></th></tr></thead>
           {groups.map(([stream, rows]) => (
             <tbody key={stream}>
               <tr className="group"><th colSpan={10} scope="rowgroup">{stream}</th></tr>
@@ -28,8 +28,8 @@ export function MasterTable({ groups, values, valueStreams, locations }: {
                 <tr key={x.id}>
                   <td>{x.id}<input type="hidden" name="teamId" value={x.id} /></td>
                   <td className="team-name"><input name={`name:${x.id}`} aria-label={`Name of ${x.id}`} defaultValue={v[`name:${x.id}`]} /></td>
-                  <td>{x.parentTeamName}</td>
-                  <td>{x.grandparentTeamName}</td>
+                  <td className="hierarchy"><input name={`parentTeamName:${x.id}`} aria-label={`Parent team for ${x.id}`} defaultValue={v[`parentTeamName:${x.id}`]} /></td>
+                  <td className="hierarchy"><input name={`grandparentTeamName:${x.id}`} aria-label={`Grandparent team for ${x.id}`} defaultValue={v[`grandparentTeamName:${x.id}`]} /></td>
                   <td>
                     <select name={`valueStream:${x.id}`} aria-label={`Value stream of ${x.id}`} defaultValue={v[`valueStream:${x.id}`]}>
                       <option value="">(none)</option>

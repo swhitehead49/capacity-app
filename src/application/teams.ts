@@ -1,3 +1,4 @@
+import { readBaseCountry } from "../domain/organisation/baseCountry";
 import { and, asc, desc, eq, gt, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { TEAM_DETAIL_FIELDS, emptyTeamDetails, looksLikeEmail, validateTeamDetails, type TeamDetails } from "../domain/organisation/teamDetails";
 import { definedOnly, nameClashes, sameName, validateTeam, type TeamDraft } from "../domain/organisation/teamRules";
@@ -28,6 +29,7 @@ export async function addTeam(db: Db, actor: string, draft: TeamDraft, shared: D
   const checked = reference.check(team);
   if (checked.errors.length) return { ok: false, errors: checked.errors };
   team.valueStream = checked.valueStream;
+  team.baseLocation = checked.baseLocation;
   if (await db.query.teams.findFirst({ where: eq(t.teams.id, team.id) })) {
     return { ok: false, errors: [`Team ID ${team.id} is already used`] };
   }
@@ -182,13 +184,13 @@ export async function changeValueStream(db: Db, actor: string, request: { teamId
   return { ok: true, id: team.id, warnings: clash.warnings };
 }
 
-/** Where the team is based (sean, 15 Nov 2026). Blank = not set. Members keep their own location for public holidays. */
+/** Where the team is based: a country (sean, 15 Nov 2026; country only since 22 Nov, FR-18t). Blank = not set. Members keep their own location for public holidays. */
 export async function changeBaseLocation(db: Db, actor: string, request: { teamId: string; baseLocation: string }, shared: Db = db): Promise<TeamResult> {
   const team = await db.query.teams.findFirst({ where: eq(t.teams.id, request.teamId) });
   if (!team) return { ok: false, errors: [`Unknown team ${request.teamId}`] };
-  const baseLocation = request.baseLocation.trim() || null;
-  const checked = (await referenceChecker(shared)).check({ baseLocation });
+  const checked = (await referenceChecker(shared)).check({ baseLocation: request.baseLocation });
   if (checked.errors.length) return { ok: false, errors: checked.errors };
+  const baseLocation = checked.baseLocation;
   if (baseLocation === team.baseLocation) {
     return { ok: false, errors: [baseLocation ? `${team.id} is already based in ${baseLocation}` : `${team.id} has no base location already`] };
   }
@@ -212,14 +214,17 @@ export async function referenceChecker(shared: Db) {
   return {
     check(team: { valueStream?: string | null; baseLocation?: string | null }) {
       const errors: string[] = [];
+      // FR-18t: a team's base location is a country; a region location code becomes its country.
+      const base = readBaseCountry(team.baseLocation, locations);
+      const baseLocation = "country" in base ? base.country : null;
+      if ("error" in base) errors.push(base.error);
       let valueStream = team.valueStream ?? null;
       if (valueStream) {
         const match = valueStreams.find((v) => sameName(v, valueStream ?? ""));
         if (match) valueStream = match;
         else errors.push(`Unknown value stream ${valueStream}: add it under Reference data first`);
       }
-      if (team.baseLocation && !locations.some((l) => l.code === team.baseLocation)) errors.push(`Unknown base location ${team.baseLocation}`);
-      return { errors, valueStream };
+      return { errors, valueStream, baseLocation };
     },
   };
 }
@@ -263,7 +268,6 @@ export async function listTeamsOverview(db: Db, today: string, filter: { valueSt
   const a = t.assignments;
   const current = and(or(isNull(a.startDate), lte(a.startDate, today)), or(isNull(a.endDate), sql`${a.endDate} >= ${today}`));
   const counts = await db.select({ teamId: a.teamId, n: sql<number>`count(*)::int` }).from(a).where(current).groupBy(a.teamId);
-  const places = await db.select({ code: t.locations.code, country: t.locations.country }).from(t.locations);
   const teams = await db.select().from(t.teams)
     .where(filter.valueStream ? eq(t.teams.valueStream, filter.valueStream) : undefined)
     .orderBy(asc(t.teams.id));
@@ -273,7 +277,7 @@ export async function listTeamsOverview(db: Db, today: string, filter: { valueSt
       status: teamStatus(team.retiredOn, today),
       members: counts.find((c) => c.teamId === team.id)?.n ?? 0,
       // Country of the team's base location (sean, 15 Nov 2026: filter teams by country).
-      baseCountry: places.find((p) => p.code === team.baseLocation)?.country ?? null,
+      baseCountry: team.baseLocation, // FR-18t: the base location is the country
     }))
     .filter((team) => !filter.country || team.baseCountry === filter.country);
 }

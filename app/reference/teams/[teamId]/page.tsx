@@ -6,7 +6,7 @@ import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
 import { formatDate } from "@/app/lib/format";
 import { BaseLocationForm, DetailsForm, RenameForm, RetireForm, ValueStreamForm } from "../TeamForms";
-import { listLocations, listTeams } from "@/src/application/lookups";
+import { listBaseCountries, listTeams } from "@/src/application/lookups";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +67,7 @@ export default async function EditMasterTeam({ params, searchParams }: { params:
 
       <h3>Base location</h3>
       <p className="muted">Where the team is based. Each member keeps their own location, which decides their public holidays.</p>
-      <BaseLocationForm teamId={team.id} current={team.baseLocation ?? ""} locations={await listLocations(shared)} />
+      <BaseLocationForm teamId={team.id} current={team.baseLocation ?? ""} locations={await listBaseCountries(shared)} />
 
       <h3>Retire</h3>
       {team.retiredOn ? (

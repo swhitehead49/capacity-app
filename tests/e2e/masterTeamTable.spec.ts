@@ -12,12 +12,12 @@ test("edit teams in the master list's table and save them together", async ({ pa
   const form = page.getByRole("form", { name: "Edit teams" });
   await form.getByLabel("Name of T700").fill("Grid One Renamed");
   await form.getByLabel("Value stream of T700").selectOption("Platform");
-  await form.getByLabel("Base location of T701").selectOption("DE-BY");
+  await form.getByLabel("Base location of T701").selectOption("DE");
   await form.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByRole("status")).toContainText("Saved changes to 2 teams");
   await expect(page.getByLabel("Name of T700")).toHaveValue("Grid One Renamed");
   await expect(page.getByLabel("Value stream of T700")).toHaveValue("Platform");
-  await expect(page.getByLabel("Base location of T701")).toHaveValue("DE-BY");
+  await expect(page.getByLabel("Base location of T701")).toHaveValue("DE");
 });
 
 // FR-18o (sean, 22 Nov 2026): each team can have a team type, set in the table or on the team's Edit page.
@@ -90,12 +90,14 @@ test("delete all provisional teams needs DELETE typed", async ({ page }) => {
 // sean, 22 Nov 2026: Team Name, Parent Team Name and Grandparent Team Name columns, no email column, and filters.
 test("filter the master team list by team, parent and grandparent name", async ({ page }) => {
   await asRole(page, "admin");
-  await page.goto("/reference/teams/T017");
-  const details = page.getByRole("form", { name: "Details" });
-  await details.getByLabel("Parent team name", { exact: true }).fill("Filter Parent");
-  await details.getByLabel("Grandparent team name", { exact: true }).fill("Filter Grandparent");
-  await details.getByRole("button", { name: "Save details" }).click();
-  await expect(page.getByRole("status")).toContainText("Saved.");
+  // sean, 22 Nov 2026: parent and grandparent team names are typed in the table and saved with Save changes.
+  await page.goto("/reference/teams");
+  const edit = page.getByRole("form", { name: "Edit teams" });
+  await edit.getByLabel("Parent team for T017", { exact: true }).fill("Filter Parent");
+  await edit.getByLabel("Grandparent team for T017", { exact: true }).fill("Filter Grandparent");
+  await edit.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved changes to 1 team");
+  await expect(page.getByLabel("Parent team for T017", { exact: true })).toHaveValue("Filter Parent");
 
   await page.goto("/reference/teams");
   const table = page.getByRole("table", { name: "Master team list" });
@@ -106,7 +108,7 @@ test("filter the master team list by team, parent and grandparent name", async (
   await page.getByRole("combobox", { name: "Grandparent Team Name" }).selectOption("Filter Grandparent");
   await filters.getByRole("button", { name: "Filter" }).click();
   await expect(page.getByText(/^Showing 1 of \d+ teams\.$/)).toBeVisible();
-  await expect(table.getByRole("row", { name: /T017/ })).toContainText("Filter Parent");
+  await expect(page.getByLabel("Parent team for T017", { exact: true })).toHaveValue("Filter Parent");
 
   await page.getByRole("link", { name: "Show all" }).click();
   await page.getByRole("form", { name: "Filter teams" }).getByLabel("Team Name", { exact: true }).fill("drg");

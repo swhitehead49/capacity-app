@@ -31,7 +31,7 @@ const copy = (id: string) => project.query.teams.findFirst({ where: eq(t.teams.i
 describe("syncTeams", () => {
   it("copies every master team into the project, with its name history", async () => {
     await syncTeams(project, shared, today);
-    expect(await copy("T1")).toMatchObject({ name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY" });
+    expect(await copy("T1")).toMatchObject({ name: "Viewer", valueStream: "Radiology", baseLocation: "DE" });
     expect(await project.select().from(t.teamNameHistory).where(eq(t.teamNameHistory.teamId, "T1")))
       .toMatchObject([{ name: "Viewer", effectiveFrom: "2026-11-02" }]);
   });
@@ -155,24 +155,38 @@ describe("saveMasterTeamRows", () => {
 
   it("a row without a lead email (the table no longer shows it) keeps the team's email", async () => {
     await saveMasterTeamRows(shared, actor, today, [
-      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY", leadEmail: "lead@example.com", idStatus: "Provisional", teamType: "" },
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE", leadEmail: "lead@example.com", idStatus: "Provisional", teamType: "" },
     ]);
     expect(await saveMasterTeamRows(shared, actor, today, [
-      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY", idStatus: "Provisional", teamType: "Domain Team" },
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE", idStatus: "Provisional", teamType: "Domain Team" },
     ])).toEqual({ ok: true, changed: 1 });
     expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T1") })).toMatchObject({ leadEmail: "lead@example.com", teamType: "Domain Team" });
   });
 
+  it("sean, 22 Nov 2026: saves the parent and grandparent team names typed in the table", async () => {
+    expect(await saveMasterTeamRows(shared, actor, today, [
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE", idStatus: "Provisional", teamType: "",
+        parentTeamName: " High Acuity Care ", grandparentTeamName: "ORBIS Engineering Vienna" },
+    ])).toEqual({ ok: true, changed: 1 });
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T1") }))
+      .toMatchObject({ parentTeamName: "High Acuity Care", grandparentTeamName: "ORBIS Engineering Vienna" });
+    await saveMasterTeamRows(shared, actor, today, [
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE", idStatus: "Provisional", teamType: "", parentTeamName: "" },
+    ]);
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T1") }))
+      .toMatchObject({ parentTeamName: null, grandparentTeamName: "ORBIS Engineering Vienna" }); // left out = kept
+  });
+
   it("FR-18o: refuses an unknown team type", async () => {
     const result = await saveMasterTeamRows(shared, actor, today, [
-      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY", leadEmail: "", idStatus: "Provisional", teamType: "Squad" },
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE", leadEmail: "", idStatus: "Provisional", teamType: "Squad" },
     ]);
     expect(result).toEqual({ ok: false, changed: 0, errors: ["T1: Team type must be Mission Team, Domain Team or Enabling Team"] });
   });
 
   it("reports a problem with the team's ID, and saves the other rows", async () => {
     const result = await saveMasterTeamRows(shared, actor, today, [
-      { teamId: "T1", name: "Viewer", valueStream: "Nowhere", baseLocation: "DE-BY", leadEmail: "", idStatus: "Provisional", teamType: "" },
+      { teamId: "T1", name: "Viewer", valueStream: "Nowhere", baseLocation: "DE", leadEmail: "", idStatus: "Provisional", teamType: "" },
       { teamId: "T2", name: "Payments", valueStream: "Radiology", baseLocation: "", leadEmail: "", idStatus: "Provisional", teamType: "" },
     ]);
     expect(result).toEqual({ ok: false, changed: 1, errors: ["T1: Unknown value stream Nowhere: add it under Reference data first"] });

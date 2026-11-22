@@ -19,7 +19,7 @@ test("the Admin adds a team; a project with its value stream gets it", async ({ 
   await page.getByLabel("Team ID").fill("T100");
   await page.getByLabel("Name").fill("Payments");
   await page.getByLabel("Value stream").selectOption("Platform");
-  await page.getByLabel("Base location").selectOption("IN-KA");
+  await page.getByLabel("Base location").selectOption("IN"); // FR-18t: a country
   await page.getByLabel("Start date").fill("2026-11-09");
   await page.getByRole("button", { name: "Add team" }).click();
   await expect(page).toHaveURL(/\/reference\/teams$/);
@@ -32,7 +32,7 @@ test("the Admin adds a team; a project with its value stream gets it", async ({ 
   await page.goto("/p/default/teams");
   const row = page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ });
   await expect(row).toContainText("Payments");
-  await expect(row).toContainText("IN-KA"); // base location (sean, 15 Nov 2026)
+  await expect(row).toContainText("IN"); // base location: a country (FR-18t)
 });
 
 test("Engineering managers see a team's details but can't edit them", async ({ page }) => {
@@ -142,17 +142,19 @@ test("the Admin changes a team's base location; projects see it", async ({ page 
   await asRole(page, "admin");
   await page.goto("/reference/teams/T100");
   const form = page.getByRole("form", { name: "Base location" });
-  await form.getByLabel("Base location").selectOption("DE-BY");
+  await expect(form.getByLabel("Base location").getByRole("option", { name: "DE-BY" })).toHaveCount(0); // FR-18t: countries only
+  await form.getByLabel("Base location").selectOption("DE");
   await form.getByRole("button", { name: "Change base location" }).click();
-  await expect(page.getByText(/Based in DE-BY/)).toBeVisible();
+  await expect(page.getByText(/Based in DE\b/)).toBeVisible();
   await asRole(page, "manager");
   await page.goto("/p/default/teams");
-  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ })).toContainText("DE-BY");
+  await expect(page.getByRole("table", { name: "All teams" }).getByRole("row", { name: /T100/ })).toContainText("DE");
 });
 
-test("a new member's location starts as the team's base location, and can be changed", async ({ page }) => {
+// FR-18t: a team is based in a country; a new member starts in its only location there, or picks one.
+test("a new member's location is picked when the team's country has several locations", async ({ page }) => {
   await page.goto("/p/default/teams/T017/members/new");
-  await expect(page.getByLabel("Location")).toHaveValue("DE-RP");
+  await expect(page.getByLabel("Location")).toHaveValue("");
   await expect(page.getByText(/public holidays/)).toBeVisible();
 });
 

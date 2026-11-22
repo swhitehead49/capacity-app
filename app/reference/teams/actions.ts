@@ -94,6 +94,7 @@ export async function saveMasterTeamsAction(previous: FormState, form: FormData)
   const rows = form.getAll("teamId").map(String).map((teamId) => ({
     teamId,
     name: read(form, `name:${teamId}`), valueStream: read(form, `valueStream:${teamId}`), baseLocation: read(form, `baseLocation:${teamId}`),
+    parentTeamName: read(form, `parentTeamName:${teamId}`), grandparentTeamName: read(form, `grandparentTeamName:${teamId}`),
     idStatus: read(form, `idStatus:${teamId}`), teamType: read(form, `teamType:${teamId}`),
   }));
   const result = await saveMasterTeamRows(await sharedDb(), ACTOR, today(), rows);
