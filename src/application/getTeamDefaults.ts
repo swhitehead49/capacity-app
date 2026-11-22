@@ -35,3 +35,34 @@ function toVersion(row: typeof t.allocationSettings.$inferSelect): DefaultVersio
     split: { run: row.run, fix: row.fix, sustain: row.sustain, change: row.change, enabling: row.enabling },
   };
 }
+
+export interface TeamDefaultRow {
+  teamId: string;
+  effectiveFrom: string | null;
+  overhead: number | null;
+  contingency: number | null;
+  split: DefaultVersion["split"] | null;
+  /** "Standard" when it matches the project's standard allocation, "Own" when it differs. */
+  source: "Standard" | "Own" | "No active default";
+}
+
+/** sean, 22 Nov 2026: every listed team's default in force today, for Team planning's Default capacity tab. */
+export async function listTeamDefaults(
+  db: Db, query: { teamIds: string[]; today: string; standard: { overhead: number; contingency: number; split: DefaultVersion["split"] } | null },
+): Promise<TeamDefaultRow[]> {
+  const rows: TeamDefaultRow[] = [];
+  for (const teamId of query.teamIds) {
+    const row = await findTeamDefault(db, teamId, query.today);
+    if (!row) { rows.push({ teamId, effectiveFrom: null, overhead: null, contingency: null, split: null, source: "No active default" }); continue; }
+    const { effectiveFrom, overhead, contingency, split } = toVersion(row);
+    rows.push({ teamId, effectiveFrom, overhead, contingency, split, source: matches(toVersion(row), query.standard) ? "Standard" : "Own" });
+  }
+  return rows;
+}
+
+function matches(v: DefaultVersion, standard: { overhead: number; contingency: number; split: DefaultVersion["split"] } | null): boolean {
+  if (!standard) return false;
+  const same = (a: number | null, b: number) => Math.abs((a ?? 0) - b) < 1e-9;
+  return same(v.overhead, standard.overhead) && same(v.contingency, standard.contingency)
+    && (Object.keys(standard.split) as (keyof DefaultVersion["split"])[]).every((k) => same(v.split[k], standard.split[k]));
+}

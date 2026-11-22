@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { seedDrgw } from "../infrastructure/db/fixtures";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { getTeamDefaults } from "./getTeamDefaults";
+import { getTeamDefaults, listTeamDefaults } from "./getTeamDefaults";
 import { saveTeamDefault } from "./saveTeamDefault";
 
 // UC03: the team default page shows the default in force today and every version before and after it.
@@ -52,5 +52,21 @@ describe("getTeamDefaults", () => {
 
   it("an unknown team is an error", async () => {
     await expect(getTeamDefaults(db, { teamId: "NOPE", today: "2026-11-08" })).rejects.toThrow("Unknown team NOPE");
+  });
+});
+
+// sean, 22 Nov 2026: Team planning's Default capacity tab lists every team's default in force, and whether it is the standard.
+describe("listTeamDefaults", () => {
+  it("gives each team's default in force, marked against the standard, or none", async () => {
+    const standard = { overhead: 0.2, contingency: 0, split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24, enabling: 0 } };
+    const rows = await listTeamDefaults(db, { teamIds: ["T017", "T001"], today: "2026-11-08", standard });
+    expect(rows).toEqual([
+      { teamId: "T017", effectiveFrom: "2026-01-01", overhead: 0.2, contingency: 0,
+        split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24, enabling: 0 }, source: "Standard" },
+      { teamId: "T001", effectiveFrom: null, overhead: null, contingency: null, split: null, source: "No active default" },
+    ]);
+    const own = await listTeamDefaults(db, { teamIds: ["T017"], today: "2026-11-08", standard: { ...standard, overhead: 0.1 } });
+    expect(own[0]?.source).toBe("Own");
+    expect((await listTeamDefaults(db, { teamIds: ["T017"], today: "2026-11-08", standard: null }))[0]?.source).toBe("Own");
   });
 });

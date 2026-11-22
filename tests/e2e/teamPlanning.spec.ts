@@ -54,3 +54,20 @@ test("on Team members you can add, edit, end or move members, and book their lea
   await expect(page.getByRole("heading", { name: "Move to another team" })).toBeVisible();
   await expect(page.getByLabel("Location")).toBeVisible(); // decides the person's public holidays
 });
+
+// sean, 22 Nov 2026: Team planning has two lists: Team details (as before) and every team's Default capacity.
+test("Team planning shows Team details and Default capacity tabs", async ({ page }) => {
+  await page.goto("/p/default/teams?choose=1");
+  const tabs = page.getByRole("navigation", { name: "Team lists" });
+  await expect(tabs.getByRole("link")).toHaveText(["Team details", "Default capacity"]);
+  await expect(tabs.getByRole("link", { name: "Team details" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("table", { name: "All teams" })).toBeVisible();
+
+  await tabs.getByRole("link", { name: "Default capacity" }).click();
+  const table = page.getByRole("table", { name: "Default capacity" });
+  const drgw = table.getByRole("row", { name: /T017/ });
+  await expect(drgw.getByRole("cell")).toContainText(["T017", "DRGW", "20%", "0%", "24%", "16%", "16%", "24%", "0%", "1 Jan 2026"]);
+  await expect(table.getByRole("row", { name: /T001/ })).toContainText("No active default");
+  await drgw.getByRole("link", { name: "DRGW" }).click();
+  await expect(page).toHaveURL(/\/p\/default\/teams\/T017\/default$/);
+});
