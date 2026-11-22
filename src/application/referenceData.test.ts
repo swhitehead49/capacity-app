@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
-import { STARTING_LOCATIONS, addLocation, updateLocation, addStartingLocations, addValueStream, getReferenceData, syncLocations } from "./referenceData";
+import { STARTING_LOCATIONS, addLocation, updateLocation, addStartingLocations, addValueStream, addValueStreams, getReferenceData, syncLocations } from "./referenceData";
 
 // Reference data set once at system level and used by every project (sean, 15 Nov 2026):
 // the value streams and the locations a team's Value stream and Base location are picked from.
@@ -111,5 +111,19 @@ describe("syncLocations", () => {
     await addLocation(shared, actor, { code: "DE-BY", country: "DE", name: "Bavaria", standardHours: "40" });
     await syncLocations(shared, shared);
     expect(await shared.select().from(t.locations)).toHaveLength(1);
+  });
+});
+
+// sean, 22 Nov 2026: "can you import the list of value streams?" Paste one name per line.
+describe("addValueStreams (a pasted list)", () => {
+  it("adds each new name once, skips ones already there, and says what it did", async () => {
+    await addValueStream(shared, actor, { name: "Connectivity" });
+    const result = await addValueStreams(shared, actor, { text: "Clinical Services\n  Medication \nconnectivity\n\nHigh Acuity Care\nHigh Acuity Care\n" });
+    expect(result).toEqual({ ok: true, added: ["Clinical Services", "Medication", "High Acuity Care"], skipped: ["connectivity"] });
+    expect((await getReferenceData(shared)).valueStreams).toEqual(["Clinical Services", "Connectivity", "High Acuity Care", "Medication"]);
+  });
+
+  it("needs at least one name", async () => {
+    expect(await addValueStreams(shared, actor, { text: " \n " })).toEqual({ ok: false, errors: ["Paste at least one value stream name"] });
   });
 });

@@ -28,6 +28,34 @@ export async function addValueStream(shared: Db, actor: string, request: { name:
   return { ok: true };
 }
 
+/** A pasted list of value streams, one per line (sean, 22 Nov 2026). New names are added; ones already there are skipped. */
+export async function addValueStreams(
+  shared: Db, actor: string, request: { text: string },
+): Promise<{ ok: true; added: string[]; skipped: string[] } | { ok: false; errors: string[] }> {
+  const names = request.text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!names.length) return { ok: false, errors: ["Paste at least one value stream name"] };
+  const known = [...(await getReferenceData(shared)).valueStreams];
+  const added: string[] = [];
+  const skipped: string[] = [];
+  for (const name of names) {
+    if (known.some((v) => sameName(v, name))) {
+      if (!added.some((v) => sameName(v, name))) skipped.push(name);
+      continue;
+    }
+    known.push(name);
+    added.push(name);
+  }
+  if (added.length) {
+    await shared.transaction(async (tx) => {
+      await tx.insert(t.valueStreams).values(added.map((name) => ({ name })));
+      for (const name of added) {
+        await tx.insert(t.auditLog).values({ actor, entity: "value_streams", entityId: name, action: "add", before: null, after: { name } });
+      }
+    });
+  }
+  return { ok: true, added, skipped };
+}
+
 export async function addLocation(
   shared: Db, actor: string, request: { code: string; country: string; name: string; standardHours: string },
 ): Promise<ReferenceResult> {

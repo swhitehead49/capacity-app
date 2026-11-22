@@ -64,3 +64,13 @@ test("edit a location's name and standard hours", async ({ page }) => {
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ })).toContainText("Vienna office");
   await expect(page.getByRole("table", { name: "Locations" }).getByRole("row", { name: /AT-9/ })).toContainText("38.5");
 });
+
+// sean, 22 Nov 2026: paste a list of value streams, one per line.
+test("paste a list of value streams; ones already there are skipped", async ({ page }) => {
+  await page.goto("/reference");
+  const form = page.getByRole("form", { name: "Paste a list of value streams" });
+  await form.getByLabel("Value streams, one per line").fill("Regular Care\nERP\nplatform\n");
+  await form.getByRole("button", { name: "Add value streams" }).click();
+  await expect(page.getByRole("status")).toContainText("Added 2 value streams. Already there, so skipped: platform.");
+  await expect(page.getByRole("table", { name: "Value streams" }).getByRole("row", { name: "Regular Care" })).toBeVisible();
+});

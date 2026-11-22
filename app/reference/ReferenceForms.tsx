@@ -1,12 +1,21 @@
 "use client";
 
 import { ActionForm } from "@/app/lib/ActionForm";
-import { addLocationAction, addValueStreamAction, updateLocationAction } from "./actions";
+import { addLocationAction, addValueStreamAction, addValueStreamsAction, updateLocationAction } from "./actions";
 
 export function AddValueStreamForm() {
   return (
     <ActionForm action={addValueStreamAction} hidden={{}} values={{}} submitLabel="Add value stream" label="Add value stream">
       {(v) => <div className="grid"><label>Name<input name="name" defaultValue={v.name} /></label></div>}
+    </ActionForm>
+  );
+}
+
+/** Paste a list of value streams, one per line (sean, 22 Nov 2026). */
+export function AddValueStreamsForm() {
+  return (
+    <ActionForm action={addValueStreamsAction} hidden={{}} values={{}} submitLabel="Add value streams" label="Paste a list of value streams">
+      {(v) => <label>Value streams, one per line<textarea name="names" rows={8} defaultValue={v.names} /></label>}
     </ActionForm>
   );
 }

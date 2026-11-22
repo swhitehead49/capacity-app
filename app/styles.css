@@ -84,3 +84,4 @@ dl.details dd { margin: 0; }
 table.editable td { padding: 2px 4px; }
 table.editable input, table.editable select { padding: 4px 6px; min-width: 7em; }
 a.danger { color: #8a1f1f; }
+.edit-form textarea { width: 100%; font: inherit; padding: 6px 10px; }
