@@ -89,6 +89,30 @@ describe("parseTeamCsv", () => {
     expect(team).not.toHaveProperty("sourceHeadcount");
   });
 
+  // FR-18x (sean, 22 Nov 2026): the template's % columns become the team's starting default, instead of the standard.
+  describe("starting allocation (FR-18x)", () => {
+    const pctHead = "Team_ID,Team_Name,Overhead_Pct,Contingency_Pct,Run_Pct,Fix_Pct,Sustain_Pct,Change_Pct,Enabling_Training_Pct,Total_Pct";
+
+    it("reads the % columns as the team's starting allocation; Total_Pct is ignored", () => {
+      const team = parseTeamCsv(`${pctHead}\nT074,Core,20,5,25,20,15,10,5,100\n`, { today }).teams[0];
+      expect(team?.allocation).toEqual({ overhead: 0.2, contingency: 0.05, split: { run: 0.25, fix: 0.2, sustain: 0.15, change: 0.1, enabling: 0.05 } });
+    });
+
+    it("all blank means none: the team takes the standard allocation", () => {
+      expect(parseTeamCsv(`${pctHead}\nT074,Core,,,,,,,,\n`, { today }).teams[0]?.allocation).toBeUndefined();
+      expect(parseTeamCsv(`Team_ID,Team_Name\nT074,Core\n`, { today }).teams[0]?.allocation).toBeUndefined();
+    });
+
+    it("once any % is filled, a blank one counts as 0% and they must add up to 100%", () => {
+      expect(parseTeamCsv(`${pctHead}\nT074,Core,20,,40,40,,,,\n`, { today }).teams[0]?.allocation)
+        .toEqual({ overhead: 0.2, contingency: 0, split: { run: 0.4, fix: 0.4, sustain: 0, change: 0, enabling: 0 } });
+      expect(parseTeamCsv(`${pctHead}\nT074,Core,20,,40,30,,,,\nT075,Viewer,20,,40,abc,,,,\n`, { today }).errors).toEqual([
+        "Line 2: Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100% (they add up to 90%)",
+        "Line 3: Fix_Pct must be a number",
+      ]);
+    });
+  });
+
   it("says when a start date is not a real date", () => {
     expect(parseTeamCsv(`${head}\nT076,Core,,,31/02/2027\n`, { today }).errors)
       .toEqual(['Line 2: "31/02/2027" is not a real date (use YYYY-MM-DD or DD/MM/YYYY)']);

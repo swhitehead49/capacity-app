@@ -2,7 +2,8 @@ import { and, asc, count, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import { syncLocations } from "./referenceData";
-import { resolveStandard } from "./standardAllocation";
+import { resolveStandard, type StandardAllocation } from "./standardAllocation";
+import { IMPORTED_REASON } from "../domain/organisation/startingAllocation";
 import { changeBaseLocation, changeValueStream, firstDefault, membersStillOn, renameTeam, teamHeadcount, retireTeam, updateTeamDetails } from "./teams";
 import { LEAD_NAME_FIELDS, readTeamType } from "../domain/organisation/teamDetails";
 
@@ -38,6 +39,23 @@ const startOf = (names: NameRow[]) => names.map((n) => n.effectiveFrom).filter((
 /** Two pages of a project can open at the same time; only one of them syncs at once. */
 const lock = (tx: Pick<Db, "execute">) => tx.execute(sql`select pg_advisory_xact_lock(hashtext('capacity-app sync teams'))`);
 
+/** FR-18x: the starting allocations teams were imported with, from the master list, by team. */
+async function importedStarts(shared: Db): Promise<Map<string, StandardAllocation>> {
+  const s = t.allocationSettings;
+  const rows = await shared.select().from(s)
+    .where(and(eq(s.level, "Team default"), eq(s.reason, IMPORTED_REASON), isNotNull(s.overhead)))
+    .orderBy(asc(s.id));
+  const starts = new Map<string, StandardAllocation>();
+  for (const r of rows) {
+    if (starts.has(r.teamId)) continue; // the first one is the one it was imported with
+    starts.set(r.teamId, {
+      overhead: r.overhead!, contingency: r.contingency ?? 0,
+      split: { run: r.run, fix: r.fix, sustain: r.sustain, change: r.change, enabling: r.enabling },
+    });
+  }
+  return starts;
+}
+
 /** Brings the project's copies of the master teams up to date. The Default project holds the master list itself. */
 export async function syncTeams(project: Db, shared: Db, today: string, actor = "Capacity Admin"): Promise<void> {
   if (project === shared) return;
@@ -63,6 +81,7 @@ export async function syncTeams(project: Db, shared: Db, today: string, actor = 
   });
 
   const standard = (await resolveStandard(project, shared))?.standard ?? null;
+  const imported = await importedStarts(shared);
   const master = await shared.select().from(t.teams);
   const masterNames = await namesByTeam(shared);
   await project.transaction(async (tx) => {
@@ -78,7 +97,10 @@ export async function syncTeams(project: Db, shared: Db, today: string, actor = 
       if (!row) continue;
       const names = masterNames.get(team.id) ?? [];
       if (names.length) await tx.insert(t.teamNameHistory).values(names.map(({ teamId, name, effectiveFrom }) => ({ teamId, name, effectiveFrom })));
-      await tx.insert(t.allocationSettings).values(firstDefault(team.id, startOf(names) ?? today, standard, actor));
+      const own = imported.get(team.id); // FR-18x: imported with its own starting allocation
+      await tx.insert(t.allocationSettings).values(own
+        ? firstDefault(team.id, startOf(names) ?? today, own, actor, IMPORTED_REASON)
+        : firstDefault(team.id, startOf(names) ?? today, standard, actor));
     }
     for (const team of changed) {
       const moved = copies.find((x) => x.id === team.id)?.valueStream !== team.valueStream;

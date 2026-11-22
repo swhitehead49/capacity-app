@@ -1,3 +1,4 @@
+import type { StartingAllocation } from "./startingAllocation";
 // FR-18, BR-15, BR-16: pure checks for team records. Each returns plain-English problems (empty = fine).
 import { emptyTeamDetails, looksLikeEmail, validateTeamDetails, type TeamDetails } from "./teamDetails";
 
@@ -8,6 +9,7 @@ export interface TeamDraft extends Partial<TeamDetails> {
   leadEmail: string | null;
   baseLocation?: string | null; // a country code, e.g. "DE" (FR-18t, sean 22 Nov 2026)
   effectiveFrom: string;
+  allocation?: StartingAllocation; // FR-18x: from the import's % columns; none = the standard allocation
 }
 
 export function validateTeam(team: TeamDraft): string[] {

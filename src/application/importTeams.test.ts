@@ -34,6 +34,15 @@ describe("importTeams", () => {
     expect(current).toMatchObject({ status: "Active", overhead: 0.2 });
   });
 
+  it("FR-18x: a team with % columns filled starts on those, not the standard", async () => {
+    await saveStandardAllocation(db, actor, { overhead: 0.2, contingency: 0, split: { run: 0.2, fix: 0.2, sustain: 0.2, change: 0.2, enabling: 0 } });
+    const csv = "Team_ID,Team_Name,Start_Date,Overhead_Pct,Run_Pct,Fix_Pct,Sustain_Pct,Change_Pct\nT074,Payments Core,2026-12-01,10,30,30,20,10\nT075,Viewer,,,,,,\n";
+    expect(await importTeams(db, actor, { today, csv })).toMatchObject({ ok: true, count: 2 });
+    expect((await getTeamDefaults(db, { teamId: "T074", today: "2026-12-01" })).current)
+      .toMatchObject({ status: "Active", effectiveFrom: "2026-12-01", overhead: 0.1, contingency: 0, split: { run: 0.3, fix: 0.3, sustain: 0.2, change: 0.1, enabling: 0 } });
+    expect((await getTeamDefaults(db, { teamId: "T075", today })).current).toMatchObject({ overhead: 0.2, split: { run: 0.2 } });
+  });
+
   it("refuses IDs or names already in the project, and adds nothing", async () => {
     const result = await importTeams(db, actor, { today, csv: `${head}\nT074,New,Platform,,\nT017,Other,,,\nT075,drgw,Platform,,\n` });
     expect(result).toEqual({ ok: false, errors: ["Line 3: Team ID T017 is already used", 'Line 4: "drgw" is already a team in Platform'] });

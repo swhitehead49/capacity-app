@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import { getTeamDefaults } from "./getTeamDefaults";
+import { importTeams } from "./importTeams";
 import { deleteMasterTeam, masterHeadcount, deleteProvisionalTeams, purgeTeam, purgePreview, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
 import { saveStandardAllocation } from "./standardAllocation";
 import { addTeam, changeValueStream, renameTeam, updateTeamDetails } from "./teams";
@@ -66,6 +67,16 @@ describe("syncTeams", () => {
     const other = await createTestDb();
     await syncTeams(other, shared, today);
     expect((await getTeamDefaults(other, { teamId: "T1", today })).current).toBeNull();
+  });
+
+  it("FR-18x: a team imported with its own starting allocation starts on it in every project, not the project's standard", async () => {
+    await saveStandardAllocation(project, actor, standard);
+    const csv = "Team_ID,Team_Name,Start_Date,Overhead_Pct,Run_Pct,Fix_Pct,Sustain_Pct,Change_Pct\nT9,Orders,2026-11-02,10,30,30,20,10\n";
+    expect(await importTeams(shared, actor, { today, csv })).toMatchObject({ ok: true });
+    await syncTeams(project, shared, today);
+    expect((await getTeamDefaults(project, { teamId: "T9", today })).current)
+      .toMatchObject({ status: "Active", effectiveFrom: "2026-11-02", overhead: 0.1, split: { run: 0.3 } });
+    expect((await getTeamDefaults(project, { teamId: "T1", today })).current).toMatchObject({ overhead: 0.2 }); // the standard
   });
 
   it("passes on the Admin's changes, but keeps what the project decided (included, retired)", async () => {

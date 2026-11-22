@@ -23,7 +23,10 @@ export default async function ImportTeams({ searchParams }: { searchParams: Prom
         Value streams must already be in the reference data, and the base country must be the country of one of its locations.
         Each team gets the same checks as Add team.
         If any line has a problem, nothing is imported and every problem is listed.
-        Each team joins every project that has its value stream, starting with that project&apos;s standard allocation.
+        Each team joins every project that has its value stream, starting with that project&apos;s standard allocation, unless the row
+        {" "}fills the % columns <code>Overhead_Pct</code>, <code>Contingency_Pct</code>, <code>Run_Pct</code>, <code>Fix_Pct</code>,
+        {" "}<code>Sustain_Pct</code>, <code>Change_Pct</code> and <code>Enabling_Training_Pct</code>: then it starts on those in every project.
+        {" "}Once any of them is filled, a blank one counts as 0%, and together they must add up to 100. <code>Total_Pct</code> is ignored.
       </p>
       {error && (
         <div role="alert" aria-label="Problems importing" className="errors">

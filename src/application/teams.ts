@@ -1,6 +1,7 @@
 import { readBaseCountry } from "../domain/organisation/baseCountry";
 import { and, asc, desc, eq, gt, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { TEAM_DETAIL_FIELDS, emptyTeamDetails, looksLikeEmail, validateTeamDetails, type TeamDetails } from "../domain/organisation/teamDetails";
+import { IMPORTED_REASON } from "../domain/organisation/startingAllocation";
 import { definedOnly, nameClashes, sameName, validateTeam, type TeamDraft } from "../domain/organisation/teamRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
@@ -53,7 +54,10 @@ export async function insertTeam(
       ...emptyTeamDetails(), ...definedOnly(pickDetails(team)),
     }).returning();
     await tx.insert(t.teamNameHistory).values({ teamId: team.id, name: team.name, effectiveFrom: team.effectiveFrom });
-    await tx.insert(t.allocationSettings).values(firstDefault(team.id, team.effectiveFrom, standard, actor));
+    // FR-18x: an imported team may bring its own starting allocation; otherwise it takes the standard.
+    await tx.insert(t.allocationSettings).values(team.allocation
+      ? firstDefault(team.id, team.effectiveFrom, team.allocation, actor, IMPORTED_REASON)
+      : firstDefault(team.id, team.effectiveFrom, standard, actor));
   await tx.insert(t.auditLog).values({
     actor, entity: "teams", entityId: team.id, action: "add", reason: `Team starts ${team.effectiveFrom}`, before: null, after: row,
   });
@@ -64,13 +68,13 @@ export async function insertTeam(
  * or with no standard (or no start date) a Draft default, so the planner shows calendar capacity only (BR-17).
  */
 export function firstDefault(
-  teamId: string, effectiveFrom: string | null, standard: StandardAllocation | null, actor: string,
+  teamId: string, effectiveFrom: string | null, standard: StandardAllocation | null, actor: string, reason = "Standard allocation",
 ): typeof t.allocationSettings.$inferInsert {
   return standard && effectiveFrom
     ? {
       teamId, level: "Team default", status: "Active", effectiveFrom,
       overhead: standard.overhead, contingency: standard.contingency, ...standard.split,
-      reason: "Standard allocation", owner: actor,
+      reason, owner: actor,
     }
     : {
       teamId, level: "Team default", status: "Draft", effectiveFrom: null, overhead: null,

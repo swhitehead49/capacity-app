@@ -1,4 +1,5 @@
 import { csvRows, toIsoDate } from "../shared/csv";
+import { PCT_COLUMNS, readStartingAllocation, type PctField } from "./startingAllocation";
 import { readTeamType, type TeamDetails } from "./teamDetails";
 import { sameName, validateTeam, type TeamDraft } from "./teamRules";
 
@@ -43,6 +44,14 @@ const COLUMNS = {
   valueStream: ["value_stream"],
   baseLocation: ["base_location"],
   start: ["start_date"],
+  // FR-18x: the starting allocation (Total_Pct is only a check in the spreadsheet, so it is ignored)
+  overhead: ["overhead_pct"],
+  contingency: ["contingency_pct"],
+  run: ["run_pct"],
+  fix: ["fix_pct"],
+  sustain: ["sustain_pct"],
+  change: ["change_pct"],
+  enabling: ["enabling_training_pct"],
 } as const;
 
 export function parseTeamCsv(text: string, options: { today: string }): { teams: TeamDraft[]; errors: string[] } {
@@ -95,7 +104,9 @@ export function readTeamCsv(text: string, { today }: { today: string }): TeamCsv
       effectiveFrom: start ?? "",
       ...details,
     };
-    const problems = start ? validateTeam(team) : [`"${rawStart}" is not a real date (use YYYY-MM-DD or DD/MM/YYYY)`];
+    const starting = readStartingAllocation(Object.fromEntries(PCT_COLUMNS.map(([field]) => [field, cell(field)])) as Record<PctField, string>);
+    if (starting.allocation) team.allocation = starting.allocation;
+    const problems = start ? [...validateTeam(team), ...starting.errors] : [`"${rawStart}" is not a real date (use YYYY-MM-DD or DD/MM/YYYY)`];
     const sameId = teams.find((x) => x.id.toLowerCase() === team.id.toLowerCase());
     const sameNameInStream = teams.find((x) => sameName(x.name, team.name) && sameName(x.valueStream ?? "", team.valueStream ?? ""));
     if (!problems.length && sameId) problems.push(`Team ID ${team.id} is also on line ${sameId.line}`);
