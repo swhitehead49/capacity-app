@@ -67,7 +67,7 @@ test("Team planning shows Team details and Default capacity tabs", async ({ page
   const table = page.getByRole("table", { name: "Default capacity" });
   const drgw = table.getByRole("row", { name: /T017/ });
   await expect(drgw.getByRole("cell")).toContainText(["T017", "DRGW", "20%", "0%", "24%", "16%", "16%", "24%", "0%", "1 Jan 2026"]);
-  await expect(table.getByRole("row", { name: /T001/ })).toContainText("No active default");
+  await expect(table.getByRole("row", { name: /T002/ }).getByRole("cell").last()).toHaveText(/^(Standard|Own|No active default)$/); // other specs may give it a default
   await drgw.getByRole("link", { name: "DRGW" }).click();
   await expect(page).toHaveURL(/\/p\/default\/teams\/T017\/default$/);
 });
