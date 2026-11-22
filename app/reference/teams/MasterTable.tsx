@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ActionForm, type Values } from "@/app/lib/ActionForm";
 import { ID_STATUSES, TEAM_TYPES } from "@/src/domain/organisation/teamDetails";
-import { deleteTeamAction, purgeTeamAction, saveMasterTeamsAction } from "./actions";
+import { deleteProvisionalTeamsAction, deleteTeamAction, purgeTeamAction, saveMasterTeamsAction } from "./actions";
 
 export interface Option { value: string; label: string }
 export interface MasterRow { id: string; parentTeamName: string | null; provisional: boolean }
@@ -74,6 +74,15 @@ export function DeleteTeamForm({ teamId }: { teamId: string }) {
   return (
     <ActionForm action={deleteTeamAction} hidden={{ teamId }} values={{}} submitLabel={`Yes, delete ${teamId}`} label="Delete team">
       {() => <p>This can&apos;t be undone. The team goes from the master list and every project, and its ID becomes free again.</p>}
+    </ActionForm>
+  );
+}
+
+/** FR-18q (sean, 22 Nov 2026): delete every unused Provisional team, after typing DELETE. */
+export function DeleteProvisionalTeamsForm({ count }: { count: number }) {
+  return (
+    <ActionForm action={deleteProvisionalTeamsAction} hidden={{}} values={{}} submitLabel={`Delete ${count} provisional teams`} label="Delete all provisional teams">
+      {(v) => <label>Type DELETE to confirm<input name="confirm" defaultValue={v.confirm} autoComplete="off" /></label>}
     </ActionForm>
   );
 }

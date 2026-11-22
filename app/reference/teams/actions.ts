@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { readHeadcount, readTeamType } from "@/src/domain/organisation/teamDetails";
 import { addTeam, changeBaseLocation, changeValueStream, renameTeam, updateTeamDetails } from "@/src/application/teams";
 import { importTeams } from "@/src/application/importTeams";
-import { deleteMasterTeam, purgeTeam, retireMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
+import { deleteMasterTeam, deleteProvisionalTeams, purgeTeam, retireMasterTeam, saveMasterTeamRows } from "@/src/application/masterTeams";
 import { allProjectDbs } from "./projectDbs";
 import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
@@ -36,7 +36,7 @@ export async function importTeamsAction(form: FormData) {
   const result = await importTeams(shared, ACTOR, { csv, today: today() }, shared);
   if (result.ok) {
     const params = new URLSearchParams({ imported: String(result.count) });
-    if (result.warnings.length) params.set("warning", result.warnings.join("\n"));
+    if (result.warnings.length) params.set("kept", result.warnings.join("\n"));
     redirect(`/reference/teams?${params}`);
   }
   const shown = result.errors.slice(0, MAX_SHOWN);
@@ -111,6 +111,15 @@ export async function deleteTeamAction(previous: FormState, form: FormData): Pro
   const result = await deleteMasterTeam(shared, (await allProjectDbs()).map((p) => p.db), ACTOR, { teamId });
   if (!result.ok) return failed(previous, form, result.errors);
   redirect(`/reference/teams?deleted=${encodeURIComponent(teamId)}`);
+}
+
+/** FR-18q (sean, 22 Nov 2026): delete every unused Provisional team at once, after confirming. */
+export async function deleteProvisionalTeamsAction(previous: FormState, form: FormData): Promise<FormState> {
+  if (read(form, "confirm").toUpperCase() !== "DELETE") return failed(previous, form, ["Type DELETE to confirm"]);
+  const { deleted, kept } = await deleteProvisionalTeams(await sharedDb(), (await allProjectDbs()).map((p) => p.db), ACTOR);
+  const params = new URLSearchParams({ bulkDeleted: String(deleted.length) });
+  if (kept.length) params.set("warning", kept.slice(0, MAX_SHOWN).join("\n"));
+  redirect(`/reference/teams?${params}`);
 }
 
 /** UC17: retire a team in every project at once (sean, 16 Nov 2026). */

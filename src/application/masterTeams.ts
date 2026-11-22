@@ -145,6 +145,22 @@ export async function deleteMasterTeam(shared: Db, projects: Db[], actor: string
   return { ok: true };
 }
 
+/**
+ * FR-18q (sean, 22 Nov 2026): delete every Provisional team that no project uses, the same way as one at a time.
+ * Confirmed teams are left alone; used ones are kept and listed with the reason.
+ */
+export async function deleteProvisionalTeams(shared: Db, projects: Db[], actor: string): Promise<{ deleted: string[]; kept: string[] }> {
+  const teams = await shared.select({ id: t.teams.id }).from(t.teams).where(eq(t.teams.idStatus, "Provisional")).orderBy(asc(t.teams.id));
+  const deleted: string[] = [];
+  const kept: string[] = [];
+  for (const { id } of teams) {
+    const result = await deleteMasterTeam(shared, projects, actor, { teamId: id });
+    if (result.ok) deleted.push(id);
+    else kept.push(...result.errors.map((e) => e.replace(`${id} is already used`, `${id}: already used`).replace(": retire it instead", ", so retire it instead")));
+  }
+  return { deleted, kept };
+}
+
 export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail: string; idStatus: string; teamType: string }
 
 /**

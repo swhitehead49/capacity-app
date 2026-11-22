@@ -74,3 +74,15 @@ test("delete a team and all its data, after typing its ID", async ({ page }) => 
   await expect(page.getByRole("status")).toContainText("Deleted T704");
   await expect(page.getByLabel("Name of T704")).toHaveCount(0);
 });
+
+// FR-18q (sean, 22 Nov 2026): deleting every provisional team asks for DELETE to be typed first.
+test("delete all provisional teams needs DELETE typed", async ({ page }) => {
+  await asRole(page, "admin");
+  await page.goto("/reference/teams");
+  await page.getByRole("link", { name: "Delete all provisional teams" }).click();
+  await expect(page.getByRole("heading", { name: "Delete all provisional teams?" })).toBeVisible();
+  const form = page.getByRole("form", { name: "Delete all provisional teams" });
+  await form.getByLabel("Type DELETE to confirm").fill("nope");
+  await form.getByRole("button", { name: /^Delete \d+ provisional teams$/ }).click();
+  await expect(form.getByRole("alert")).toContainText("Type DELETE to confirm");
+});

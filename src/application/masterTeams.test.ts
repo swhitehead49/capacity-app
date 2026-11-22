@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as t from "../infrastructure/db/schema";
 import { createTestDb, type Db } from "../infrastructure/db/testDb";
 import { getTeamDefaults } from "./getTeamDefaults";
-import { deleteMasterTeam, purgeTeam, purgePreview, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
+import { deleteMasterTeam, deleteProvisionalTeams, purgeTeam, purgePreview, retireMasterTeam, saveMasterTeamRows, syncTeams } from "./masterTeams";
 import { saveStandardAllocation } from "./standardAllocation";
 import { addTeam, renameTeam, updateTeamDetails } from "./teams";
 
@@ -103,6 +103,24 @@ describe("deleteMasterTeam", () => {
     });
     expect(await deleteMasterTeam(shared, [project], actor, { teamId: "T2" }))
       .toEqual({ ok: false, errors: ["T2 is already used in a project (members, leave or allocation changes): retire it instead"] });
+  });
+});
+
+// FR-18q (sean, 22 Nov 2026): clear out the whole provisional list at once.
+describe("deleteProvisionalTeams", () => {
+  it("deletes every unused Provisional team everywhere; keeps Confirmed and used ones, saying why", async () => {
+    await addTeam(shared, actor, { id: "T3", name: "Viewer", valueStream: "Clinical", leadEmail: null, effectiveFrom: "2026-11-02" });
+    await shared.update(t.teams).set({ idStatus: "Confirmed" }).where(eq(t.teams.id, "T1"));
+    await syncTeams(project, shared, today);
+    await project.insert(t.allocationSettings).values({
+      teamId: "T3", level: "Team default", status: "Draft", effectiveFrom: null, overhead: null, run: 0, fix: 0, sustain: 0, change: 0, owner: actor,
+    });
+    expect(await deleteProvisionalTeams(shared, [project], actor)).toEqual({
+      deleted: ["T2"],
+      kept: ["T3: already used in a project (members, leave or allocation changes), so retire it instead"],
+    });
+    expect((await shared.select().from(t.teams)).map((x) => x.id).sort()).toEqual(["T1", "T3"]);
+    expect(await copy("T2")).toBeUndefined();
   });
 });
 
