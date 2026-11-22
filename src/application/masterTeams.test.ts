@@ -137,6 +137,16 @@ describe("saveMasterTeamRows", () => {
     expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T2") })).toMatchObject({ name: "Billing", idStatus: "Confirmed" });
   });
 
+  it("a row without a lead email (the table no longer shows it) keeps the team's email", async () => {
+    await saveMasterTeamRows(shared, actor, today, [
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY", leadEmail: "lead@example.com", idStatus: "Provisional", teamType: "" },
+    ]);
+    expect(await saveMasterTeamRows(shared, actor, today, [
+      { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY", idStatus: "Provisional", teamType: "Domain Team" },
+    ])).toEqual({ ok: true, changed: 1 });
+    expect(await shared.query.teams.findFirst({ where: eq(t.teams.id, "T1") })).toMatchObject({ leadEmail: "lead@example.com", teamType: "Domain Team" });
+  });
+
   it("FR-18o: refuses an unknown team type", async () => {
     const result = await saveMasterTeamRows(shared, actor, today, [
       { teamId: "T1", name: "Viewer", valueStream: "Radiology", baseLocation: "DE-BY", leadEmail: "", idStatus: "Provisional", teamType: "Squad" },

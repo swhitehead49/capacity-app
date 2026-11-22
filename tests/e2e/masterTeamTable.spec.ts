@@ -86,3 +86,30 @@ test("delete all provisional teams needs DELETE typed", async ({ page }) => {
   await form.getByRole("button", { name: /^Delete \d+ provisional teams$/ }).click();
   await expect(form.getByRole("alert")).toContainText("Type DELETE to confirm");
 });
+
+// sean, 22 Nov 2026: Team Name, Parent Team Name and Grandparent Team Name columns, no email column, and filters.
+test("filter the master team list by team, parent and grandparent name", async ({ page }) => {
+  await asRole(page, "admin");
+  await page.goto("/reference/teams/T017");
+  const details = page.getByRole("form", { name: "Details" });
+  await details.getByLabel("Parent team name", { exact: true }).fill("Filter Parent");
+  await details.getByLabel("Grandparent team name", { exact: true }).fill("Filter Grandparent");
+  await details.getByRole("button", { name: "Save details" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved.");
+
+  await page.goto("/reference/teams");
+  const table = page.getByRole("table", { name: "Master team list" });
+  await expect(table.getByRole("columnheader")).toContainText(["ID", "Team Name", "Parent Team Name", "Grandparent Team Name"]);
+  await expect(table.getByRole("columnheader", { name: /email/i })).toHaveCount(0);
+
+  const filters = page.getByRole("form", { name: "Filter teams" });
+  await page.getByRole("combobox", { name: "Grandparent Team Name" }).selectOption("Filter Grandparent");
+  await filters.getByRole("button", { name: "Filter" }).click();
+  await expect(page.getByText(/^Showing 1 of \d+ teams\.$/)).toBeVisible();
+  await expect(table.getByRole("row", { name: /T017/ })).toContainText("Filter Parent");
+
+  await page.getByRole("link", { name: "Show all" }).click();
+  await page.getByRole("form", { name: "Filter teams" }).getByLabel("Team Name", { exact: true }).fill("drg");
+  await page.getByRole("form", { name: "Filter teams" }).getByRole("button", { name: "Filter" }).click();
+  await expect(page.getByLabel("Name of T017")).toHaveValue("DRGW");
+});

@@ -3,7 +3,7 @@ import { listLocations } from "@/src/application/lookups";
 import { getReferenceData } from "@/src/application/referenceData";
 import { MasterTable } from "./MasterTable";
 import { listTeamsOverview } from "@/src/application/teams";
-import { groupByValueStream } from "@/src/domain/organisation/teamGroups";
+import { filterTeams, groupByValueStream, hierarchyOptions } from "@/src/domain/organisation/teamGroups";
 import { today } from "@/src/infrastructure/db/appDb";
 import { sharedDb } from "@/app/lib/project";
 
@@ -13,10 +13,13 @@ export const dynamic = "force-dynamic";
  * Reference data, Teams tab (sean, 15 Nov 2026): the master team list. Every team is kept here once; a project's
  * teams are the ones in its value streams. Members, allocations and plans are kept by each project.
  */
-export default async function MasterTeams({ searchParams }: { searchParams: Promise<{ warning?: string; imported?: string; saved?: string; deleted?: string; bulkDeleted?: string; kept?: string }> }) {
-  const { warning, imported, saved, deleted, bulkDeleted, kept } = await searchParams;
+export default async function MasterTeams({ searchParams }: { searchParams: Promise<{ warning?: string; imported?: string; saved?: string; deleted?: string; bulkDeleted?: string; kept?: string; name?: string; parent?: string; grandparent?: string }> }) {
+  const { warning, imported, saved, deleted, bulkDeleted, kept, name, parent, grandparent } = await searchParams;
   const shared = await sharedDb();
-  const teams = await listTeamsOverview(shared, today());
+  const all = await listTeamsOverview(shared, today());
+  const teams = filterTeams(all, { name, parent, grandparent });
+  const { parents, grandparents } = hierarchyOptions(all);
+  const filtered = Boolean(name || parent || grandparent);
   const { valueStreams } = await getReferenceData(shared);
   return (
     <>
@@ -38,10 +41,30 @@ export default async function MasterTeams({ searchParams }: { searchParams: Prom
         <Link className="button secondary" href="/reference/teams/import">Import from spreadsheet</Link>
         <Link className="button secondary danger" href="/reference/teams/delete-provisional">Delete all provisional teams</Link>
       </div>
-      <MasterTable groups={groupByValueStream(teams).map(([stream, rows]) => [stream, rows.map((x) => ({ id: x.id, parentTeamName: x.parentTeamName, provisional: x.idStatus === "Provisional" }))])}
+      <div className="toolbar">
+      <form className="picker inline" method="get" aria-label="Filter teams">
+        <label>Team Name<input name="name" defaultValue={name ?? ""} placeholder="Part of the name" /></label>
+        <label>Parent Team Name
+          <select name="parent" defaultValue={parent ?? ""}>
+            <option value="">All</option>
+            {parents.map((p) => <option key={p}>{p}</option>)}
+          </select>
+        </label>
+        <label>Grandparent Team Name
+          <select name="grandparent" defaultValue={grandparent ?? ""}>
+            <option value="">All</option>
+            {grandparents.map((g) => <option key={g}>{g}</option>)}
+          </select>
+        </label>
+        <button type="submit" className="secondary">Filter</button>
+        {filtered && <Link href="/reference/teams">Show all</Link>}
+      </form>
+      </div>
+      {filtered && <p className="muted">Showing {teams.length} of {all.length} teams.</p>}
+      <MasterTable groups={groupByValueStream(teams).map(([stream, rows]) => [stream, rows.map((x) => ({ id: x.id, parentTeamName: x.parentTeamName, grandparentTeamName: x.grandparentTeamName, provisional: x.idStatus === "Provisional" }))])}
         values={Object.fromEntries(teams.flatMap((x) => [
           [`name:${x.id}`, x.name], [`valueStream:${x.id}`, x.valueStream ?? ""], [`baseLocation:${x.id}`, x.baseLocation ?? ""],
-          [`leadEmail:${x.id}`, x.leadEmail ?? ""], [`idStatus:${x.id}`, x.idStatus], [`teamType:${x.id}`, x.teamType ?? ""],
+          [`idStatus:${x.id}`, x.idStatus], [`teamType:${x.id}`, x.teamType ?? ""],
         ]))}
         valueStreams={valueStreams} locations={await listLocations(shared)} />
     </>

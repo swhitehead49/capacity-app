@@ -161,7 +161,7 @@ export async function deleteProvisionalTeams(shared: Db, projects: Db[], actor: 
   return { deleted, kept };
 }
 
-export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail: string; idStatus: string; teamType: string }
+export interface MasterTeamRow { teamId: string; name: string; valueStream: string; baseLocation: string; leadEmail?: string; idStatus: string; teamType: string } // leadEmail left out = keep it
 
 /**
  * The master list's table, saved in one go (sean, 16 Nov 2026). Each row only changes what differs, with the same
@@ -185,9 +185,10 @@ export async function saveMasterTeamRows(
     if (blank(row.valueStream) !== team.valueStream) await step(await changeValueStream(shared, actor, { teamId: team.id, valueStream: row.valueStream }, shared));
     if (blank(row.baseLocation) !== team.baseLocation) await step(await changeBaseLocation(shared, actor, { teamId: team.id, baseLocation: row.baseLocation }, shared));
     const teamType = readTeamType(row.teamType);
-    if (blank(row.leadEmail) !== team.leadEmail || row.idStatus !== team.idStatus || teamType !== team.teamType) {
+    const leadEmail = row.leadEmail === undefined ? team.leadEmail : blank(row.leadEmail);
+    if (leadEmail !== team.leadEmail || row.idStatus !== team.idStatus || teamType !== team.teamType) {
       const current = (await shared.query.teams.findFirst({ where: eq(t.teams.id, team.id) }))!;
-      await step(await updateTeamDetails(shared, actor, { ...current, teamId: team.id, leadEmail: blank(row.leadEmail), idStatus: row.idStatus, teamType }));
+      await step(await updateTeamDetails(shared, actor, { ...current, teamId: team.id, leadEmail, idStatus: row.idStatus, teamType }));
     }
     if (touched) changed++;
     errors.push(...problems.map((p) => `${team.id}: ${p}`));
