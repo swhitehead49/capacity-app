@@ -108,3 +108,7 @@ table.hierarchy-form .fixed-name { display: inline-block; padding: 6px 0; }
 /* FR-18y: Set up and Archive/Restore side by side on the Projects tab */
 td.row-actions { display: flex; gap: 8px; align-items: center; }
 form.inline { display: inline; margin: 0; }
+/* FR-19c: Capacity summary */
+.summary-picker { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 8px; }
+table.summary td, table.summary th { text-align: right; white-space: nowrap; }
+table.summary td:first-child, table.summary td:nth-child(2), table.summary th:first-child, table.summary th:nth-child(2) { text-align: left; }

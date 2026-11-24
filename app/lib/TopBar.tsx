@@ -31,6 +31,7 @@ export async function TopBar({ projectId }: { projectId?: string }) {
       <nav>
         {base && <a href={base}>Project home</a>}
         {base && <a href={`${base}/teams`}>Team planning</a>}
+        {base && <a href={`${base}/summary`}>Capacity summary</a>}
         {base && role === "manager" && <a href={`${base}/project-reference`}>Project reference data</a>}
       </nav>
       {role && <span className="role muted">{ROLE_LABELS[role]}</span>}

@@ -113,7 +113,7 @@ test("every Engineering manager page has the same top menu", async ({ page }) =>
   for (const address of ["/p/imaging", "/p/imaging/teams", "/p/imaging/project-reference", "/projects"]) {
     await page.goto(address);
     const bar = page.getByRole("banner");
-    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Project home", "Team planning", "Project reference data", "Switch project"]);
+    await expect(bar.getByRole("link")).toHaveText(["Capacity App", "Project home", "Team planning", "Capacity summary", "Project reference data", "Switch project"]);
     await expect(bar.getByRole("link", { name: "Project home" })).toHaveAttribute("href", "/p/imaging");
     await expect(bar).toContainText("Imaging");
     await expect(bar.getByRole("link", { name: "Team planning" })).toHaveAttribute("href", "/p/imaging/teams");
