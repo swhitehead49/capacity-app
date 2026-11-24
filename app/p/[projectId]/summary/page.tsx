@@ -36,7 +36,8 @@ export default async function CapacitySummary({ params, searchParams }: { params
     <>
       <h2>Capacity summary</h2>
       <p className="muted">Person-days, as of {formatDate(today())}, from each team&apos;s plan. The categories add up to the
-        available days; a team without an allocation counts as Not allocated.</p>
+        available days; a team without an allocation counts as Not allocated. Functional total = Sustain + Change;
+        Non-functional total = Fix + Run + Overhead.</p>
 
       <form method="get" className="filters summary-picker" aria-label="Show capacity for">
         <label>Show
@@ -75,10 +76,11 @@ function SummaryTable({ caption, rows }: { caption: string; rows: SummaryRow[] }
           <th>Period</th><th>Dates</th><th>Teams</th><th>People</th><th>FTE</th><th>Available</th>
           <th>Overhead</th><th>Contingency</th><th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th>
           <th>Enabling/<wbr />Training</th><th>Not allocated</th>
+          <th className="total">Functional total</th><th className="total">Non-functional total</th>
         </tr>
       </thead>
       <tbody>
-        {rows.length === 0 && <tr><td colSpan={14} className="empty">No teams to show.</td></tr>}
+        {rows.length === 0 && <tr><td colSpan={16} className="empty">No teams to show.</td></tr>}
         {rows.map((r) => (
           <tr key={r.periodId}>
             <td>{r.periodId}</td>
@@ -86,6 +88,7 @@ function SummaryTable({ caption, rows }: { caption: string; rows: SummaryRow[] }
             <td>{r.teams}</td><td>{r.headcount}</td><td>{r.allocatedFte.toFixed(2)}</td>
             <td><strong>{r.available.toFixed(1)}</strong></td>
             {[r.overhead, r.contingency, r.run, r.fix, r.sustain, r.change, r.enabling, r.notAllocated].map((v, i) => <td key={i}>{v.toFixed(1)}</td>)}
+            <td className="total">{r.functional.toFixed(1)}</td><td className="total">{r.nonFunctional.toFixed(1)}</td>
           </tr>
         ))}
       </tbody>

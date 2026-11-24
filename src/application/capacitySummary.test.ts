@@ -67,6 +67,13 @@ describe("getCapacitySummary (FR-19c)", () => {
     expect(categories).toBeCloseTo(all.available); // the categories always add up to the available days
   });
 
+  it("sean, 24 Nov 2026: Functional total = Sustain + Change; Non-functional total = Fix + Run + Overhead", async () => {
+    const row = await s001({ kind: "team", teamId: "T017" });
+    expect(row.functional).toBeCloseTo(row.sustain + row.change);
+    expect(row.nonFunctional).toBeCloseTo(row.fix + row.run + row.overhead);
+    expect(row.functional).toBeGreaterThan(0);
+  });
+
   it("one value stream: only its teams in the project", async () => {
     const row = await s001({ kind: "valueStream", name: "Platform" });
     expect(row).toMatchObject({ teams: 1, headcount: 2 });

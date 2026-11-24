@@ -25,11 +25,14 @@ export interface SummaryRow {
   change: number;
   enabling: number;
   notAllocated: number;
+  functional: number; // Sustain + Change (sean, 24 Nov 2026)
+  nonFunctional: number; // Fix + Run + Overhead
 }
 
 /** Adds one team's planner row to the period's total. */
 function add(total: SummaryRow | undefined, row: PlanRow): SummaryRow {
   const base: SummaryRow = total ?? {
+    functional: 0, nonFunctional: 0,
     periodId: row.periodId, start: row.start, end: row.end, teams: 0, headcount: 0, allocatedFte: 0, available: 0,
     overhead: 0, contingency: 0, run: 0, fix: 0, sustain: 0, change: 0, enabling: 0, notAllocated: 0,
   };
@@ -54,7 +57,9 @@ function add(total: SummaryRow | undefined, row: PlanRow): SummaryRow {
 function totals(plans: PlanRow[][]): SummaryRow[] {
   const byPeriod = new Map<string, SummaryRow>();
   for (const rows of plans) for (const row of rows) byPeriod.set(row.periodId, add(byPeriod.get(row.periodId), row));
-  return [...byPeriod.values()].sort((a, b) => a.start.localeCompare(b.start));
+  return [...byPeriod.values()]
+    .map((r) => ({ ...r, functional: r.sustain + r.change, nonFunctional: r.fix + r.run + r.overhead }))
+    .sort((a, b) => a.start.localeCompare(b.start));
 }
 
 export async function getCapacitySummary(db: Db, query: { today: string; scope: SummaryScope }, holidayDb: Db = db) {

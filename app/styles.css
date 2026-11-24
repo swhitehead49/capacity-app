@@ -112,3 +112,4 @@ form.inline { display: inline; margin: 0; }
 .summary-picker { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 8px; }
 table.summary td, table.summary th { text-align: right; white-space: nowrap; }
 table.summary td:first-child, table.summary td:nth-child(2), table.summary th:first-child, table.summary th:nth-child(2) { text-align: left; }
+table.summary .total { font-weight: 600; background: var(--total-bg, rgba(37, 99, 235, 0.06)); }
