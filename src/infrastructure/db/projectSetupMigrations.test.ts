@@ -38,3 +38,15 @@ describe("migration 0018: a team's base location becomes its country", () => {
     expect([(await team(db, "T1"))?.baseLocation, (await team(db, "T2"))?.baseLocation, (await team(db, "T3"))?.baseLocation]).toEqual(["DE", "AT", null]);
   });
 });
+
+describe("migration 0020: team % imported as a fraction (sean, 24 Nov 2026: 1 -> 100, 0.8 -> 80)", () => {
+  it("multiplies every team % of 1% or less by 100 and leaves the rest alone", async () => {
+    await db.insert(t.teams).values({ id: "T1", name: "A" });
+    const emails = ["a", "b", "c", "d", "e"].map((x) => `${x}@example.com`);
+    await db.insert(t.people).values(emails.map((email) => ({ email })));
+    await db.insert(t.assignments).values([0.01, 0.008, 0.005, 0.5, null].map((teamAllocation, i) => ({ personEmail: emails[i]!, teamId: "T1", teamAllocation })));
+    await rerun(db, "drizzle/0020_team_pct_one_hundred.sql");
+    const shares = (await db.select().from(t.assignments)).sort((x, y) => x.personEmail.localeCompare(y.personEmail)).map((a) => a.teamAllocation);
+    expect(shares).toEqual([1, 0.8, 0.5, 0.5, null]);
+  });
+});
