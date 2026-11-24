@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanName, fullName, validateMembership, validatePerson, validateEndDate, dayBefore } from "./memberRules";
+import { cleanName, fullName, personKey, shownEmail, personLabel, validateMembership, validatePerson, validateEndDate, dayBefore } from "./memberRules";
 
 // FR-03, FR-05, BR-21, BR-22: what a team member record needs before it is saved.
 
@@ -14,8 +14,15 @@ describe("validatePerson", () => {
     expect(validatePerson({ email: "a@example.com", contractedHours: null, employmentStart: null, employmentEnd: null })).toEqual([]);
   });
 
-  it("needs a real-looking email, because it identifies the person", () => {
+  it("an email, when given, must look real", () => {
     expect(validatePerson({ ...ok, email: "anna" })).toEqual(["Email must look like name@company.com"]);
+  });
+
+  // FR-05c (sean, 24 Nov 2026): "make all emails optional". Without one, the person's name identifies them.
+  it("the email is optional, but then a first or last name is needed", () => {
+    expect(validatePerson({ ...ok, email: "", firstName: "Ada" })).toEqual([]);
+    expect(validatePerson({ ...ok, email: "" })).toEqual(["Email or a name is needed"]);
+    expect(validatePerson({ ...ok, email: personKey("", "Ada", null) })).toEqual([]); // a saved person without an email
   });
 
   it("contracted hours must be between 1 and 60 a week", () => {
@@ -81,5 +88,24 @@ describe("names (FR-05a, sean 22 Nov 2026)", () => {
     expect(fullName({ firstName: "Ada", lastName: "Lovelace" })).toBe("Ada Lovelace");
     expect(fullName({ firstName: null, lastName: "Lovelace" })).toBe("Lovelace");
     expect(fullName({ firstName: null, lastName: null })).toBeNull();
+  });
+});
+
+// FR-05c (sean, 24 Nov 2026): people without an email are identified by their name.
+describe("person keys", () => {
+  it("is the email when there is one, otherwise made from the name", () => {
+    expect(personKey(" Ada@Example.com ", "Ada", "Lovelace")).toBe("ada@example.com");
+    expect(personKey("", "Ada", "Lovelace")).toBe("no-email:ada lovelace");
+    expect(personKey(null, " ADA ", " lovelace ")).toBe("no-email:ada lovelace"); // same name, same person
+  });
+
+  it("shows the email only when there is a real one", () => {
+    expect(shownEmail("ada@example.com")).toBe("ada@example.com");
+    expect(shownEmail("no-email:ada lovelace")).toBeNull();
+  });
+
+  it("labels a person by name, else email", () => {
+    expect(personLabel({ email: "no-email:ada lovelace", firstName: "Ada", lastName: "Lovelace" })).toBe("Ada Lovelace");
+    expect(personLabel({ email: "a@example.com", firstName: null, lastName: null })).toBe("a@example.com");
   });
 });

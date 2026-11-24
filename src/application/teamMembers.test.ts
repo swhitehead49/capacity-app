@@ -199,3 +199,44 @@ describe("moveMember (BR-22)", () => {
     expect(await assignmentsOf("b@example.com")).toHaveLength(1);
   });
 });
+
+// FR-05c (sean, 24 Nov 2026): "make all emails optional". Without an email a person is identified by their name.
+describe("people without an email (FR-05c)", () => {
+  const add = (teamId: string, email: string, person: Parameters<typeof addMember>[2]["person"] = newPerson) =>
+    addMember(db, actor, { teamId, email, teamAllocation: 1, sharedResource: false, startDate: "2026-11-09", person });
+
+  it("adds someone with just a name, shown by name with no email", async () => {
+    expect((await add("T017", "")).ok).toBe(true);
+    const member = (await getTeamMembers(db, { teamId: "T017", today })).current.find((m) => m.firstName === "Ada");
+    expect(member).toMatchObject({ email: "no-email:ada lovelace", shownEmail: null, label: "Ada Lovelace" });
+  });
+
+  it("the same name on another team is the same person", async () => {
+    await add("T017", "");
+    await add("T001", "", { ...newPerson, firstName: "ADA", contractedHours: 10 });
+    expect(await db.select().from(t.people).where(eq(t.people.email, "no-email:ada lovelace"))).toHaveLength(1);
+    expect(await assignmentsOf("no-email:ada lovelace")).toHaveLength(2);
+  });
+
+  it("needs an email or a name", async () => {
+    expect(await add("T017", "", { ...newPerson, firstName: null, lastName: null }))
+      .toEqual({ ok: false, errors: ["Email or a name is needed"] });
+  });
+
+  it("an email can be added later; their memberships and leave move with them", async () => {
+    await add("T017", "");
+    const [a] = await assignmentsOf("no-email:ada lovelace");
+    await db.insert(t.absences).values({ personEmail: "no-email:ada lovelace", startDate: "2026-12-01", endDate: "2026-12-01", type: "Annual" });
+    expect((await updateMember(db, actor, { assignmentId: a!.id, teamAllocation: 1, sharedResource: false, email: " Ada@Example.com ", person: newPerson })).ok).toBe(true);
+    expect(await getMember(db, a!.id)).toMatchObject({ email: "ada@example.com", shownEmail: "ada@example.com" });
+    expect(await db.select().from(t.people).where(eq(t.people.email, "no-email:ada lovelace"))).toEqual([]);
+    expect(await db.select().from(t.absences).where(eq(t.absences.personEmail, "ada@example.com"))).toHaveLength(1);
+  });
+
+  it("refuses an email that already belongs to someone else", async () => {
+    await add("T001", "");
+    const [a] = await assignmentsOf("no-email:ada lovelace");
+    expect(await updateMember(db, actor, { assignmentId: a!.id, teamAllocation: 1, sharedResource: false, email: "b@example.com", person: newPerson }))
+      .toEqual({ ok: false, errors: ["b@example.com already belongs to someone else"] });
+  });
+});

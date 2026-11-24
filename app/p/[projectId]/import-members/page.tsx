@@ -15,7 +15,8 @@ export default async function ImportMembers({ params, searchParams }: {
       <h2>Import team members</h2>
       <p className="muted">
         Use the Team Members sheet of the team template. In Excel, open that sheet and save it as CSV (File → Save As → CSV UTF-8).
-        {" "}<code>Team_ID</code> and <code>Email</code> are needed; <code>First_Name</code>, <code>Last_Name</code>, <code>Role</code>,
+        {" "}<code>Team_ID</code> is needed, and an <code>Email</code> or a name (<code>First_Name</code>, <code>Last_Name</code>): without an
+        {" "}email, someone with the same name is the same person. <code>Role</code>,
         {" "}<code>Location</code> (blank means the team&apos;s base location), <code>Contracted_Hours</code>, <code>Team_Pct</code> (blank means 100),
         {" "}<code>Shared_Resource</code> (Yes or No), <code>Start_Date</code> (blank means today), <code>End_Date</code>,
         {" "}<code>Employment_Start</code> and <code>Employment_End</code> are optional. Dates as 2026-12-01 or 01/12/2026.

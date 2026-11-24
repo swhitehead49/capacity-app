@@ -6,6 +6,7 @@ import { resolveStandard, type StandardAllocation } from "./standardAllocation";
 import { IMPORTED_REASON } from "../domain/organisation/startingAllocation";
 import { changeBaseLocation, changeValueStream, firstDefault, membersStillOn, renameTeam, teamHeadcount, retireTeam, updateTeamDetails } from "./teams";
 import { LEAD_NAME_FIELDS, readTeamType } from "../domain/organisation/teamDetails";
+import { personLabel } from "../domain/people/memberRules";
 
 // Master team list (sean, 15 Nov 2026). The Admin keeps every team once, in the shared (Default) database.
 // Each project holds a copy of every team, kept up to date here, because its members, allocations and plans refer to it.
@@ -246,7 +247,7 @@ export async function retireMasterTeam(
   for (const p of others) await syncTeams(p.db, shared, today, actor);
   const stillOn: string[] = [];
   for (const { name, db } of [{ name: "Default", db: shared }, ...others]) {
-    stillOn.push(...(await membersStillOn(db, team.id, request.retiredOn)).map((email) => `${email} (${name})`));
+    stillOn.push(...(await membersStillOn(db, team.id, request.retiredOn)).map((key) => `${personLabel({ email: key, firstName: null, lastName: null })} (${name})`));
   }
   if (stillOn.length) return { ok: false, errors: [`Move or end these members first: ${stillOn.join(", ")}`] };
 

@@ -53,6 +53,7 @@ export async function updateMemberAction(previous: FormState, form: FormData): P
     teamAllocation: share(form, "teamAllocation"),
     sharedResource: form.get("sharedResource") === "on",
     person: personDetails(form),
+    email: String(form.get("email") ?? ""), // FR-05c: blank keeps the current one
   });
   return result.ok ? backToMembers(projectId, String(form.get("teamId"))) : failed(previous, form, result.errors);
 }

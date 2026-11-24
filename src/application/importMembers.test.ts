@@ -61,6 +61,17 @@ describe("importMembers", () => {
 
   it("passes on problems found in the file", async () => {
     expect(await importMembers(db, actor, { csv: "Name\nAda\n", today }))
-      .toEqual({ ok: false, errors: ['The first line must have the headings "Team_ID" and "Email"'] });
+      .toEqual({ ok: false, errors: ['The first line must have the heading "Team_ID", and "Email" or "First_Name"/"Last_Name"'] });
+  });
+});
+
+// FR-05c (sean, 24 Nov 2026): emails are optional; a row without one is matched to a person by name.
+describe("importMembers without emails (FR-05c)", () => {
+  it("adds people by name, and a name already in the project is the same person", async () => {
+    const csv = "Team_ID,Email,First_Name,Last_Name\nT017,,Ada,Lovelace\nT001,,ada,lovelace\n";
+    expect(await importMembers(db, actor, { csv, today })).toEqual({ ok: true, count: 2 });
+    expect(await db.select().from(t.assignments).where(eq(t.assignments.personEmail, "no-email:ada lovelace"))).toHaveLength(2);
+    expect(await importMembers(db, actor, { csv: "Team_ID,First_Name,Last_Name\nT017,Ada,Lovelace\n", today }))
+      .toEqual({ ok: false, errors: ["Line 2: Ada Lovelace is already a member of T017"] });
   });
 });

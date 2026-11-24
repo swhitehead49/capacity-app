@@ -23,6 +23,7 @@ export default async function EditMember({ params }: { params: Promise<{ project
     locationCode: member.locationCode ?? "",
     contractedHours: member.contractedHours === null ? "" : String(member.contractedHours),
     role: member.role ?? "",
+    email: member.shownEmail ?? "",
     employmentStart: member.employmentStart ?? "",
     employmentEnd: member.employmentEnd ?? "",
   };
@@ -30,7 +31,7 @@ export default async function EditMember({ params }: { params: Promise<{ project
   return (
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams/${teamId}/members`}>← Team members</Link></p>
-      <h2>{member.email}</h2>
+      <h2>{member.label}</h2>
       <p className="muted">
         On {teamId} {member.startDate ? `from ${formatDate(member.startDate)}` : "(no start date)"}
         {member.endDate ? ` to ${formatDate(member.endDate)}` : ""} · inputs: {member.inputStatus} ·{" "}

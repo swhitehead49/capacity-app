@@ -30,10 +30,37 @@ export function fullName(person: { firstName: string | null; lastName: string | 
   return [person.firstName, person.lastName].filter(Boolean).join(" ") || null;
 }
 
+/**
+ * FR-05c (sean, 24 Nov 2026): "make all emails optional". A person is still identified by one key (people.email):
+ * their email when they have one, otherwise "no-email:" and their name, so the same name means the same person.
+ */
+export const NO_EMAIL = "no-email:";
+
+export function personKey(email: string | null | undefined, firstName: string | null | undefined, lastName: string | null | undefined): string {
+  const typed = (email ?? "").trim().toLowerCase();
+  if (typed) return typed;
+  const name = [cleanName(firstName), cleanName(lastName)].filter(Boolean).join(" ").toLowerCase();
+  return name ? `${NO_EMAIL}${name}` : "";
+}
+
+/** The person's real email, or null when they were saved without one. */
+export function shownEmail(key: string): string | null {
+  return key.startsWith(NO_EMAIL) ? null : key;
+}
+
+/** How a person is named on screen and in messages: their name, else their email. */
+export function personLabel(person: { email: string; firstName: string | null; lastName: string | null }): string {
+  return fullName(person) ?? shownEmail(person.email) ?? person.email.slice(NO_EMAIL.length);
+}
+
 /** Blanks are allowed: an incomplete person is saved and flagged (FR-04). Wrong values are not. */
 export function validatePerson(person: PersonFields): string[] {
   const errors: string[] = [];
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email)) errors.push("Email must look like name@company.com");
+  const named = Boolean(cleanName(person.firstName) || cleanName(person.lastName));
+  const email = person.email.trim();
+  const savedWithoutEmail = email.startsWith(NO_EMAIL);
+  if (!email && !named) errors.push("Email or a name is needed");
+  if (email && !savedWithoutEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Email must look like name@company.com");
   if ((person.firstName ?? "").length > NAME_LIMIT) errors.push(`First name must be at most ${NAME_LIMIT} characters`);
   if ((person.lastName ?? "").length > NAME_LIMIT) errors.push(`Last name must be at most ${NAME_LIMIT} characters`);
   const hours = person.contractedHours;

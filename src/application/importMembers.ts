@@ -1,5 +1,6 @@
 import { and, gte, isNull, or, eq } from "drizzle-orm";
 import { parseMemberCsv } from "../domain/people/memberCsv";
+import { personLabel } from "../domain/people/memberRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import { listProjectTeams } from "./projectValueStreams";
@@ -36,7 +37,7 @@ export async function importMembers(db: Db, actor: string, request: { csv: strin
         or(isNull(t.assignments.endDate), gte(t.assignments.endDate, m.startDate)),
       ),
     });
-    if (clash) problems.push(`Line ${m.line}: ${m.email} is already a member of ${team.id}`);
+    if (clash) problems.push(`Line ${m.line}: ${personLabel({ email: m.email, ...m.person })} is already a member of ${team.id}`);
   }
   if (problems.length) return { ok: false, errors: problems };
 

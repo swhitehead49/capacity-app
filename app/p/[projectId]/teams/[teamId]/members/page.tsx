@@ -43,7 +43,7 @@ function MemberTable({ caption, rows, projectId, teamId }: { caption: string; ro
         {rows.map((m) => (
           <tr key={m.assignmentId}>
             <td>{fullName(m)}</td>
-            <td>{m.email}</td>
+            <td>{m.shownEmail ?? ""}</td>
             <td>{m.role}</td>
             <td>{m.locationCode}</td>
             <td>{m.contractedHours}</td>

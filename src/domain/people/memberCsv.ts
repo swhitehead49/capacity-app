@@ -1,14 +1,14 @@
 import { csvRows, toIsoDate } from "../shared/csv";
-import { cleanName, validateEndDate, validateMembership, validatePerson } from "./memberRules";
+import { cleanName, personKey, personLabel, validateEndDate, validateMembership, validatePerson } from "./memberRules";
 
 // Import team members from the template's Team Members sheet saved as CSV (FR-05b, sean, 22 Nov 2026).
-// Pure: the file's text in, members or problems out. Team_ID and Email are needed; everything else is optional.
+// Pure: the file's text in, members or problems out. Team_ID is needed, and an Email or a name (FR-05c); the rest is optional.
 // A blank Team_Pct means 100, a blank Start_Date means today, a blank Shared_Resource means No.
 
 export interface MemberCsvRow {
   line: number;
   teamId: string;
-  email: string;
+  email: string; // the person key: their email, or "no-email:" + name (FR-05c)
   teamAllocation: number; // 0.5 = 50%
   sharedResource: boolean;
   startDate: string;
@@ -19,7 +19,7 @@ export interface MemberCsvRow {
   };
 }
 
-const HEADINGS = 'The first line must have the headings "Team_ID" and "Email"';
+const HEADINGS = 'The first line must have the heading "Team_ID", and "Email" or "First_Name"/"Last_Name"';
 
 /** Each field and the headings it can have (compared ignoring case, with spaces read as "_"). */
 const COLUMNS = {
@@ -44,7 +44,7 @@ export function parseMemberCsv(text: string, { today }: { today: string }): { me
   const c = Object.fromEntries(Object.entries(COLUMNS).map(([field, names]) => [
     field, header.findIndex((h) => (names as readonly string[]).includes(h)),
   ])) as Record<keyof typeof COLUMNS, number>;
-  if (c.teamId < 0 || c.email < 0) return { members: [], errors: [HEADINGS] };
+  if (c.teamId < 0 || (c.email < 0 && c.firstName < 0 && c.lastName < 0)) return { members: [], errors: [HEADINGS] };
 
   const members: MemberCsvRow[] = [];
   const errors: string[] = [];
@@ -61,7 +61,7 @@ export function parseMemberCsv(text: string, { today }: { today: string }): { me
     const number_ = (raw: string) => (raw === "" ? null : Number(raw.replace("%", "")));
 
     const teamId = cell("teamId");
-    const email = cell("email").toLowerCase();
+    const typedEmail = cell("email").toLowerCase();
     const pct = number_(cell("pct"));
     const sharedRaw = cell("shared").toLowerCase();
     const person = {
@@ -73,13 +73,14 @@ export function parseMemberCsv(text: string, { today }: { today: string }): { me
     const end = date("end");
 
     const problems: string[] = teamId ? [] : ["Team_ID is needed"];
-    problems.push(...validatePerson({ email, ...person }));
+    problems.push(...validatePerson({ email: typedEmail, ...person }));
+    const email = personKey(typedEmail, person.firstName, person.lastName);
     const membership = { teamAllocation: pct === null ? 1 : pct / 100, startDate: start ?? today };
     problems.push(...validateMembership(membership));
     if (!["", "yes", "no", "y", "n", "true", "false"].includes(sharedRaw)) problems.push(`Shared_Resource must be Yes or No, not "${cell("shared")}"`);
     if (end && start) problems.push(...validateEndDate({ startDate: start, endDate: end }));
     const twin = members.find((m) => m.email === email && m.teamId.toLowerCase() === teamId.toLowerCase());
-    if (!problems.length && twin) problems.push(`${email} is also on line ${twin.line} for ${twin.teamId}`);
+    if (!problems.length && twin) problems.push(`${personLabel({ email: twin.email, ...twin.person })} is also on line ${twin.line} for ${twin.teamId}`);
 
     problems.push(...dateProblems);
     errors.push(...problems.map((p) => `Line ${number}: ${p}`));

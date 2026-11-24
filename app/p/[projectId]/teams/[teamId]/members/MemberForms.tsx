@@ -40,13 +40,14 @@ export function AddMemberForm({ teamId, locations, today, baseLocation }: { team
       {(v) => (
         <>
           <div className="grid">
-            <label>Email<input name="email" type="text" defaultValue={v.email} /></label>
+            <label>Email (optional)<input name="email" type="text" defaultValue={v.email} /></label>
             <label>Team %<input name="teamAllocation" type="number" step="any" defaultValue={v.teamAllocation} /></label>
             <label>Start date<input name="startDate" type="date" defaultValue={v.startDate} /></label>
           </div>
           <SharedBox v={v} />
           <h2>Person</h2>
-          <p className="muted">Used for a new person. If the email already exists, their saved details are kept; edit them afterwards.</p>
+          <p className="muted">Used for a new person. If the email already exists, their saved details are kept; edit them afterwards.
+            Without an email, a first or last name is needed, and someone with the same name is the same person.</p>
           <PersonFields v={v} locations={locations} />
         </>
       )}
@@ -62,6 +63,7 @@ export function EditMemberForm({ teamId, assignmentId, values, locations }: {
       {(v) => (
         <>
           <div className="grid">
+            <label>Email (optional)<input name="email" type="text" defaultValue={v.email} /></label>
             <label>Team %<input name="teamAllocation" type="number" step="any" defaultValue={v.teamAllocation} /></label>
           </div>
           <SharedBox v={v} />

@@ -1,7 +1,7 @@
 import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 import type { IsoDate } from "../domain/capacity/workingWindow";
 import { checkInputs, type InputStatus } from "../domain/capacity/teamCapacity";
-import { cleanName, dayBefore, validateEndDate, validateMembership, validatePerson } from "../domain/people/memberRules";
+import { cleanName, dayBefore, personKey, personLabel, shownEmail, validateEndDate, validateMembership, validatePerson } from "../domain/people/memberRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import type { SaveResult } from "./saveTeamDefault";
@@ -21,7 +21,9 @@ export interface PersonDetails {
 export interface MemberRow extends PersonDetails {
   assignmentId: number;
   teamId: string;
-  email: string;
+  email: string; // the person key: their email, or "no-email:" + name (FR-05c)
+  shownEmail: string | null; // their real email, if any
+  label: string; // name, else email
   teamAllocation: number | null;
   sharedResource: boolean;
   startDate: IsoDate | null;
@@ -63,12 +65,13 @@ export interface AddMemberRequest {
 /** BR-21: add someone to a team from a start date. Creates the person if they are new. */
 export async function addMember(db: Db, actor: string, raw: AddMemberRequest): Promise<SaveResult> {
   const request = { ...raw, person: cleanPerson(raw.person) };
-  const email = normalise(request.email);
   const errors = [
-    ...validatePerson({ email, ...request.person }),
+    ...validatePerson({ email: normalise(request.email), ...request.person }),
     ...validateMembership(request),
   ];
   if (errors.length) return { ok: false, errors };
+  // FR-05c: without an email the person is identified by their name, so the same name is the same person.
+  const email = personKey(request.email, request.person.firstName, request.person.lastName);
 
   const existing = await db.query.people.findFirst({ where: eq(t.people.email, email) });
   if (!existing) {
@@ -81,7 +84,7 @@ export async function addMember(db: Db, actor: string, raw: AddMemberRequest): P
       or(isNull(t.assignments.endDate), gte(t.assignments.endDate, request.startDate)),
     ),
   });
-  if (clash) return { ok: false, errors: [`${email} is already a member of this team`] };
+  if (clash) return { ok: false, errors: [`${personLabel({ email, ...(existing ?? request.person) })} is already a member of this team`] };
 
   const id = await db.transaction(async (tx) => {
     if (!existing) await tx.insert(t.people).values({ email, ...request.person });
@@ -102,7 +105,7 @@ export async function addMember(db: Db, actor: string, raw: AddMemberRequest): P
 export async function updateMember(
   db: Db,
   actor: string,
-  raw: { assignmentId: number; teamAllocation: number | null; sharedResource: boolean; person: PersonDetails },
+  raw: { assignmentId: number; teamAllocation: number | null; sharedResource: boolean; person: PersonDetails; email?: string },
 ): Promise<SaveResult> {
   const request = { ...raw, person: cleanPerson(raw.person) };
   const before = await getMember(db, request.assignmentId);
@@ -111,12 +114,26 @@ export async function updateMember(
     ...validatePerson({ email: before.email, ...request.person }),
     ...validateMembership({ teamAllocation: request.teamAllocation, startDate: before.startDate ?? "open" }),
   ];
+  // FR-05c: an email typed here replaces the person's key (e.g. adding one to someone saved without); blank keeps it.
+  const newEmail = normalise(request.email ?? "");
+  const rekey = newEmail !== "" && newEmail !== before.email;
+  if (rekey) {
+    errors.push(...validatePerson({ ...request.person, email: newEmail }).filter((e) => e.startsWith("Email")));
+    if (await db.query.people.findFirst({ where: eq(t.people.email, newEmail) })) errors.push(`${newEmail} already belongs to someone else`);
+  }
   const locationError = await checkLocation(db, request.person.locationCode);
   if (locationError) errors.push(locationError);
   if (errors.length) return { ok: false, errors };
 
   await db.transaction(async (tx) => {
-    await tx.update(t.people).set(request.person).where(eq(t.people.email, before.email));
+    if (rekey) {
+      const [person] = await tx.select().from(t.people).where(eq(t.people.email, before.email));
+      await tx.insert(t.people).values({ ...person!, email: newEmail });
+      await tx.update(t.assignments).set({ personEmail: newEmail }).where(eq(t.assignments.personEmail, before.email));
+      await tx.update(t.absences).set({ personEmail: newEmail }).where(eq(t.absences.personEmail, before.email));
+      await tx.delete(t.people).where(eq(t.people.email, before.email));
+    }
+    await tx.update(t.people).set(request.person).where(eq(t.people.email, rekey ? newEmail : before.email));
     await tx.update(t.assignments)
       .set({ teamAllocation: request.teamAllocation, sharedResource: request.sharedResource })
       .where(eq(t.assignments.id, request.assignmentId));
@@ -205,7 +222,7 @@ type JoinedRow = Awaited<ReturnType<ReturnType<typeof selectMembers>["execute"]>
 
 function toMemberRow({ assignments: a, people: p, locations: loc }: JoinedRow): MemberRow {
   return {
-    assignmentId: a.id, teamId: a.teamId, email: p.email, firstName: p.firstName, lastName: p.lastName, role: p.role, locationCode: p.locationCode,
+    assignmentId: a.id, teamId: a.teamId, email: p.email, shownEmail: shownEmail(p.email), label: personLabel(p), firstName: p.firstName, lastName: p.lastName, role: p.role, locationCode: p.locationCode,
     contractedHours: p.contractedHours, employmentStart: p.employmentStart, employmentEnd: p.employmentEnd,
     teamAllocation: a.teamAllocation, sharedResource: a.sharedResource, startDate: a.startDate, endDate: a.endDate,
     inputStatus: checkInputs({

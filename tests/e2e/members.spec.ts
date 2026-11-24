@@ -73,3 +73,20 @@ test("move a member to another team", async ({ page }) => {
   await expect(page.getByRole("table", { name: "Current members" }).getByRole("row", { name: /h@example\.com/ }))
     .toContainText("30 Nov 2026");
 });
+
+// FR-05c (sean, 24 Nov 2026): emails are optional; a name is enough.
+test("add someone without an email, then add their email later", async ({ page }) => {
+  await page.goto("/p/default/teams/T001/members/new");
+  await page.getByLabel("First name").fill("Grace");
+  await page.getByLabel("Last name").fill("Hopper");
+  await page.getByLabel("Team %").fill("100");
+  await page.getByLabel("Start date").fill("2026-11-09");
+  await page.getByRole("button", { name: "Add member" }).click();
+  const row = page.getByRole("table", { name: "Current members" }).getByRole("row", { name: /Grace Hopper/ });
+  await expect(row).toBeVisible();
+  await row.getByRole("link", { name: "Edit" }).click();
+  await expect(page.getByRole("heading", { name: "Grace Hopper" })).toBeVisible();
+  await page.getByRole("form", { name: "Member details" }).getByLabel("Email").fill("grace.hopper@example.com");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("table", { name: "Current members" }).getByRole("row", { name: /Grace Hopper/ })).toContainText("grace.hopper@example.com");
+});

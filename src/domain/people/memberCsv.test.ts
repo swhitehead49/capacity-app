@@ -45,7 +45,18 @@ describe("parseMemberCsv", () => {
     expect(parseMemberCsv(csv, { today }).errors).toEqual(["Line 3: a@example.com is also on line 2 for T202"]);
   });
 
-  it("needs the Team_ID and Email headings", () => {
-    expect(parseMemberCsv("Name\nAda\n", { today }).errors).toEqual(['The first line must have the headings "Team_ID" and "Email"']);
+  it("needs the Team_ID heading, and Email or a name heading", () => {
+    expect(parseMemberCsv("Name\nAda\n", { today }).errors).toEqual(['The first line must have the heading "Team_ID", and "Email" or "First_Name"/"Last_Name"']);
+  });
+
+  // FR-05c (sean, 24 Nov 2026): emails are optional; without one, a person is matched by name.
+  it("a row without an email needs a name, and is keyed by it", () => {
+    const csv = "Team_ID,First_Name,Last_Name\nT202,Ada,Lovelace\nT203,ada,LOVELACE\nT202,,\n";
+    const result = parseMemberCsv(csv, { today });
+    expect(result.errors).toEqual(["Line 4: Email or a name is needed"]);
+    const ok = parseMemberCsv("Team_ID,First_Name,Last_Name\nT202,Ada,Lovelace\nT203,ada,LOVELACE\n", { today });
+    expect(ok.members.map((m) => m.email)).toEqual(["no-email:ada lovelace", "no-email:ada lovelace"]);
+    expect(parseMemberCsv("Team_ID,Email,First_Name\nT202,,Ada\nT202,,ada\n", { today }).errors)
+      .toEqual(["Line 3: Ada is also on line 2 for T202"]);
   });
 });
