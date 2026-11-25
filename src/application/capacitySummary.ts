@@ -69,7 +69,11 @@ export async function getCapacitySummary(db: Db, query: { today: string; scope: 
     .filter((x) => scope.kind === "all"
       || (scope.kind === "valueStream" && x.valueStream === scope.name)
       || (scope.kind === "team" && x.id === scope.teamId));
-  const plans = await Promise.all(teams.map((x) => getTeamPlan(db, { teamId: x.id, today }, holidayDb)));
+  // A few teams at a time, so a project with ~80 teams can't flood the database or the small Render server.
+  const plans: Awaited<ReturnType<typeof getTeamPlan>>[] = [];
+  for (let i = 0; i < teams.length; i += 3) {
+    plans.push(...await Promise.all(teams.slice(i, i + 3).map((x) => getTeamPlan(db, { teamId: x.id, today }, holidayDb))));
+  }
   return {
     teams: teams.map((x) => ({ id: x.id, name: x.name })),
     sprints: totals(plans.map((p) => p.sprints)),
