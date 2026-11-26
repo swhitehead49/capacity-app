@@ -52,7 +52,7 @@ test("on Team members you can add, edit, end or move members, and book their lea
   await row.getByRole("link", { name: "Edit" }).click();
   await expect(page.getByRole("heading", { name: "End membership" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Move to another team" })).toBeVisible();
-  await expect(page.getByLabel("Location")).toBeVisible(); // decides the person's public holidays
+  await expect(page.getByLabel("Country")).toBeVisible(); // FR-05e: decides the person's public holidays
 });
 
 // sean, 22 Nov 2026: Team planning has two lists: Team details (as before) and every team's Default capacity.

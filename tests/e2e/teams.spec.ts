@@ -153,9 +153,10 @@ test("the Admin changes a team's base location; projects see it", async ({ page 
 });
 
 // FR-18t: a team is based in a country; a new member starts in its only location there, or picks one.
-test("a new member's location is picked when the team's country has several locations", async ({ page }) => {
+// FR-05e (sean, 26 Nov 2026): a person has a country; a new member starts in their team's country.
+test("a new member starts in the team's country", async ({ page }) => {
   await page.goto("/p/default/teams/T017/members/new");
-  await expect(page.getByLabel("Location")).toHaveValue("");
+  await expect(page.getByLabel("Country")).toHaveValue("DE");
   await expect(page.getByText(/public holidays/)).toBeVisible();
 });
 
