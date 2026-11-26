@@ -21,20 +21,27 @@ beforeEach(async () => {
 const membersOf = (teamId: string) => db.select().from(t.assignments).where(eq(t.assignments.teamId, teamId));
 
 describe("importMembers", () => {
-  it("FR-18t: a blank location means the only location in the team's country; if it has several, it is left to pick", async () => {
-    await db.insert(t.locations).values({ code: "AT-9", country: "AT", name: "Vienna", standardHours: 40 });
+  it("FR-05e: a blank country means the team's country; if the system doesn't have it, it is left to pick", async () => {
     await db.update(t.teams).set({ baseLocation: "AT" }).where(eq(t.teams.id, "T001"));
     const csv = "Team_ID,Email\nT001,vienna@example.com\nT017,somewhere@example.com\n";
     expect(await importMembers(db, actor, { csv, today })).toEqual({ ok: true, count: 2 });
-    expect((await db.query.people.findFirst({ where: eq(t.people.email, "vienna@example.com") }))?.locationCode).toBe("AT-9");
-    expect((await db.query.people.findFirst({ where: eq(t.people.email, "somewhere@example.com") }))?.locationCode).toBeNull();
+    expect((await db.query.people.findFirst({ where: eq(t.people.email, "vienna@example.com") }))?.locationCode).toBeNull();
+    expect((await db.query.people.findFirst({ where: eq(t.people.email, "somewhere@example.com") }))?.locationCode).toBe("DE");
+  });
+
+  it("FR-05e: reads a Country column; a region code in it becomes its country", async () => {
+    const csv = "Team_ID,Email,Country\nT001,x@example.com,de\nT001,y@example.com,DE-BY\n";
+    expect(await importMembers(db, actor, { csv, today })).toEqual({ ok: true, count: 2 });
+    for (const email of ["x@example.com", "y@example.com"]) {
+      expect((await db.query.people.findFirst({ where: eq(t.people.email, email) }))?.locationCode).toBe("DE");
+    }
   });
 
   it("adds new people and memberships", async () => {
     const csv = "Team_ID,Email,First_Name,Last_Name,Location,Team_Pct\nT017,ada@example.com,Ada,Lovelace,DE-RP,50\nT001,grace@example.com,Grace,Hopper,DE-BY,\n";
     expect(await importMembers(db, actor, { csv, today })).toEqual({ ok: true, count: 2 });
     expect(await db.query.people.findFirst({ where: eq(t.people.email, "ada@example.com") }))
-      .toMatchObject({ firstName: "Ada", lastName: "Lovelace", locationCode: "DE-RP" });
+      .toMatchObject({ firstName: "Ada", lastName: "Lovelace", locationCode: "DE" });
     expect(await membersOf("T001")).toEqual([expect.objectContaining({ personEmail: "grace@example.com", teamAllocation: 1, startDate: today })]);
     expect((await db.select().from(t.auditLog)).filter((a) => a.action === "import")).toHaveLength(2);
   });
@@ -52,7 +59,7 @@ describe("importMembers", () => {
       errors: [
         "Line 2: T999 is not one of this project's teams",
         "Line 3: T002 is not one of this project's teams",
-        "Line 4: Unknown location XX-1",
+        "Line 4: Unknown country XX-1: use DE",
         "Line 5: b@example.com is already a member of T017",
       ],
     });

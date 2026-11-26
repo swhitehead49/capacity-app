@@ -19,7 +19,7 @@ export default async function AddMember({ params }: { params: Promise<{ projectI
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams/${team.id}/members`}>← Team members</Link></p>
       <h2>Add a member</h2>
-      <AddMemberForm teamId={team.id} locations={(await projectReference(db)).locations} today={today()} baseLocation={memberLocationFor(team.baseLocation, await db.select().from(t.locations)) ?? ""} />
+      <AddMemberForm teamId={team.id} locations={(await projectReference(db)).countries} today={today()} baseLocation={memberLocationFor(team.baseLocation, await db.select().from(t.locations)) ?? ""} />
     </>
   );
 }

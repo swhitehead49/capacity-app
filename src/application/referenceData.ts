@@ -1,3 +1,4 @@
+import { countryLocationsToAdd } from "../domain/organisation/baseCountry";
 import { asc, eq } from "drizzle-orm";
 import { sameName } from "../domain/organisation/teamRules";
 import * as t from "../infrastructure/db/schema";
@@ -75,6 +76,7 @@ export async function addLocation(
   await shared.transaction(async (tx) => {
     await tx.insert(t.locations).values(location);
     await tx.insert(t.auditLog).values({ actor, entity: "locations", entityId: code, action: "add", before: null, after: location });
+    await addMissingCountries(tx as unknown as Db, actor);
   });
   return { ok: true };
 }
@@ -132,8 +134,20 @@ export async function addStartingLocations(shared: Db, actor: string): Promise<n
     await tx.insert(t.auditLog).values({
       actor, entity: "locations", entityId: missing.map((l) => l.code).join(", "), action: "add starting locations", before: null, after: missing,
     });
+    await addMissingCountries(tx as unknown as Db, actor);
   });
   return missing.length;
+}
+
+/**
+ * FR-05e (sean, 26 Nov 2026): people are in a country, not a region, so every country with locations also has its
+ * own whole-country row (code = country, e.g. DE). Adds the ones missing, taking the first region's standard hours.
+ */
+async function addMissingCountries(db: Db, actor: string): Promise<void> {
+  const missing = countryLocationsToAdd(await db.select().from(t.locations));
+  if (!missing.length) return;
+  await db.insert(t.locations).values(missing);
+  await db.insert(t.auditLog).values({ actor, entity: "locations", entityId: missing.map((l) => l.code).join(", "), action: "add country", before: null, after: missing });
 }
 
 /** Copies the system's locations into a project's own table, so its teams and people can point at them. */

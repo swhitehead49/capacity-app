@@ -11,13 +11,13 @@ function PersonFields({ v, locations }: { v: Values; locations: Option[] }) {
     <div className="grid">
       <label>First name<input name="firstName" defaultValue={v.firstName} autoComplete="off" /></label>
       <label>Last name<input name="lastName" defaultValue={v.lastName} autoComplete="off" /></label>
-      <label>Location
+      <label>Country
         <select name="locationCode" defaultValue={v.locationCode ?? ""}>
           <option value="">(not set)</option>
           {locations.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
         </select>
       </label>
-      <p className="muted hint">Location is where the person works. It decides their public holidays, so it can differ from the team&apos;s base location.</p>
+      <p className="muted hint">Country is where the person works. They get its nationwide public holidays, so it can differ from the team&apos;s base location.</p>
       <label>Contracted hours<input name="contractedHours" type="number" step="any" defaultValue={v.contractedHours} /></label>
       <label>Role<input name="role" defaultValue={v.role} /></label>
       <label>Employment start<input name="employmentStart" type="date" defaultValue={v.employmentStart} /></label>

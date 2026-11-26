@@ -17,6 +17,10 @@ export async function seedDemo(db: Db) {
   await db.insert(t.valueStreams).values(["Clinical", "Diagnostics", "Platform", "Radiology"].map((name) => ({ name })));
   // An India office (no people yet), so the Holidays page shows the CSV upload calendars.
   await db.insert(t.locations).values({ code: "IN-KA", country: "IN", name: "Bangalore", standardHours: 40 });
+  // FR-05e (sean, 26 Nov 2026): people are in a country, so the pilot team's people move from their regions to DE.
+  await db.insert(t.locations).values({ code: "IN", country: "IN", name: "India", standardHours: 40 });
+  await db.insert(t.availabilityForecasts).values({ locationCode: "DE", month: "2026-11", availability: 0.9 });
+  await db.update(t.people).set({ locationCode: "DE" });
 }
 
 /** Loads the demo data only into a database with no teams and no timeline. Returns whether it did. */

@@ -55,7 +55,7 @@ describe("addMember (BR-21)", () => {
     });
     expect(result.ok).toBe(true);
     const [person] = await db.select().from(t.people).where(eq(t.people.email, "new@example.com"));
-    expect(person).toMatchObject({ firstName: "Ada", lastName: "Lovelace", locationCode: "DE-BY", contractedHours: 40, role: "Engineer" });
+    expect(person).toMatchObject({ firstName: "Ada", lastName: "Lovelace", locationCode: "DE", contractedHours: 40, role: "Engineer" });
     expect(await assignmentsOf("new@example.com")).toEqual([
       expect.objectContaining({ teamId: "T017", teamAllocation: 0.5, sharedResource: true, startDate: "2026-11-09", endDate: null }),
     ]);
@@ -95,12 +95,20 @@ describe("addMember (BR-21)", () => {
     expect(await audit()).toHaveLength(0);
   });
 
-  it("refuses a location that doesn't exist", async () => {
+  it("refuses a country that doesn't exist", async () => {
     const result = await addMember(db, actor, {
       teamId: "T017", email: "new@example.com", teamAllocation: 1, sharedResource: false, startDate: "2026-11-09",
       person: { ...newPerson, locationCode: "XX-1" },
     });
-    expect(result).toEqual({ ok: false, errors: ["Unknown location XX-1"] });
+    expect(result).toEqual({ ok: false, errors: ["Unknown country XX-1: use DE"] });
+  });
+
+  it("FR-05e: a person has a country; a region code given for them is kept as its country", async () => {
+    await addMember(db, actor, {
+      teamId: "T017", email: "new@example.com", teamAllocation: 1, sharedResource: false, startDate: "2026-11-09",
+      person: { ...newPerson, locationCode: "de-by" },
+    });
+    expect((await db.query.people.findFirst({ where: eq(t.people.email, "new@example.com") }))?.locationCode).toBe("DE");
   });
 });
 
@@ -133,7 +141,7 @@ describe("updateMember (UC07 edit)", () => {
     expect(result.ok).toBe(true);
     const member = await getMember(db, f!.id);
     expect(member).toMatchObject({
-      email: "f@example.com", firstName: "Fay", lastName: "Fischer", role: "Tester", locationCode: "DE-BY", contractedHours: 32, employmentEnd: "2027-06-30",
+      email: "f@example.com", firstName: "Fay", lastName: "Fischer", role: "Tester", locationCode: "DE", contractedHours: 32, employmentEnd: "2027-06-30",
       teamAllocation: 0.8, sharedResource: true, inputStatus: "Complete",
     });
     const [entry] = await audit();

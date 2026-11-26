@@ -3,7 +3,7 @@ import { getDb, getProjectDb, today } from "@/src/infrastructure/db/appDb";
 import { syncTeams } from "@/src/application/masterTeams";
 import { findProject, listProjects } from "@/src/infrastructure/db/projectDatabases";
 import { getReferenceData, syncLocations } from "@/src/application/referenceData";
-import { listLocations } from "@/src/application/lookups";
+import { listLocations, listPersonCountries } from "@/src/application/lookups";
 import { projectStreamNames } from "@/src/application/projectValueStreams";
 import type { Db } from "@/src/infrastructure/db/testDb";
 
@@ -42,5 +42,5 @@ export async function projectReference(db: Db) {
   await syncLocations(db, shared);
   const inProject = await projectStreamNames(db);
   const others = (await getReferenceData(shared)).valueStreams.filter((v) => !inProject.includes(v));
-  return { valueStreams: { inProject, others }, locations: await listLocations(db) };
+  return { valueStreams: { inProject, others }, locations: await listLocations(db), countries: await listPersonCountries(db) };
 }

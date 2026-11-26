@@ -28,7 +28,7 @@ const COLUMNS = {
   firstName: ["first_name"],
   lastName: ["last_name"],
   role: ["role"],
-  location: ["location", "location_code"],
+  location: ["country", "location", "location_code"], // FR-05e: Country (older files say Location)
   hours: ["contracted_hours"],
   pct: ["team_pct", "team_%"],
   shared: ["shared_resource", "shared"],

@@ -19,7 +19,7 @@ test("add a new person to a team", async ({ page }) => {
   await page.getByLabel("Email").fill("new.person@example.com");
   await page.getByLabel("Team %").fill("50");
   await page.getByLabel("Start date").fill("2026-11-09");
-  await page.getByLabel("Location").selectOption("DE-BY");
+  await page.getByLabel("Country").selectOption("DE"); // FR-05e: a person has a country, not a region
   await page.getByLabel("Contracted hours").fill("40");
   await page.getByRole("button", { name: "Add member" }).click();
   await expect(page).toHaveURL(/\/p\/default\/teams\/T001\/members$/);

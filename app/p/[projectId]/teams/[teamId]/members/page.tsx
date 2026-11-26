@@ -19,7 +19,7 @@ export default async function TeamMembers({ params }: { params: Promise<{ projec
     <>
       <h2>Team members</h2>
       <p className="muted">{current.length} current, as of {formatDate(today())}. Edit a member to change their details or their
-        location (which decides their public holidays), end their membership or move them to another team. Nobody is deleted,
+        country (whose nationwide public holidays they get), end their membership or move them to another team. Nobody is deleted,
         so past sprints still add up. People with missing inputs count as zero capacity until they are filled in.</p>
       <p><Link className="button" href={`/p/${projectId}/teams/${team.id}/members/new`}>Add member</Link></p>
       <MemberTable caption="Current members" rows={current} projectId={projectId} teamId={team.id} />
@@ -34,7 +34,7 @@ function MemberTable({ caption, rows, projectId, teamId }: { caption: string; ro
       <caption>{caption}</caption>
       <thead>
         <tr>
-          <th>Name</th><th>Email</th><th>Role</th><th>Location</th><th>Hours</th><th>Team %</th><th>Shared</th>
+          <th>Name</th><th>Email</th><th>Role</th><th>Country</th><th>Hours</th><th>Team %</th><th>Shared</th>
           <th>From</th><th>To</th><th>Inputs</th><th></th><th></th>
         </tr>
       </thead>

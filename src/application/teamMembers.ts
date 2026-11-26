@@ -1,3 +1,4 @@
+import { readPersonCountry } from "../domain/organisation/baseCountry";
 import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 import type { IsoDate } from "../domain/capacity/workingWindow";
 import { checkInputs, type InputStatus } from "../domain/capacity/teamCapacity";
@@ -75,8 +76,9 @@ export async function addMember(db: Db, actor: string, raw: AddMemberRequest): P
 
   const existing = await db.query.people.findFirst({ where: eq(t.people.email, email) });
   if (!existing) {
-    const locationError = await checkLocation(db, request.person.locationCode);
-    if (locationError) return { ok: false, errors: [locationError] };
+    const country = await checkCountry(db, request.person.locationCode);
+    if ("error" in country) return { ok: false, errors: [country.error] };
+    request.person.locationCode = country.country;
   }
   const clash = await db.query.assignments.findFirst({
     where: and(
@@ -121,8 +123,9 @@ export async function updateMember(
     errors.push(...validatePerson({ ...request.person, email: newEmail }).filter((e) => e.startsWith("Email")));
     if (await db.query.people.findFirst({ where: eq(t.people.email, newEmail) })) errors.push(`${newEmail} already belongs to someone else`);
   }
-  const locationError = await checkLocation(db, request.person.locationCode);
-  if (locationError) errors.push(locationError);
+  const country = await checkCountry(db, request.person.locationCode);
+  if ("error" in country) errors.push(country.error);
+  else request.person.locationCode = country.country;
   if (errors.length) return { ok: false, errors };
 
   await db.transaction(async (tx) => {
@@ -205,10 +208,9 @@ export async function moveMember(
 
 const cleanPerson = (person: PersonDetails): PersonDetails => ({ ...person, firstName: cleanName(person.firstName), lastName: cleanName(person.lastName) });
 
-async function checkLocation(db: Db, code: string | null): Promise<string | null> {
-  if (!code) return null;
-  const location = await db.query.locations.findFirst({ where: eq(t.locations.code, code) });
-  return location ? null : `Unknown location ${code}`;
+/** FR-05e (sean, 26 Nov 2026): a person's country (a region code becomes its country). */
+async function checkCountry(db: Db, code: string | null) {
+  return readPersonCountry(code, await db.select({ code: t.locations.code, country: t.locations.country }).from(t.locations));
 }
 
 function selectMembers(db: Db) {

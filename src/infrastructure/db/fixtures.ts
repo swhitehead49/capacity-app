@@ -6,6 +6,9 @@ export async function seedDrgw(db: Db) {
   await db.insert(t.locations).values(
     ["DE-BY", "DE-NI", "DE-RP", "DE-SL"].map((code) => ({ code, country: "DE", name: code, standardHours: 40 })),
   );
+  // FR-05e (sean, 26 Nov 2026): the whole-country row people now point at. The workbook's people keep their regions
+  // below so its numbers still check out; new people get the country.
+  await db.insert(t.locations).values({ code: "DE", country: "DE", name: "Germany", standardHours: 40 });
   await db.insert(t.teams).values({ id: "T017", name: "DRGW", baseLocation: "DE" }); // FR-18t: a team is based in a country
   const people: [string, string, number | null, number][] = [
     ["a@example.com", "DE-BY", 40, 1],

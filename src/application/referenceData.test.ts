@@ -38,8 +38,19 @@ describe("locations", () => {
 
   it("adds a location (code in capitals) and logs it", async () => {
     expect(await addLocation(shared, actor, bavaria)).toEqual({ ok: true });
-    expect((await getReferenceData(shared)).locations).toEqual([{ code: "DE-BY", country: "DE", name: "Bavaria", standardHours: 40 }]);
+    expect((await getReferenceData(shared)).locations).toEqual([
+      { code: "DE", country: "DE", name: "Germany", standardHours: 40 },
+      { code: "DE-BY", country: "DE", name: "Bavaria", standardHours: 40 },
+    ]);
     expect((await shared.select().from(t.auditLog))[0]).toMatchObject({ entity: "locations", entityId: "DE-BY", action: "add" });
+  });
+
+  it("FR-05e: the first location in a new country also adds the country itself, which people are put in", async () => {
+    await addLocation(shared, actor, bavaria);
+    await addLocation(shared, actor, { code: "DE-NI", country: "DE", name: "Lower Saxony", standardHours: "38" });
+    await addLocation(shared, actor, { code: "IN", country: "IN", name: "India", standardHours: "45" });
+    expect((await getReferenceData(shared)).locations.map((l) => l.code)).toEqual(["DE", "DE-BY", "DE-NI", "IN"]);
+    expect((await shared.select().from(t.auditLog)).map((a) => [a.entityId, a.action])).toContainEqual(["DE", "add country"]);
   });
 
   it("checks the code, country and hours", async () => {
@@ -65,7 +76,10 @@ describe("updateLocation (sean, 15 Nov 2026: edit a location's name and standard
 
   it("changes the name and standard hours, and logs what changed", async () => {
     expect(await updateLocation(shared, actor, { code: "AT-9", name: "Vienna office", standardHours: "38.5" })).toEqual({ ok: true });
-    expect((await getReferenceData(shared)).locations).toEqual([{ code: "AT-9", country: "AT", name: "Vienna office", standardHours: 38.5 }]);
+    expect((await getReferenceData(shared)).locations).toEqual([
+      { code: "AT", country: "AT", name: "Austria", standardHours: null },
+      { code: "AT-9", country: "AT", name: "Vienna office", standardHours: 38.5 },
+    ]);
     const entry = (await shared.select().from(t.auditLog)).at(-1);
     expect(entry).toMatchObject({ entity: "locations", entityId: "AT-9", action: "change", before: { name: "Vienna", standardHours: null }, after: { name: "Vienna office", standardHours: 38.5 } });
   });
@@ -82,7 +96,7 @@ describe("updateLocation (sean, 15 Nov 2026: edit a location's name and standard
     await syncLocations(project, shared);
     await updateLocation(shared, actor, { code: "AT-9", name: "Vienna", standardHours: "40" });
     await syncLocations(project, shared);
-    expect((await project.select().from(t.locations))[0]?.standardHours).toBe(40);
+    expect((await project.select().from(t.locations)).find((l) => l.code === "AT-9")?.standardHours).toBe(40);
   });
 });
 
@@ -91,7 +105,7 @@ describe("addStartingLocations (the original workbook's LocationProfiles, as ISO
     await addLocation(shared, actor, { code: "DE-BY", country: "DE", name: "Bayern", standardHours: "38" });
     expect(await addStartingLocations(shared, actor)).toBe(STARTING_LOCATIONS.length - 1);
     const { locations } = await getReferenceData(shared);
-    expect(locations.map((l) => l.code)).toEqual(["AT-6", "AT-9", "BE-VOV", "DE-BY", "DE-NI", "DE-RP", "DE-SL", "FR-NAQ", "IN-KA"]);
+    expect(locations.map((l) => l.code)).toEqual(["AT", "AT-6", "AT-9", "BE", "BE-VOV", "DE", "DE-BY", "DE-NI", "DE-RP", "DE-SL", "FR", "FR-NAQ", "IN", "IN-KA"]);
     expect(locations.find((l) => l.code === "DE-BY")?.name).toBe("Bayern");
     expect(await addStartingLocations(shared, actor)).toBe(0);
   });
@@ -104,13 +118,13 @@ describe("syncLocations", () => {
     await addLocation(shared, actor, { code: "DE-BY", country: "DE", name: "Bavaria", standardHours: "40" });
     await addLocation(shared, actor, { code: "IN-KA", country: "IN", name: "Bangalore", standardHours: "" });
     await syncLocations(project, shared);
-    expect((await project.select().from(t.locations)).map((l) => [l.code, l.name]).sort()).toEqual([["DE-BY", "Bavaria"], ["IN-KA", "Bangalore"]]);
+    expect((await project.select().from(t.locations)).map((l) => [l.code, l.name]).sort()).toEqual([["DE", "Germany"], ["DE-BY", "Bavaria"], ["IN", "India"], ["IN-KA", "Bangalore"]]);
   });
 
   it("does nothing for the Default project, which holds the system's list itself", async () => {
     await addLocation(shared, actor, { code: "DE-BY", country: "DE", name: "Bavaria", standardHours: "40" });
     await syncLocations(shared, shared);
-    expect(await shared.select().from(t.locations)).toHaveLength(1);
+    expect(await shared.select().from(t.locations)).toHaveLength(2); // DE-BY and its country, DE
   });
 });
 

@@ -39,7 +39,7 @@ export default async function EditMember({ params }: { params: Promise<{ project
       </p>
 
       <h3>Details</h3>
-      <EditMemberForm teamId={teamId} assignmentId={assignmentId} values={values} locations={(await projectReference(db)).locations} />
+      <EditMemberForm teamId={teamId} assignmentId={assignmentId} values={values} locations={(await projectReference(db)).countries} />
 
       <h3>End membership</h3>
       <p className="muted">They stop counting for this team after this day. Nothing is deleted.</p>

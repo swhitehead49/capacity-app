@@ -65,3 +65,32 @@ describe("migration 0021: Run + Fix become Maintenance (sean, 26 Nov 2026)", () 
     expect([standard?.run, standard?.fix]).toEqual([0.4, 0]);
   });
 });
+
+describe("migration 0022: people are in a country, not a region (FR-05e, sean, 26 Nov 2026)", () => {
+  it("adds a whole-country location per country, averages its regions' forecasts, and moves people to their country", async () => {
+    await db.update(t.locations).set({ standardHours: 40 }).where(eq(t.locations.code, "DE-BY")); // DE-BY is already there
+    await db.insert(t.locations).values([
+      { code: "DE-NI", country: "DE", name: "Lower Saxony", standardHours: 38 },
+      { code: "IN", country: "IN", name: "India", standardHours: 45 },
+      { code: "IN-KA", country: "IN", name: "Bangalore", standardHours: 40 },
+    ]);
+    await db.insert(t.availabilityForecasts).values([
+      { locationCode: "DE-BY", month: "2026-11", availability: 0.9 },
+      { locationCode: "DE-NI", month: "2026-11", availability: 0.8 },
+      { locationCode: "IN", month: "2026-11", availability: 0.7 },
+      { locationCode: "IN-KA", month: "2026-11", availability: 0.5 },
+    ]);
+    await db.insert(t.people).values([
+      { email: "a@example.com", locationCode: "DE-BY" }, { email: "b@example.com", locationCode: "IN-KA" }, { email: "c@example.com", locationCode: null },
+    ]);
+    for (const s of readFileSync("drizzle/0022_person_country.sql", "utf8").split("--> statement-breakpoint")) await db.execute(sql.raw(s));
+    const locations = await db.select().from(t.locations);
+    expect(locations.find((l) => l.code === "DE")).toEqual({ code: "DE", country: "DE", name: "Germany", standardHours: 40 });
+    expect(locations.find((l) => l.code === "IN")?.name).toBe("India"); // already there: left alone
+    const forecasts = await db.select().from(t.availabilityForecasts);
+    expect(forecasts.find((f) => f.locationCode === "DE")?.availability).toBeCloseTo(0.85);
+    expect(forecasts.find((f) => f.locationCode === "IN")?.availability).toBe(0.7);
+    const people = (await db.select().from(t.people)).sort((x, y) => x.email.localeCompare(y.email)).map((p) => p.locationCode);
+    expect(people).toEqual(["DE", "IN", null]);
+  });
+});

@@ -4,7 +4,7 @@ import { personLabel } from "../domain/people/memberRules";
 import * as t from "../infrastructure/db/schema";
 import type { Db } from "../infrastructure/db/testDb";
 import { listProjectTeams } from "./projectValueStreams";
-import { memberLocationFor } from "../domain/organisation/baseCountry";
+import { memberLocationFor, readPersonCountry } from "../domain/organisation/baseCountry";
 
 // FR-05b (sean, 22 Nov 2026): import team members into a project from the template's Team Members sheet saved as CSV.
 // Same rules as Add member (FR-05, BR-21); the team must be one of the project's teams. Any problem means nothing is
@@ -19,17 +19,18 @@ export async function importMembers(db: Db, actor: string, request: { csv: strin
   const teams = new Map((await listProjectTeams(db, request.today)).map((x) => [x.id.toLowerCase(), x]));
   const baseLocations = new Map((await db.select({ id: t.teams.id, base: t.teams.baseLocation }).from(t.teams)).map((x) => [x.id, x.base]));
   const places = await db.select({ code: t.locations.code, country: t.locations.country }).from(t.locations);
-  const locations = new Set(places.map((l) => l.code));
   const people = new Set((await db.select({ email: t.people.email }).from(t.people)).map((p) => p.email));
   const problems: string[] = [];
   for (const m of members) {
     const team = teams.get(m.teamId.toLowerCase());
     if (!team) { problems.push(`Line ${m.line}: ${m.teamId} is not one of this project's teams`); continue; }
     m.teamId = team.id;
-    // FR-18t: blank = the only location in the team's country; otherwise it is left for the manager to pick.
+    // FR-05e: a person has a country (a region code becomes its country); blank = the team's country.
     m.person.locationCode ??= memberLocationFor(baseLocations.get(team.id) ?? null, places);
-    if (!people.has(m.email) && m.person.locationCode && !locations.has(m.person.locationCode)) {
-      problems.push(`Line ${m.line}: Unknown location ${m.person.locationCode}`);
+    if (!people.has(m.email)) {
+      const country = readPersonCountry(m.person.locationCode, places);
+      if ("error" in country) problems.push(`Line ${m.line}: ${country.error}`);
+      else m.person.locationCode = country.country;
     }
     const clash = await db.query.assignments.findFirst({
       where: and(
