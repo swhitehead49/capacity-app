@@ -7,7 +7,7 @@ const field = (label: string, name: string, v: Values) => (
   <label>{label}<input name={name} type="number" step="any" min="0" max="100" defaultValue={v[name]} /></label>
 );
 
-/** The seven standard allocation percentages, used by the system and project standard forms. */
+/** The six standard allocation percentages, used by the system and project standard forms. */
 export function StandardAllocationForm({ action, hidden = {}, values }: {
   action: (previous: FormState, form: FormData) => Promise<FormState>; hidden?: Values; values: Values;
 }) {
@@ -16,14 +16,13 @@ export function StandardAllocationForm({ action, hidden = {}, values }: {
       {(v) => (
         <>
           <div className="grid">
-            {field("Overhead %", "overhead", v)}
-            {field("Contingency %", "contingency", v)}
+            {field("Organisational %", "overhead", v)}
+            {field("Unplanned %", "contingency", v)}
           </div>
-          <p className="muted">All seven add up to 100% of available days.</p>
+          <p className="muted">All six add up to 100% of available days.</p>
           <div className="grid">
-            {field("Run %", "run", v)}
-            {field("Fix %", "fix", v)}
-            {field("Sustain %", "sustain", v)}
+            {field("Maintenance %", "run", v)}
+            {field("Technical improvements %", "sustain", v)}
             {field("Change %", "change", v)}
             {field("Enabling/Training %", "enabling", v)}
           </div>

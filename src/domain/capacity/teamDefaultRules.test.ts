@@ -21,12 +21,12 @@ describe("validateTeamDefault", () => {
   });
 
   it("needs an overhead to be Active (BR-03)", () => {
-    expect(validateTeamDefault({ ...good, overhead: null })).toContain("Overhead % is needed (it can be 0)");
+    expect(validateTeamDefault({ ...good, overhead: null })).toContain("Organisational % is needed (it can be 0)");
   });
 
   it("checks everything adds up to 100%, and says the total (BR-01)", () => {
     expect(validateTeamDefault({ ...good, split: { run: 0.3, fix: 0.2, sustain: 0.2, change: 0.3 } }))
-      .toContain("Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100% (they add up to 120%)");
+      .toContain("Organisational + Unplanned + Maintenance + Technical improvements + Change + Enabling/Training must add up to 100% (they add up to 120%)");
   });
 
   it("rejects a % outside 0–100% (BR-02)", () => {

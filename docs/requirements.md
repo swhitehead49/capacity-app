@@ -113,6 +113,7 @@ UC01 is the core use case. Every other use case exists to make its numbers trust
 | FR-10 | Allocation | Team default from an effective date: overhead %, Run %, Fix %, Sustain %, Change % and Enabling/Training %. Status is Draft, Active or Retired. |
 | FR-11 | Allocation | Quarter and sprint overrides of R/F/S/C, plus an optional overhead %, each with a reason, owner and status. |
 | FR-12 | Allocation | Work out the effective allocation (section 3) and show which source was used. |
+| FR-12a | Names (sean, 26 Nov 2026): Run and Fix are merged into one work type, Maintenance (migration 0021 adds Fix into Run; Fix is no longer shown or entered). Overhead is called Organisational, Contingency is called Unplanned, Sustain is called Technical improvements, on every screen and in the import templates (Organisational_Pct, Unplanned_Pct, Maintenance_Pct, Technical_Improvements_Pct; old headings still accepted, an old Fix_Pct is added into Maintenance). Stored column names are unchanged. |
 | FR-13 | Calculation | Calculate capacity for each person and as a team total, as set out in section 3. |
 | FR-14 | Calculation | Label each result Ready, Calendar capacity only, Provisional or Excluded. |
 | FR-15 | Data quality | Issue log: ID, severity, type, entity, details, suggested action and status (Open, Resolved, Accepted). Show counts by severity. |

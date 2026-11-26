@@ -12,11 +12,10 @@ test("set the project's standard allocation; a new team starts with it", async (
   await expect(page).toHaveURL(/\/p\/imaging\/project-reference$/);
   await expect(page.getByRole("heading", { name: "Standard allocation for new teams" })).toBeVisible();
   const form = page.getByRole("form", { name: "Standard allocation" });
-  await form.getByLabel("Overhead %").fill("20");
-  await form.getByLabel("Contingency %").fill("5");
-  await form.getByLabel("Run %").fill("20");
-  await form.getByLabel("Fix %").fill("15");
-  await form.getByLabel("Sustain %").fill("10");
+  await form.getByLabel("Organisational %").fill("20");
+  await form.getByLabel("Unplanned %").fill("5");
+  await form.getByLabel("Maintenance %").fill("35");
+  await form.getByLabel("Technical improvements %").fill("10");
   await form.getByLabel("Change %").fill("20");
   await form.getByLabel("Enabling/Training %").fill("10");
   await form.getByRole("button", { name: "Save standard allocation" }).click();
@@ -27,18 +26,17 @@ test("set the project's standard allocation; a new team starts with it", async (
   await linkValueStream(page, "imaging", "Diagnostics");
   await page.goto("/p/imaging/teams/T901/default");
   await expect(page.getByRole("region", { name: "In force today" }))
-    .toContainText("Overhead 20% · Contingency 5% · Run 20% · Fix 15% · Sustain 10% · Change 20% · Enabling/Training 10%");
+    .toContainText("Organisational 20% · Unplanned 5% · Maintenance 35% · Technical improvements 10% · Change 20% · Enabling/Training 10%");
 });
 
 test("a standard allocation that doesn't add up is explained", async ({ page }) => {
   await page.goto("/p/imaging/project-reference");
   const form = page.getByRole("form", { name: "Standard allocation" });
-  await form.getByLabel("Overhead %").fill("20");
-  await form.getByLabel("Run %").fill("50");
+  await form.getByLabel("Organisational %").fill("20");
+  await form.getByLabel("Maintenance %").fill("50");
   await form.getByLabel("Change %").fill("40");
   await form.getByLabel("Enabling/Training %").fill("0");
-  await form.getByLabel("Fix %").fill("0");
-  await form.getByLabel("Sustain %").fill("0");
+  await form.getByLabel("Technical improvements %").fill("0");
   await form.getByRole("button", { name: "Save standard allocation" }).click();
   await expect(page.getByRole("alert", { name: "Problems saving" })).toContainText("must add up to 100%");
 });

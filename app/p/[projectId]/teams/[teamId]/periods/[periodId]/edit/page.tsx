@@ -26,15 +26,15 @@ export default async function EditOverride({ params }: { params: Promise<{ proje
       <p className="muted">{view.level} · {formatDate(view.period.start)} – {formatDate(view.period.end)}</p>
       <p>
         Currently applied: {applied.splitSource ?? "nothing (calendar capacity only)"}
-        {applied.overhead !== null && <span className="muted"> · overhead {pct(applied.overhead)}% from {applied.overheadSource}</span>}
-        {applied.contingencySource && <span className="muted"> · contingency {pct(applied.contingency)}% from {applied.contingencySource}</span>}
+        {applied.overhead !== null && <span className="muted"> · organisational {pct(applied.overhead)}% from {applied.overheadSource}</span>}
+        {applied.contingencySource && <span className="muted"> · unplanned {pct(applied.contingency)}% from {applied.contingencySource}</span>}
       </p>
       <section aria-label="Team default (read only)" className="reference">
         <h3>Team default <span className="muted">(read only)</span></h3>
         {view.teamDefault ? (
           <p>
-            Overhead {pct(view.teamDefault.overhead)}% · Contingency {pct(view.teamDefault.contingency ?? 0)}% · Run {pct(view.teamDefault.split.run)}% ·
-            Fix {pct(view.teamDefault.split.fix)}% · Sustain {pct(view.teamDefault.split.sustain)}% ·
+            Organisational {pct(view.teamDefault.overhead)}% · Unplanned {pct(view.teamDefault.contingency ?? 0)}% ·
+            Maintenance {pct(view.teamDefault.split.run + view.teamDefault.split.fix)}% · Technical improvements {pct(view.teamDefault.split.sustain)}% ·
             Change {pct(view.teamDefault.split.change)}% · Enabling/Training {pct(view.teamDefault.split.enabling ?? 0)}%
             <span className="muted"> · since {formatDate(view.teamDefault.effectiveFrom ?? view.period.start)}</span>
           </p>

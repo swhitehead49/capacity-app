@@ -11,12 +11,12 @@ export function standardFormValues(standard: StandardAllocation | null): Record<
   };
 }
 
-/** A one-line summary, e.g. "Overhead 10% · Contingency 0% · Run 30% …". */
+/** A one-line summary, e.g. "Organisational 10% · Unplanned 0% · Maintenance 30% …". */
 export function describeStandard(standard: StandardAllocation): string {
   const s = standard.split;
   return [
-    ["Overhead", standard.overhead], ["Contingency", standard.contingency], ["Run", s.run], ["Fix", s.fix],
-    ["Sustain", s.sustain], ["Change", s.change], ["Enabling/Training", s.enabling],
+    ["Organisational", standard.overhead], ["Unplanned", standard.contingency], ["Maintenance", s.run + s.fix],
+    ["Technical improvements", s.sustain], ["Change", s.change], ["Enabling/Training", s.enabling],
   ].map(([label, value]) => `${label} ${percent(value as number)}%`).join(" · ");
 }
 

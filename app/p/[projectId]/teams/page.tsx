@@ -107,13 +107,13 @@ async function DefaultCapacity({ projectId, db, teams }: { projectId: string; db
     <table className="members">
       <caption>Default capacity</caption>
       <thead><tr>
-        <th>ID</th><th>Name</th><th>Overhead</th><th>Contingency</th><th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th>
+        <th>ID</th><th>Name</th><th>Organisational</th><th>Unplanned</th><th>Maintenance</th><th>Technical improvements</th><th>Change</th>
         <th>Enabling / Training</th><th>From</th><th>Standard or own</th>
       </tr></thead>
-      {teams.length === 0 && <tbody><tr><td colSpan={11} className="empty">No teams.</td></tr></tbody>}
+      {teams.length === 0 && <tbody><tr><td colSpan={10} className="empty">No teams.</td></tr></tbody>}
       {groupByValueStream(teams).map(([stream, group]) => (
         <tbody key={stream}>
-          <tr className="group"><th colSpan={11} scope="rowgroup">{stream}</th></tr>
+          <tr className="group"><th colSpan={10} scope="rowgroup">{stream}</th></tr>
           {group.map((x) => {
             const d = defaults.get(x.id);
             return (
@@ -121,7 +121,7 @@ async function DefaultCapacity({ projectId, db, teams }: { projectId: string; db
                 <td>{x.id}</td>
                 <td><Link href={`/p/${projectId}/teams/${x.id}/default`}>{x.name}</Link></td>
                 <td>{pct(d?.overhead)}</td><td>{pct(d?.split ? d.contingency ?? 0 : null)}</td>
-                <td>{pct(d?.split?.run)}</td><td>{pct(d?.split?.fix)}</td><td>{pct(d?.split?.sustain)}</td><td>{pct(d?.split?.change)}</td>
+                <td>{pct(d?.split ? d.split.run + d.split.fix : null)}</td><td>{pct(d?.split?.sustain)}</td><td>{pct(d?.split?.change)}</td>
                 <td>{pct(d?.split?.enabling)}</td>
                 <td>{d?.effectiveFrom ? formatDate(d.effectiveFrom) : ""}</td>
                 <td className={d?.source === "No active default" ? "status-Provisional" : ""}>{d?.source}</td>

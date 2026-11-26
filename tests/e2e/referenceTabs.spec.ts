@@ -46,7 +46,7 @@ test("set the system standard allocation; a project without its own uses it", as
   await page.getByRole("navigation", { name: "Reference data sections" }).getByRole("link", { name: "Standard allocation" }).click();
   await expect(page).toHaveURL(/\/reference\/standard-allocation$/);
   const form = page.getByRole("form", { name: "Standard allocation" });
-  for (const [label, value] of [["Overhead %", "10"], ["Contingency %", "0"], ["Run %", "30"], ["Fix %", "20"], ["Sustain %", "20"], ["Change %", "20"], ["Enabling/Training %", "0"]]) {
+  for (const [label, value] of [["Organisational %", "10"], ["Unplanned %", "0"], ["Maintenance %", "50"], ["Technical improvements %", "20"], ["Change %", "20"], ["Enabling/Training %", "0"]]) {
     await form.getByLabel(label).fill(value);
   }
   await form.getByRole("button", { name: "Save standard allocation" }).click();

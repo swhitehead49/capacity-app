@@ -32,16 +32,26 @@ export interface ResolvedAllocation {
 
 const TOLERANCE = 0.0001; // BR-01: within 0.01%
 
+/**
+ * What each share is called on screen (sean, 26 Nov 2026). The stored names stay as they were:
+ * overhead = Organisational, contingency = Unplanned, run = Maintenance (Run and Fix merged; fix is always 0 now),
+ * sustain = Technical improvements.
+ */
+export const LABELS = {
+  overhead: "Organisational", contingency: "Unplanned", run: "Maintenance", sustain: "Technical improvements",
+  change: "Change", enabling: "Enabling/Training",
+} as const;
+
 /** BR-01 and BR-02. Returns plain-English problems; an empty list means the allocation is valid. */
 export function validateAllocation(allocation: { overhead: number | null; contingency?: number | null; split: Split }): string[] {
-  if (allocation.overhead === null) return ["Overhead % is needed (it can be 0)"];
+  if (allocation.overhead === null) return ["Organisational % is needed (it can be 0)"];
   const { split } = allocation;
   const values = [allocation.overhead, allocation.contingency ?? 0, split.run, split.fix, split.sustain, split.change, split.enabling ?? 0];
   const problems: string[] = [];
   const total = values.reduce((sum, value) => sum + value, 0);
   if (Math.abs(total - 1) > TOLERANCE) {
     const typed = Math.round(total * 10000) / 100; // 1.2 -> 120
-    problems.push(`Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100% (they add up to ${typed}%)`);
+    problems.push(`Organisational + Unplanned + Maintenance + Technical improvements + Change + Enabling/Training must add up to 100% (they add up to ${typed}%)`);
   }
   if (values.some((value) => !Number.isFinite(value) || value < 0 || value > 1)) problems.push("Every percentage must be between 0% and 100%");
   return problems;

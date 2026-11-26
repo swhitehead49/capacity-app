@@ -8,14 +8,13 @@ test("the Edit form shows what applies now", async ({ page }) => {
   await page.getByRole("table", { name: "Sprints" }).getByRole("row", { name: /S002/ }).getByRole("link", { name: "Edit" }).click();
   await expect(page.getByRole("heading", { name: "S002", exact: true })).toBeVisible();
   await expect(page.getByText("Currently applied: Team default")).toBeVisible();
-  await expect(page.getByLabel("Run %")).toHaveValue("24");
+  await expect(page.getByLabel("Maintenance %")).toHaveValue("40");
 });
 
 test("refuses a split that does not add up to 100%", async ({ page }) => {
   await page.goto("/p/default/teams/T017/periods/S002/edit");
-  await page.getByLabel("Run %").fill("50");
-  await page.getByLabel("Fix %").fill("20");
-  await page.getByLabel("Sustain %").fill("10");
+  await page.getByLabel("Maintenance %").fill("70");
+  await page.getByLabel("Technical improvements %").fill("10");
   await page.getByLabel("Change %").fill("10");
   await page.getByLabel("Reason").fill("Release sprint");
   await page.getByRole("button", { name: "Save" }).click();
@@ -26,9 +25,8 @@ test("refuses a split that does not add up to 100%", async ({ page }) => {
 
 test("saves an Active override and the planner shows it", async ({ page }) => {
   await page.goto("/p/default/teams/T017/periods/S002/edit");
-  await page.getByLabel("Run %").fill("40");
-  await page.getByLabel("Fix %").fill("20");
-  await page.getByLabel("Sustain %").fill("10");
+  await page.getByLabel("Maintenance %").fill("60");
+  await page.getByLabel("Technical improvements %").fill("10");
   await page.getByLabel("Change %").fill("10");
   await page.getByLabel("Status").selectOption("Active");
   await page.getByLabel("Reason").fill("Release sprint");
@@ -37,16 +35,15 @@ test("saves an Active override and the planner shows it", async ({ page }) => {
   await expect(page).toHaveURL(/\/p\/default\/teams\/T017$/);
   const s002 = page.getByRole("table", { name: "Sprints" }).getByRole("row", { name: /S002/ });
   await expect(s002).toContainText("Sprint override");
-  await expect(s002).toContainText("29.0"); // Run = 72.5 available days × 40%
+  await expect(s002).toContainText("43.5"); // Maintenance = 72.5 available days × 60%
 });
 
 // Requested 8 Nov 2026: show the team default read-only, and revert one or all periods to it.
 
 async function saveOverride(page: import("@playwright/test").Page, periodId: string) {
   await page.goto(`/p/default/teams/T017/periods/${periodId}/edit`);
-  await page.getByLabel("Run %").fill("40");
-  await page.getByLabel("Fix %").fill("20");
-  await page.getByLabel("Sustain %").fill("10");
+  await page.getByLabel("Maintenance %").fill("60");
+  await page.getByLabel("Technical improvements %").fill("10");
   await page.getByLabel("Change %").fill("10");
   await page.getByLabel("Status").selectOption("Active");
   await page.getByLabel("Reason").fill("Test override");
@@ -60,8 +57,8 @@ const sprintRow = (page: import("@playwright/test").Page, id: string) =>
 test("shows the team default read-only for reference", async ({ page }) => {
   await page.goto("/p/default/teams/T017/periods/S004/edit");
   const panel = page.getByRole("region", { name: "Team default (read only)" });
-  await expect(panel).toContainText("Overhead 20%");
-  await expect(panel).toContainText("Run 24%");
+  await expect(panel).toContainText("Organisational 20%");
+  await expect(panel).toContainText("Maintenance 40%");
   await expect(panel).toContainText("Change 24%");
 });
 

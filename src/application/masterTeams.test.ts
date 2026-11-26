@@ -75,7 +75,7 @@ describe("syncTeams", () => {
     expect(await importTeams(shared, actor, { today, csv })).toMatchObject({ ok: true });
     await syncTeams(project, shared, today);
     expect((await getTeamDefaults(project, { teamId: "T9", today })).current)
-      .toMatchObject({ status: "Active", effectiveFrom: "2026-11-02", overhead: 0.1, split: { run: 0.3 } });
+      .toMatchObject({ status: "Active", effectiveFrom: "2026-11-02", overhead: 0.1, split: { run: 0.6 } });
     expect((await getTeamDefaults(project, { teamId: "T1", today })).current).toMatchObject({ overhead: 0.2 }); // the standard
   });
 

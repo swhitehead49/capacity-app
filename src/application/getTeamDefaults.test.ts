@@ -22,7 +22,7 @@ describe("getTeamDefaults", () => {
     expect(team.name).toBe("DRGW");
     expect(current).toMatchObject({
       effectiveFrom: "2026-01-01", status: "Active", overhead: 0.2,
-      split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24 },
+      split: { run: 0.4, fix: 0, sustain: 0.16, change: 0.24 },
     });
   });
 
@@ -58,11 +58,11 @@ describe("getTeamDefaults", () => {
 // sean, 22 Nov 2026: Team planning's Default capacity tab lists every team's default in force, and whether it is the standard.
 describe("listTeamDefaults", () => {
   it("gives each team's default in force, marked against the standard, or none", async () => {
-    const standard = { overhead: 0.2, contingency: 0, split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24, enabling: 0 } };
+    const standard = { overhead: 0.2, contingency: 0, split: { run: 0.4, fix: 0, sustain: 0.16, change: 0.24, enabling: 0 } };
     const rows = await listTeamDefaults(db, { teamIds: ["T017", "T001"], today: "2026-11-08", standard });
     expect(rows).toEqual([
       { teamId: "T017", effectiveFrom: "2026-01-01", overhead: 0.2, contingency: 0,
-        split: { run: 0.24, fix: 0.16, sustain: 0.16, change: 0.24, enabling: 0 }, source: "Standard" },
+        split: { run: 0.4, fix: 0, sustain: 0.16, change: 0.24, enabling: 0 }, source: "Standard" },
       { teamId: "T001", effectiveFrom: null, overhead: null, contingency: null, split: null, source: "No active default" },
     ]);
     const own = await listTeamDefaults(db, { teamIds: ["T017"], today: "2026-11-08", standard: { ...standard, overhead: 0.1 } });

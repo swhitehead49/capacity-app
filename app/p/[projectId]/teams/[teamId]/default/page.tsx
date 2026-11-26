@@ -9,8 +9,8 @@ import { DefaultForm } from "./DefaultForm";
 export const dynamic = "force-dynamic";
 
 const summary = (d: DefaultVersion) =>
-  `Overhead ${percent(d.overhead)}% · Contingency ${percent(d.contingency ?? 0)}% · Run ${percent(d.split.run)}% · Fix ${percent(d.split.fix)}% · ` +
-  `Sustain ${percent(d.split.sustain)}% · Change ${percent(d.split.change)}% · Enabling/Training ${percent(d.split.enabling)}%`;
+  `Organisational ${percent(d.overhead)}% · Unplanned ${percent(d.contingency ?? 0)}% · Maintenance ${percent(d.split.run + d.split.fix)}% · ` +
+  `Technical improvements ${percent(d.split.sustain)}% · Change ${percent(d.split.change)}% · Enabling/Training ${percent(d.split.enabling)}%`;
 
 /** UC03 / FR-10: the team's default allocation, its history, and a form for a new version. */
 export default async function TeamDefault({ params }: { params: Promise<{ projectId: string; teamId: string }> }) {
@@ -29,7 +29,7 @@ export default async function TeamDefault({ params }: { params: Promise<{ projec
     <>
       <p className="muted"><Link href={`/p/${projectId}/teams/${team.id}`}>← Capacity</Link></p>
       <h2>Team default</h2>
-      <p className="muted">How the team&apos;s available days are shared when no quarter or sprint override applies: overhead, contingency, Run, Fix, Sustain, Change and Enabling/Training, adding up to 100%.</p>
+      <p className="muted">How the team&apos;s available days are shared when no quarter or sprint override applies: Organisational, Unplanned, Maintenance, Technical improvements, Change and Enabling/Training, adding up to 100%.</p>
 
       <section aria-label="In force today" className="reference">
         <h3>In force today <span className="muted">({formatDate(today())})</span></h3>
@@ -48,18 +48,17 @@ export default async function TeamDefault({ params }: { params: Promise<{ projec
       <table>
         <caption>Default history</caption>
         <thead>
-          <tr><th>Effective from</th><th>Status</th><th>Overhead</th><th>Contingency</th><th>Run</th><th>Fix</th><th>Sustain</th><th>Change</th><th>Enabling/Training</th><th>Reason</th></tr>
+          <tr><th>Effective from</th><th>Status</th><th>Organisational</th><th>Unplanned</th><th>Maintenance</th><th>Technical improvements</th><th>Change</th><th>Enabling/Training</th><th>Reason</th></tr>
         </thead>
         <tbody>
-          {history.length === 0 && <tr><td colSpan={10} className="empty">No versions yet.</td></tr>}
+          {history.length === 0 && <tr><td colSpan={9} className="empty">No versions yet.</td></tr>}
           {history.map((d) => (
             <tr key={d.id} className={d.status === "Retired" ? "muted" : ""}>
               <td>{d.effectiveFrom ? formatDate(d.effectiveFrom) : "(no date)"}</td>
               <td>{d.status}{current?.id === d.id ? " · in force" : ""}</td>
               <td>{percent(d.overhead)}%</td>
               <td>{percent(d.contingency ?? 0)}%</td>
-              <td>{percent(d.split.run)}%</td>
-              <td>{percent(d.split.fix)}%</td>
+              <td>{percent(d.split.run + d.split.fix)}%</td>
               <td>{percent(d.split.sustain)}%</td>
               <td>{percent(d.split.change)}%</td>
               <td>{percent(d.split.enabling)}%</td>

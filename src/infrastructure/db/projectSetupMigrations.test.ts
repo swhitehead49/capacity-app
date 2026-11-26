@@ -50,3 +50,18 @@ describe("migration 0020: team % imported as a fraction (sean, 24 Nov 2026: 1 ->
     expect(shares).toEqual([1, 0.8, 0.5, 0.5, null]);
   });
 });
+
+describe("migration 0021: Run + Fix become Maintenance (sean, 26 Nov 2026)", () => {
+  it("adds Fix into Run (Maintenance) in team settings and the standard allocation; the total stays the same", async () => {
+    await db.insert(t.teams).values({ id: "T1", name: "A" });
+    await db.insert(t.allocationSettings).values({
+      teamId: "T1", level: "Team default", effectiveFrom: "2026-01-01", status: "Active", overhead: 0.2, contingency: 0, run: 0.3, fix: 0.2, sustain: 0.1, change: 0.2,
+    });
+    await db.insert(t.standardAllocation).values({ id: 1, overhead: 0.2, contingency: 0, run: 0.2, fix: 0.2, sustain: 0.2, change: 0.2, enabling: 0 });
+    await rerun(db, "drizzle/0021_maintenance.sql");
+    const [row] = await db.select().from(t.allocationSettings);
+    expect([row?.run, row?.fix]).toEqual([0.5, 0]);
+    const [standard] = await db.select().from(t.standardAllocation);
+    expect([standard?.run, standard?.fix]).toEqual([0.4, 0]);
+  });
+});

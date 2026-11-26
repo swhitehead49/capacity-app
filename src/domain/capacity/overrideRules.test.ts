@@ -12,7 +12,7 @@ const good = {
   reason: "Release sprint",
 };
 
-const ONE_HUNDRED = "Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100%";
+const ONE_HUNDRED = "Organisational + Unplanned + Maintenance + Technical improvements + Change + Enabling/Training must add up to 100%";
 
 describe("validateOverride", () => {
   it("accepts a complete Active override", () => {
@@ -24,7 +24,7 @@ describe("validateOverride", () => {
   });
 
   it("needs an overhead %", () => {
-    expect(validateOverride({ ...good, overhead: null })).toContain("Overhead % is needed (it can be 0)");
+    expect(validateOverride({ ...good, overhead: null })).toContain("Organisational % is needed (it can be 0)");
   });
 
   it("checks everything adds up to 100% (BR-01)", () => {

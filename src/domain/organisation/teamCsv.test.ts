@@ -95,7 +95,14 @@ describe("parseTeamCsv", () => {
 
     it("reads the % columns as the team's starting allocation; Total_Pct is ignored", () => {
       const team = parseTeamCsv(`${pctHead}\nT074,Core,20,5,25,20,15,10,5,100\n`, { today }).teams[0];
-      expect(team?.allocation).toEqual({ overhead: 0.2, contingency: 0.05, split: { run: 0.25, fix: 0.2, sustain: 0.15, change: 0.1, enabling: 0.05 } });
+      // An old file's Run_Pct and Fix_Pct are added together as Maintenance (sean, 26 Nov 2026).
+      expect(team?.allocation).toEqual({ overhead: 0.2, contingency: 0.05, split: { run: 0.45, fix: 0, sustain: 0.15, change: 0.1, enabling: 0.05 } });
+    });
+
+    it("reads the new headings (sean, 26 Nov 2026): Organisational, Unplanned, Maintenance, Technical improvements", () => {
+      const head = "Team_ID,Team_Name,Organisational_Pct,Unplanned_Pct,Maintenance_Pct,Technical_Improvements_Pct,Change_Pct,Enabling_Training_Pct";
+      expect(parseTeamCsv(`${head}\nT074,Core,20,5,45,15,10,5\n`, { today }).teams[0]?.allocation)
+        .toEqual({ overhead: 0.2, contingency: 0.05, split: { run: 0.45, fix: 0, sustain: 0.15, change: 0.1, enabling: 0.05 } });
     });
 
     it("all blank means none: the team takes the standard allocation", () => {
@@ -105,9 +112,9 @@ describe("parseTeamCsv", () => {
 
     it("once any % is filled, a blank one counts as 0% and they must add up to 100%", () => {
       expect(parseTeamCsv(`${pctHead}\nT074,Core,20,,40,40,,,,\n`, { today }).teams[0]?.allocation)
-        .toEqual({ overhead: 0.2, contingency: 0, split: { run: 0.4, fix: 0.4, sustain: 0, change: 0, enabling: 0 } });
+        .toEqual({ overhead: 0.2, contingency: 0, split: { run: 0.8, fix: 0, sustain: 0, change: 0, enabling: 0 } });
       expect(parseTeamCsv(`${pctHead}\nT074,Core,20,,40,30,,,,\nT075,Viewer,20,,40,abc,,,,\n`, { today }).errors).toEqual([
-        "Line 2: Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100% (they add up to 90%)",
+        "Line 2: Organisational + Unplanned + Maintenance + Technical improvements + Change + Enabling/Training must add up to 100% (they add up to 90%)",
         "Line 3: Fix_Pct must be a number",
       ]);
     });

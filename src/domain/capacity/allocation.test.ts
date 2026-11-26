@@ -22,7 +22,7 @@ describe("validateAllocation (BR-01, BR-02)", () => {
 
   it("says what the numbers add up to when they don't make 100%", () => {
     expect(validateAllocation({ overhead: 0.2, contingency: 0, split: split(0.3, 0.2, 0.2, 0.3) })).toEqual([
-      "Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100% (they add up to 120%)",
+      "Organisational + Unplanned + Maintenance + Technical improvements + Change + Enabling/Training must add up to 100% (they add up to 120%)",
     ]);
   });
 
@@ -31,7 +31,7 @@ describe("validateAllocation (BR-01, BR-02)", () => {
   });
 
   it("needs an overhead % (it can be 0)", () => {
-    expect(validateAllocation({ overhead: null, contingency: 0, split: split(0.5, 0.5, 0, 0) })).toEqual(["Overhead % is needed (it can be 0)"]);
+    expect(validateAllocation({ overhead: null, contingency: 0, split: split(0.5, 0.5, 0, 0) })).toEqual(["Organisational % is needed (it can be 0)"]);
     expect(validateAllocation({ overhead: 0, contingency: 0, split: split(0.5, 0.5, 0, 0) })).toEqual([]);
   });
 

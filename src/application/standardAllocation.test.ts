@@ -33,9 +33,9 @@ describe("standard allocation", () => {
 
   it("follows the same rules as a team default (BR-01, BR-02)", async () => {
     const result = await saveStandardAllocation(db, actor, { ...standard, split: { ...standard.split, change: 0.5 } });
-    expect(result).toEqual({ ok: false, errors: ["Overhead + Contingency + Run + Fix + Sustain + Change + Enabling/Training must add up to 100% (they add up to 130%)"] });
+    expect(result).toEqual({ ok: false, errors: ["Organisational + Unplanned + Maintenance + Technical improvements + Change + Enabling/Training must add up to 100% (they add up to 130%)"] });
     expect(await saveStandardAllocation(db, actor, { ...standard, overhead: null }))
-      .toEqual({ ok: false, errors: ["Overhead % is needed (it can be 0)"] });
+      .toEqual({ ok: false, errors: ["Organisational % is needed (it can be 0)"] });
     expect(await getStandardAllocation(db)).toBeNull();
   });
 

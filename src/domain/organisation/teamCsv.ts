@@ -45,11 +45,12 @@ const COLUMNS = {
   baseLocation: ["base_location"],
   start: ["start_date"],
   // FR-18x: the starting allocation (Total_Pct is only a check in the spreadsheet, so it is ignored)
-  overhead: ["overhead_pct"],
-  contingency: ["contingency_pct"],
-  run: ["run_pct"],
+  // sean, 26 Nov 2026: new names; the old headings are still read, and an old Fix_Pct is added into Maintenance.
+  overhead: ["organisational_pct", "overhead_pct"],
+  contingency: ["unplanned_pct", "contingency_pct"],
+  run: ["maintenance_pct", "run_pct"],
   fix: ["fix_pct"],
-  sustain: ["sustain_pct"],
+  sustain: ["technical_improvements_pct", "sustain_pct"],
   change: ["change_pct"],
   enabling: ["enabling_training_pct"],
 } as const;

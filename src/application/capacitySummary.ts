@@ -25,8 +25,8 @@ export interface SummaryRow {
   change: number;
   enabling: number;
   notAllocated: number;
-  functional: number; // Sustain + Change (sean, 24 Nov 2026)
-  nonFunctional: number; // Fix + Run + Overhead
+  functional: number; // Technical improvements (sustain) + Change (sean, 24 Nov 2026)
+  nonFunctional: number; // Maintenance (run + fix) + Organisational (overhead)
 }
 
 /** Adds one team's planner row to the period's total. */

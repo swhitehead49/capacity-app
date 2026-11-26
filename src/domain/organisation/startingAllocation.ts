@@ -11,8 +11,8 @@ export interface StartingAllocation {
 
 /** The template's % columns, in order, with their headings. */
 export const PCT_COLUMNS = [
-  ["overhead", "Overhead_Pct"], ["contingency", "Contingency_Pct"], ["run", "Run_Pct"], ["fix", "Fix_Pct"],
-  ["sustain", "Sustain_Pct"], ["change", "Change_Pct"], ["enabling", "Enabling_Training_Pct"],
+  ["overhead", "Organisational_Pct"], ["contingency", "Unplanned_Pct"], ["run", "Maintenance_Pct"], ["fix", "Fix_Pct"],
+  ["sustain", "Technical_Improvements_Pct"], ["change", "Change_Pct"], ["enabling", "Enabling_Training_Pct"],
 ] as const;
 
 export type PctField = (typeof PCT_COLUMNS)[number][0];
@@ -37,7 +37,8 @@ export function readStartingAllocation(cells: Record<PctField, string>): { alloc
   if (errors.length) return { errors };
   const allocation: StartingAllocation = {
     overhead: value.overhead, contingency: value.contingency,
-    split: { run: value.run, fix: value.fix, sustain: value.sustain, change: value.change, enabling: value.enabling },
+    // Run and Fix are one type now, Maintenance (sean, 26 Nov 2026): an old file's Fix_Pct is added into it.
+    split: { run: Math.round((value.run + value.fix) * 10000) / 10000, fix: 0, sustain: value.sustain, change: value.change, enabling: value.enabling },
   };
   const problems = validateAllocation(allocation);
   return problems.length ? { errors: problems } : { allocation, errors: [] };
